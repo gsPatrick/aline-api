@@ -1,14 +1,21 @@
+// Importando explicitamente as funções que acabamos de garantir que existem no sports.service.js
 import { 
+  fetchLeagues, 
   fetchLeagueById, 
   fetchStandingsBySeason, 
   fetchFixtures 
 } from "../../services/sports.service.js";
 
-
 export const listAllLeagues = async () => {
-  // Busca ligas da Sportmonks (pode adicionar cache Redis aqui futuramente)
+  // Adicionamos include country para ter a bandeira
   const leagues = await fetchLeagues({ include: ["country"] }); 
   
+  // Tratamento de erro caso a API da Sportmonks falhe ou retorne vazio
+  if (!Array.isArray(leagues)) {
+    console.error("Erro: fetchLeagues não retornou um array", leagues);
+    return [];
+  }
+
   return leagues.map(l => ({
     id: l.id,
     name: l.name,
@@ -18,14 +25,13 @@ export const listAllLeagues = async () => {
   }));
 };
 
-
 export const getLeagueDetails = async (leagueId) => {
   const league = await fetchLeagueById(leagueId, { include: ["country", "season"] });
   
-  // Tenta pegar a temporada atual
+  if (!league) throw new Error("Liga não encontrada");
+
   const currentSeasonId = league.current_season_id || league.season?.data?.id;
   
-  // Busca standings se tiver temporada atual
   let standings = [];
   if (currentSeasonId) {
     try {
@@ -47,37 +53,36 @@ export const getLeagueDetails = async (leagueId) => {
 };
 
 export const getLeagueFixtures = async (leagueId) => {
-  // Busca próximos jogos desta liga
-  // Nota: Precisamos passar filtros de data no futuro, aqui pegamos os gerais filtrados pela liga
-  // A Sportmonks pede start_date e end_date normalmente, ou filtragem no array.
-  // Vamos simplificar pedindo fixtures e filtrando ou usando endpoint de season se disponível.
-  
-  // Para simplificar a integração agora, vamos usar o endpoint de fixtures genérico filtrando por ligaId
-  // (No mundo ideal, usaria /fixtures/between com league_id no parametro, mas vamos usar o wrapper existente)
   const fixtures = await fetchFixtures({ 
-    // Se sua função fetchFixtures aceitar params adicionais de query string:
     league_id: leagueId, 
-    include: ["participants", "scores"] // Garante dados dos times
+    include: ["participants", "scores", "state"] 
   });
   
-  // Filtra apenas futuros ou ao vivo no JS se a API retornar tudo
   const now = new Date();
+  
+  if (!Array.isArray(fixtures)) return [];
+
   return fixtures
-    .filter(f => new Date(f.starting_at) >= now) // Apenas futuros
-    .slice(0, 10) // Limita a 10 jogos
-    .map(f => ({
-       id: f.id,
-       time: f.starting_at, // Timestamp ou string
-       status_id: f.state_id,
-       homeTeam: {
-         name: f.participants?.data?.find(p => p.meta.location === 'home')?.name,
-         image_path: f.participants?.data?.find(p => p.meta.location === 'home')?.image_path,
-         score: 0 // Jogos futuros começam 0-0
-       },
-       awayTeam: {
-         name: f.participants?.data?.find(p => p.meta.location === 'away')?.name,
-         image_path: f.participants?.data?.find(p => p.meta.location === 'away')?.image_path,
-         score: 0
-       }
-    }));
+    .filter(f => new Date(f.starting_at) >= now)
+    .slice(0, 10)
+    .map(f => {
+        // Lógica de participantes similar ao normalizeFixture
+        const participants = f.participants?.data || [];
+        const home = participants.find(p => p.meta?.location === 'home');
+        const away = participants.find(p => p.meta?.location === 'away');
+
+        return {
+            id: f.id,
+            time: f.starting_at,
+            status_id: f.state_id,
+            homeTeam: {
+                name: home?.name || "Casa",
+                image_path: home?.image_path
+            },
+            awayTeam: {
+                name: away?.name || "Fora",
+                image_path: away?.image_path
+            }
+        };
+    });
 };
