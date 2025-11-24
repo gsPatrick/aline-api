@@ -1,7 +1,8 @@
 
 import { 
   apiGetLiveMatches, 
-  apiGetFixtureDetails 
+  apiGetFixtureDetails,
+  apiGetFixtureLineups 
 } from "../../services/sports.service.js";
 
 // Lista de Jogos (Home/Live)
@@ -11,6 +12,17 @@ export const live = async (req, res, next) => {
     // Por enquanto retorna os LIVE do Sportmonks
     const matches = await apiGetLiveMatches();
     res.json(matches);
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const lineups = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = await apiGetFixtureLineups(id);
+    if (!data) return res.status(404).json({ error: "Escalação não disponível" });
+    res.json(data);
   } catch (e) {
     next(e);
   }
