@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const apiKey = process.env.MYSPORTMONKS_API_KEY;
-const baseURL = process.env.MYSPORTMONKS_API_BASE;
+const baseURL = process.env.MYSPORTMONKS_API_BASE || "https://api.sportmonks.com/v3/football";
 const defaultTimezone = process.env.MYSPORTMONKS_TIMEZONE || "UTC";
 
 const http = axios.create({
@@ -12,22 +12,18 @@ const http = axios.create({
   timeout: 15000,
 });
 
+// --- INTERCEPTORS & CONFIG ---
 const ensureApiKey = () => {
-  if (!apiKey) {
-    throw new Error("MYSPORTMONKS_API_KEY deve estar configurada no .env");
-  }
+  if (!apiKey) throw new Error("MYSPORTMONKS_API_KEY não configurada no .env");
 };
 
 const normalizeInclude = (include) => {
-  if (Array.isArray(include)) {
-    return include.join(";");
-  }
+  if (Array.isArray(include)) return include.join(";");
   return include;
 };
 
 const request = async (endpoint, params = {}) => {
   ensureApiKey();
-
   const parsedParams = {
     api_token: apiKey,
     timezone: defaultTimezone,
@@ -40,288 +36,202 @@ const request = async (endpoint, params = {}) => {
 
   try {
     const { data } = await http.get(endpoint, { params: parsedParams });
+    // Sportmonks v3 geralmente retorna { data: [...] }
     return data?.data ?? data;
   } catch (err) {
-    if (err.response) {
-      const status = err.response.status;
-      const apiMessage =
-        err.response.data?.message ||
-        err.response.data?.error ||
-        "Erro desconhecido";
-      throw new Error(`MySportMonks (${endpoint}) erro ${status}: ${apiMessage}`);
-    }
-    throw new Error(
-      `Falha ao consultar MySportMonks (${endpoint}): ${err.message}`
-    );
+    console.error(`Erro na requisição ${endpoint}:`, err.message);
+    return null; // Retorna null para não quebrar a aplicação inteira
   }
 };
 
-const defaultIncludes = [
-  "participants",
-  "scores",
-  "events.type",
-  "statistics.type",
+// --- INCLUDES PADRÃO (PARA TRAZER TUDO) ---
+const fixtureIncludes = [
+  "participants",           // Times
+  "league.country",         // Liga e País
+  "season",                 // Temporada
+  "round",                  // Rodada
+  "stage",                  // Fase
+  "state",                  // Status do jogo
+  "venue",                  // Estádio
+  "scores",                 // Placar
+  "events.type",            // Gols, Cartões, Substituições
+  "statistics.type",        // Estatísticas (Chutes, Posse, etc)
+  "lineups.player",         // Escalações
+  "lineups.details",        // Detalhes da escalação (camisa, posição)
+  "referee",                // Árbitro
+  "probability"             // Probabilidades/Previsões (se disponível no plano)
 ];
 
-const parseIncludeInput = (include) => {
-  if (!include) {
-    return [];
-  }
-  if (Array.isArray(include)) {
-    return include.filter(Boolean);
-  }
-  return String(include)
-    .split(";")
-    .map((item) => item.trim())
-    .filter(Boolean);
+// --- HELPERS DE NORMALIZAÇÃO (PARSERS) ---
+
+const getParticipant = (participants, location) => {
+  if (!Array.isArray(participants)) return {};
+  // Encontra time baseado na location (home/away)
+  const team = participants.find(p => p.meta?.location === location);
+  return team ? {
+    id: team.id,
+    name: team.name,
+    logo: team.image_path,
+    short_code: team.short_code,
+    country_id: team.country_id
+  } : { name: location === 'home' ? "Mandante" : "Visitante" };
 };
 
-const resolveIncludes = (include, includeDefaults = false) => {
-  const custom = parseIncludeInput(include);
-  const base = includeDefaults ? defaultIncludes : [];
-  const merged = [...base, ...custom];
-  const unique = Array.from(new Set(merged.filter(Boolean)));
-  return unique.length ? unique : undefined;
-};
-
-const buildParams = (options = {}, { includeDefaults = false } = {}) => {
-  if (!options || typeof options !== "object") {
-    return includeDefaults ? { include: defaultIncludes } : {};
-  }
-
-  const { include, includeDefaults: overrideIncludeDefaults, ...rest } = options;
-  const shouldUseDefault =
-    typeof overrideIncludeDefaults === "boolean"
-      ? overrideIncludeDefaults
-      : includeDefaults;
-  const resolvedIncludes = resolveIncludes(include, shouldUseDefault);
-
-  return resolvedIncludes ? { ...rest, include: resolvedIncludes } : rest;
-};
-
-const sanitizeSegment = (segment, fieldName) => {
-  if (segment === null || segment === undefined) {
-    throw new Error(`${fieldName || "segmento"} é obrigatório`);
-  }
-  const trimmed = String(segment).trim();
-  if (!trimmed) {
-    throw new Error(`${fieldName || "segmento"} é obrigatório`);
-  }
-  return encodeURIComponent(trimmed);
-};
-
-// --- Helpers de Normalização ---
-
-const getParticipantByLocation = (participants, location) => {
-  if (!Array.isArray(participants)) return null;
-  return participants.find((p) => {
-    // Sportmonks v3 pode retornar location em meta ou pivot
-    const loc = p.meta?.location || p.pivot?.location;
-    return loc === location;
-  });
-};
-
-const computeStatusCode = (fixture) => {
-  if (typeof fixture?.state_id === "number") {
-    return fixture.state_id;
-  }
+const getScore = (scores, location) => {
+  if (!Array.isArray(scores)) return 0;
+  // Tenta pegar o score "CURRENT"
+  const current = scores.find(s => s.description === "CURRENT" && s.score_participant === location);
+  if (current) return current.score?.goals || 0;
   return 0;
 };
 
-const parseNumeric = (value) => {
-  const num = Number(value);
-  return Number.isFinite(num) ? num : null;
-};
-
-const getParticipants = (fixture) =>
-  Array.isArray(fixture?.participants?.data)
-    ? fixture.participants.data
-    : fixture.participants || [];
-
-const resolveLocation = (entity) =>
-  entity?.meta?.location ||
-  entity?.pivot?.location ||
-  entity?.details?.location ||
-  entity?.location ||
-  null;
-
-const locationFromParticipantId = (participantId, participants) => {
-  if (!participantId) return null;
-  const participant = participants.find(
-    (p) => String(p.id) === String(participantId)
-  );
-  return participant ? resolveLocation(participant) : null;
-};
-
-const extractScoreValue = (fixture, location, participants) => {
-  // Lógica simplificada para pegar o score atual
-  const scores = fixture?.scores?.data || fixture?.scores || [];
-  const currentScore = scores.find(
-    (s) => s.description === "CURRENT" && (s.score_participant === location || resolveLocation(s) === location)
-  );
+const normalizeEvents = (events, participants) => {
+  if (!Array.isArray(events)) return [];
   
-  if (currentScore) return parseNumeric(currentScore.score?.goals || currentScore.score);
+  return events.map(ev => {
+    const teamId = ev.participant_id;
+    const team = participants.find(p => p.id === teamId);
+    const location = team?.meta?.location; // home ou away
 
-  // Fallback para campos diretos
-  if (location === "home") return parseNumeric(fixture?.scores?.localteam_score || 0);
-  if (location === "away") return parseNumeric(fixture?.scores?.visitorteam_score || 0);
-  
-  return 0;
-};
-
-const getKickoffTimestamp = (fixture) => {
-  const tsFromField = parseNumeric(fixture?.starting_at_timestamp);
-  if (tsFromField !== null) return Math.floor(tsFromField);
-  if (!fixture?.starting_at) return null;
-  const ms = Date.parse(fixture.starting_at);
-  return Number.isFinite(ms) ? Math.floor(ms / 1000) : null;
-};
-
-const summarizeEvents = (fixture, participants) => {
-  const events = Array.isArray(fixture?.events?.data) ? fixture.events.data : [];
-  const counts = {
-    home: { corners: 0, yellow: 0, red: 0 },
-    away: { corners: 0, yellow: 0, red: 0 },
-  };
-
-  events.forEach((event) => {
-    const location = resolveLocation(event) || locationFromParticipantId(event.participant_id, participants);
-    if (location !== "home" && location !== "away") return;
-
-    const typeName = (event?.type?.data?.name || "").toLowerCase();
-    if (typeName.includes("yellow")) counts[location].yellow++;
-    else if (typeName.includes("red")) counts[location].red++;
-    else if (typeName.includes("corner")) counts[location].corners++;
-  });
-  return counts;
-};
-
-const buildScoreArray = (fixture, participants) => {
-  const homeScore = extractScoreValue(fixture, "home", participants);
-  const awayScore = extractScoreValue(fixture, "away", participants);
-  const eventSummary = summarizeEvents(fixture, participants);
-
-  return [
-    String(fixture?.id ?? ""),
-    computeStatusCode(fixture),
-    [homeScore, 0, eventSummary.home.red, eventSummary.home.yellow, eventSummary.home.corners, 0, 0],
-    [awayScore, 0, eventSummary.away.red, eventSummary.away.yellow, eventSummary.away.corners, 0, 0],
-    getKickoffTimestamp(fixture),
-    "",
-  ];
-};
-
-const normalizeStats = (fixture, participants) => {
-  const stats = Array.isArray(fixture?.statistics?.data) ? fixture.statistics.data : [];
-  if (stats.length === 0) return [];
-
-  const grouped = new Map();
-
-  stats.forEach((stat) => {
-    const type = stat?.type?.data?.name || stat?.type_id;
-    if (!type) return;
-
-    const location = locationFromParticipantId(stat.participant_id, participants) || resolveLocation(stat);
-    const value = parseNumeric(stat.value) ?? parseNumeric(stat.data?.value);
-
-    if (!location || value === null) return;
-
-    const entry = grouped.get(type) || { type, home: 0, away: 0 };
-    if (location === "away") entry.away = value;
-    else entry.home = value;
-
-    grouped.set(type, entry);
-  });
-
-  return Array.from(grouped.values());
-};
-
-const normalizeIncidents = (fixture, participants) => {
-  const events = Array.isArray(fixture?.events?.data) ? fixture.events.data : [];
-  return events.map((event) => {
-    const location = resolveLocation(event) || locationFromParticipantId(event.participant_id, participants);
     return {
-      type: event?.type?.data?.name || "Unknown",
-      participant: location,
-      minute: event.minute,
-      player_name: event.player?.data?.name || event.player_name
+      id: ev.id,
+      minute: ev.minute,
+      extra_minute: ev.extra_minute,
+      type: ev.type?.data?.name || "Unknown", // ex: Goal, Yellow Card
+      player_name: ev.player_name || ev.player?.data?.name,
+      related_player_name: ev.related_player?.data?.name, // ex: Assistência ou jogador substituído
+      team_location: location, // 'home' ou 'away'
+      result: ev.info // ex: placar após o gol "1-0"
     };
-  });
+  }).sort((a, b) => a.minute - b.minute);
 };
 
-const fixtureParams = (options = {}) =>
-  buildParams(options, { includeDefaults: true });
+const normalizeStats = (stats, participants) => {
+  if (!Array.isArray(stats)) return [];
+  
+  // Agrupa estatísticas por tipo (ex: "Ball Possession")
+  const map = {};
+  
+  stats.forEach(stat => {
+    const typeName = stat.type?.data?.name || stat.type?.name;
+    if (!typeName) return;
 
-// --- EXPORTS (FUNÇÕES DE BUSCA) ---
+    const teamId = stat.participant_id;
+    const team = participants.find(p => p.id === teamId);
+    const location = team?.meta?.location; // home ou away
 
-export const fetchLivescores = (options = {}) => request("/livescores", fixtureParams(options));
+    if (!map[typeName]) map[typeName] = { name: typeName, home: 0, away: 0 };
+    
+    // Valor pode vir em 'value' ou 'data.value'
+    const val = stat.value?.total ?? stat.value ?? 0;
+    if (location) map[typeName][location] = val;
+  });
 
-export const fetchLivescoresInplay = (options = {}) => request("/livescores/inplay", fixtureParams(options));
+  return Object.values(map);
+};
 
-export const fetchLatestLivescores = (options = {}) => request("/livescores/latest", fixtureParams(options));
+const normalizeLineups = (lineups, participants) => {
+  if (!Array.isArray(lineups)) return { home: [], away: [] };
 
-export const fetchFixtures = (options = {}) => request("/fixtures", fixtureParams(options));
+  const home = [];
+  const away = [];
 
-export const fetchFixtureById = (fixtureId, options = {}) => request(`/fixtures/${sanitizeSegment(fixtureId, "fixtureId")}`, fixtureParams(options));
+  lineups.forEach(l => {
+    const teamId = l.team_id;
+    const team = participants.find(p => p.id === teamId);
+    const location = team?.meta?.location;
 
-export const fetchLeagues = (options = {}) => request("/leagues", buildParams(options));
+    const playerObj = {
+      id: l.player_id,
+      name: l.player_name || l.player?.data?.display_name,
+      number: l.jersey_number,
+      position: l.position_id, // Precisa mapear ID para texto se quiser
+      type: l.type?.data?.name || (l.formation_position ? "Starting XI" : "Bench"), // Simplificação
+      image: l.player?.data?.image_path
+    };
 
-export const fetchLeagueById = (leagueId, options = {}) => request(`/leagues/${sanitizeSegment(leagueId, "leagueId")}`, buildParams(options));
+    if (location === 'home') home.push(playerObj);
+    else if (location === 'away') away.push(playerObj);
+  });
 
-export const fetchSeasons = (options = {}) => request("/seasons", buildParams(options));
+  return { home, away };
+};
 
-export const fetchStandingsBySeason = (seasonId, options = {}) => request(`/standings/seasons/${sanitizeSegment(seasonId, "seasonId")}`, buildParams(options));
+// --- FUNÇÃO PRINCIPAL DE NORMALIZAÇÃO DE PARTIDA ---
+export const normalizeFixture = (f) => {
+  if (!f) return null;
 
-export const normalizeFixture = (fixture) => {
-  const participants = getParticipants(fixture);
-  const homeTeam = getParticipantByLocation(participants, "home");
-  const awayTeam = getParticipantByLocation(participants, "away");
-  const scoreArray = buildScoreArray(fixture, participants);
-  const homeScore = scoreArray[2][0];
-  const awayScore = scoreArray[3][0];
+  const participants = f.participants?.data || f.participants || [];
+  const eventsRaw = f.events?.data || f.events || [];
+  const statsRaw = f.statistics?.data || f.statistics || [];
+  const lineupsRaw = f.lineups?.data || f.lineups || [];
+  const scoresRaw = f.scores?.data || f.scores || [];
+
+  const homeTeam = getParticipant(participants, 'home');
+  const awayTeam = getParticipant(participants, 'away');
 
   return {
-    id: String(fixture?.id ?? ""),
-    status_id: computeStatusCode(fixture),
-    status_name: fixture?.state?.data?.name || "Unknown",
-    minute: fixture?.minute || null,
+    id: f.id,
     league: {
-      id: fixture?.league_id,
-      name: fixture?.league?.data?.name || "Liga",
-      country: fixture?.league?.data?.country?.data?.name || "Mundo",
-      flag: fixture?.league?.data?.country?.data?.image_path || null,
-      logo: fixture?.league?.data?.image_path || null,
+      id: f.league_id,
+      name: f.league?.data?.name,
+      logo: f.league?.data?.image_path,
+      country: f.league?.data?.country?.data?.name,
+      flag: f.league?.data?.country?.data?.image_path
     },
-    homeTeam: {
-      id: homeTeam?.id,
-      name: homeTeam?.name || "Casa",
-      logo: homeTeam?.image_path || null,
-      score: homeScore
+    season_id: f.season_id,
+    round_name: f.round?.data?.name,
+    venue: f.venue?.data?.name,
+    starting_at: f.starting_at,
+    timestamp: f.starting_at_timestamp,
+    status: {
+      id: f.state_id,
+      short: f.state?.data?.short_name, // FT, NS, HT, LIVE
+      name: f.state?.data?.name,
+      minute: f.minute
     },
-    awayTeam: {
-      id: awayTeam?.id,
-      name: awayTeam?.name || "Fora",
-      logo: awayTeam?.image_path || null,
-      score: awayScore
+    teams: {
+      home: { ...homeTeam, score: getScore(scoresRaw, 'home') },
+      away: { ...awayTeam, score: getScore(scoresRaw, 'away') }
     },
-    score: scoreArray,
-    stats: normalizeStats(fixture, participants),
-    incidents: normalizeIncidents(fixture, participants),
-    events: fixture?.events?.data || [],
-    tlive: [],
-    odds: fixture?.odds?.data || []
+    events: normalizeEvents(eventsRaw, participants),
+    stats: normalizeStats(statsRaw, participants),
+    lineups: normalizeLineups(lineupsRaw, participants),
+    referee: f.referee?.data?.name || null,
+    has_odds: f.has_odds
   };
 };
 
-export const getLiveMatches = async () => {
-  const fixtures = await fetchLivescoresInplay();
-  if (!Array.isArray(fixtures)) return [];
-  return fixtures.map(normalizeFixture);
-};
+// --- EXPORTS DAS CHAMADAS API (Mapeando APIFUTEBOL.json) ---
 
-export const getMatchStats = async (matchId) => {
-  if (!matchId) throw new Error("matchId é obrigatório");
-  const fixture = await fetchFixtureById(matchId);
-  if (!fixture) throw new Error("Partida não encontrada");
-  return normalizeFixture(Array.isArray(fixture?.data) ? fixture.data[0] : fixture);
-};
+// 1. Fixtures
+export const fetchFixturesBetween = (start, end, filters = {}) => 
+  request(`/fixtures/between/${start}/${end}`, { ...filters, include: fixtureIncludes });
+
+export const fetchFixtureById = (id) => 
+  request(`/fixtures/${id}`, { include: fixtureIncludes });
+
+export const fetchLiveFixtures = () => 
+  request(`/livescores/inplay`, { include: fixtureIncludes });
+
+// 2. Leagues
+export const fetchLeagues = (params = {}) => 
+  request(`/leagues`, { ...params, include: ["country", "currentSeason"] });
+
+export const fetchLeagueById = (id) => 
+  request(`/leagues/${id}`, { include: ["country", "currentSeason"] });
+
+// 3. Standings
+export const fetchStandingsBySeason = (seasonId) => 
+  request(`/standings/seasons/${seasonId}`, { include: ["details.type", "participant"] });
+
+// 4. Topscorers
+export const fetchTopscorersBySeason = (seasonId) => 
+  request(`/topscorers/seasons/${seasonId}`, { include: ["player", "participant"] });
+
+// 5. Teams
+export const fetchTeamById = (id) =>
+  request(`/teams/${id}`, { include: ["country", "venue"] });
+
+// 6. Search
+export const searchTeams = (name) => request(`/teams/search/${encodeURIComponent(name)}`);

@@ -2,94 +2,142 @@ import {
   fetchLeagues, 
   fetchLeagueById, 
   fetchStandingsBySeason, 
-  fetchFixturesBetween
-} from "../../services/sports.service.js";
+  fetchFixturesBetween,
+  fetchTopscorersBySeason,
+  fetchLiveFixtures,
+  fetchFixtureById,
+  normalizeFixture
+} from "./sports.service.js";
 
+/**
+ * Lista todas as ligas disponíveis com detalhes do país.
+ */
 export const listAllLeagues = async () => {
-  const leagues = await fetchLeagues({ include: ["country"] }); 
+  const leagues = await fetchLeagues();
   
-  if (!Array.isArray(leagues)) {
-    console.error("Erro: fetchLeagues não retornou um array", leagues);
-    return [];
-  }
+  if (!Array.isArray(leagues)) return [];
 
   return leagues.map(l => ({
     id: l.id,
     name: l.name,
     logo: l.image_path,
-    country: l.country?.data?.name,
-    country_flag: l.country?.data?.image_path
+    type: l.type, // 'league', 'cup'
+    country: l.country?.data?.name || "Internacional",
+    country_flag: l.country?.data?.image_path,
+    current_season_id: l.current_season_id || l.currentSeason?.data?.id
   }));
 };
 
+/**
+ * Obtém detalhes completos de uma liga: Info, Tabela e Artilharia.
+ */
 export const getLeagueDetails = async (leagueId) => {
-  // 1. Buscamos a liga incluindo a temporada atual para garantir o ID
-  const league = await fetchLeagueById(leagueId, { include: ["country", "currentSeason"] });
-  
-  if (!league) throw new Error("Liga não encontrada");
+  // 1. Busca dados básicos da liga
+  const leagueData = await fetchLeagueById(leagueId);
+  if (!leagueData) throw new Error("Liga não encontrada");
 
-  // 2. Identificamos a temporada atual
-  const currentSeasonId = league.current_season_id || league.currentSeason?.data?.id;
-  
-  // 3. Buscamos a tabela (Standings)
-  let standings = [];
+  const currentSeasonId = leagueData.current_season_id || leagueData.currentSeason?.data?.id;
+
+  // 2. Paraleliza buscas dependentes da temporada (Tabela e Artilharia)
+  let standingsData = [];
+  let topScorersData = [];
+
   if (currentSeasonId) {
     try {
-      const stdData = await fetchStandingsBySeason(currentSeasonId);
-      standings = Array.isArray(stdData) ? stdData : (stdData?.data || []);
-    } catch (e) {
-      console.log(`Aviso: Sem standings para a season ${currentSeasonId}`);
+      const [stdRes, scorersRes] = await Promise.all([
+        fetchStandingsBySeason(currentSeasonId),
+        fetchTopscorersBySeason(currentSeasonId)
+      ]);
+      standingsData = stdRes || [];
+      topScorersData = scorersRes || [];
+    } catch (error) {
+      console.warn("Erro ao buscar dados da temporada:", error);
     }
   }
 
+  // 3. Normaliza Tabela (Standings)
+  const standings = Array.isArray(standingsData) ? standingsData.map(s => ({
+    position: s.position,
+    team_id: s.participant_id,
+    team_name: s.participant?.data?.name,
+    team_logo: s.participant?.data?.image_path,
+    points: s.points,
+    played: s.details?.find(d => d.type_id === 129)?.value || 0, // Exemplo de ID, varia
+    won: s.details?.find(d => d.type_id === 130)?.value || 0,
+    draw: s.details?.find(d => d.type_id === 131)?.value || 0,
+    lost: s.details?.find(d => d.type_id === 132)?.value || 0,
+    form: s.form // WWDLW
+  })) : [];
+
+  // 4. Normaliza Artilharia
+  const topScorers = Array.isArray(topScorersData) ? topScorersData.slice(0, 10).map(t => ({
+    player_name: t.player?.data?.display_name,
+    player_image: t.player?.data?.image_path,
+    team_name: t.participant?.data?.name,
+    goals: t.total, // Dependendo do type_id (goals=83)
+    position: t.position
+  })) : [];
+
   return {
-    id: league.id,
-    name: league.name,
-    logo: league.image_path,
-    country: league.country?.data?.name,
-    season_id: currentSeasonId,
-    standings
+    info: {
+      id: leagueData.id,
+      name: leagueData.name,
+      logo: leagueData.image_path,
+      country: leagueData.country?.data?.name
+    },
+    standings,
+    topScorers
   };
 };
 
-export const getLeagueFixtures = async (leagueId) => {
-  // 1. Define intervalo de datas (Hoje até +30 dias)
+/**
+ * Busca jogos de uma liga específica em um intervalo de datas.
+ * Útil para "Próximos Jogos" ou "Resultados".
+ */
+export const getLeagueFixtures = async (leagueId, daysAhead = 14) => {
   const today = new Date();
   const future = new Date();
-  future.setDate(today.getDate() + 30);
+  future.setDate(today.getDate() + daysAhead);
 
   const startDate = today.toISOString().split('T')[0];
   const endDate = future.toISOString().split('T')[0];
 
-  // 2. Usa o endpoint BETWEEN para filtrar na API (não no código)
-  // Passamos league_id como filtro adicional
   const fixtures = await fetchFixturesBetween(startDate, endDate, { 
-    league_id: leagueId, 
-    include: ["participants", "scores"] 
+    league_id: leagueId 
   });
-  
+
   if (!Array.isArray(fixtures)) return [];
 
-  // 3. Mapeia para o formato do frontend
-  return fixtures
-    .slice(0, 10) // Pega apenas os 10 próximos
-    .map(f => {
-        const participants = f.participants?.data || [];
-        const home = participants.find(p => p.meta?.location === 'home');
-        const away = participants.find(p => p.meta?.location === 'away');
+  // Usa o normalizador centralizado
+  return fixtures.map(normalizeFixture);
+};
 
-        return {
-            id: f.id,
-            time: f.starting_at,
-            status_id: f.state_id,
-            homeTeam: {
-                name: home?.name || "Casa",
-                image_path: home?.image_path
-            },
-            awayTeam: {
-                name: away?.name || "Fora",
-                image_path: away?.image_path
-            }
-        };
-    });
+/**
+ * Busca jogos ao vivo de qualquer liga ou filtrado por uma.
+ */
+export const getLiveMatches = async (filterLeagueId = null) => {
+  const fixtures = await fetchLiveFixtures();
+  if (!Array.isArray(fixtures)) return [];
+
+  let normalized = fixtures.map(normalizeFixture);
+
+  if (filterLeagueId) {
+    normalized = normalized.filter(m => m.league.id == filterLeagueId);
+  }
+
+  return normalized;
+};
+
+/**
+ * Obtém a "Tela da Partida" completa (Stats, Lineups, Events).
+ */
+export const getMatchFullDetails = async (fixtureId) => {
+  if (!fixtureId) throw new Error("ID da partida obrigatório");
+  
+  const fixtureRaw = await fetchFixtureById(fixtureId);
+  if (!fixtureRaw) throw new Error("Partida não encontrada");
+
+  // A função fetchFixtureById já usa os includes completos, 
+  // então normalizeFixture vai extrair tudo: lineups, stats, events.
+  return normalizeFixture(fixtureRaw);
 };
