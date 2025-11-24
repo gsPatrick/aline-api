@@ -611,3 +611,70 @@ export const apiGetFixtureLineups = async (fixtureId) => {
   if (!data) return null;
   return normalizeLineups(data);
 };
+
+const getSquadStat = (statsArray, typeId) => {
+  // Procura no array de estatísticas do jogador pelo type_id específico
+  // O JSON mostra que stats é um array, e dentro dele tem 'details' com os tipos
+  if (!Array.isArray(statsArray)) return 0;
+  
+  // Geralmente há um objeto de stats por temporada. Pegamos o primeiro (ou filtramos se necessário)
+  const seasonStats = statsArray[0]?.details || [];
+  const stat = seasonStats.find(s => s.type_id === typeId);
+  
+  // O valor pode ser um objeto { total: 5 } ou número direto dependendo da API
+  const val = stat?.value?.total ?? stat?.value ?? 0;
+  return Number(val);
+};
+
+export const normalizeSquadPlayer = (entry) => {
+  const p = entry.player;
+  const stats = entry.player.statistics || [];
+
+  // IDs de estatísticas baseados no seu JSON:
+  // 321: Appearances (Jogos)
+  // 52: Goals
+  // 79: Assists
+  // 118: Rating (Average)
+  
+  // Extraindo Rating Médio
+  let rating = 0;
+  const ratingStat = stats[0]?.details?.find(s => s.type_id === 118);
+  if (ratingStat) rating = ratingStat.value?.average || 0;
+
+  return {
+    id: p.id,
+    name: p.display_name,
+    photo: p.image_path,
+    position: p.position_id, // ID da posição
+    position_name: entry.position?.name || "Desconhecido", // Ex: Attacker
+    number: entry.jersey_number,
+    nationality: p.nationality?.image_path,
+    stats: {
+      matches: getSquadStat(stats, 321),
+      goals: getSquadStat(stats, 52),
+      assists: getSquadStat(stats, 79),
+      rating: Number(rating).toFixed(2)
+    }
+  };
+};
+
+// 12. Elenco do Time (NOVO)
+export const apiGetTeamSquad = async (teamId, seasonId) => {
+  const includes = [
+    "player.nationality",
+    "player.statistics.details.type",
+    "player.position"
+  ];
+
+  // Se tiver seasonId, filtramos. Se não, a API pode retornar tudo ou a atual.
+  const filters = seasonId ? { playerstatisticSeasons: seasonId } : {};
+
+  const data = await request(`/squads/teams/${teamId}`, {
+    include: includes,
+    filters: filters
+  });
+
+  if (!data) return [];
+
+  return (data || []).map(normalizeSquadPlayer);
+};

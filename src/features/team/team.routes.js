@@ -1,10 +1,9 @@
 import { Router } from "express";
-import { auth } from "../../middleware/auth.middleware.js"; // Opcional, se quiser proteger
-import { schedule } from "./team.controller.js";
+import { schedule, squad } from "./team.controller.js";
 
 const r = Router();
 
-// Rota: /api/teams/:id/schedule
-r.get("/:id/schedule", schedule);
+r.get("/:id/schedule", schedule); // Jogos
+r.get("/:id/squad", squad);       // Elenco (NOVO)
 
 export default r;

@@ -1,4 +1,4 @@
-import { apiGetTeamSchedule } from "../../services/sports.service.js";
+import { apiGetTeamSchedule, apiGetTeamSquad } from "../../services/sports.service.js";
 
 export const schedule = async (req, res, next) => {
   try {
@@ -23,6 +23,19 @@ export const schedule = async (req, res, next) => {
       results: results, // Últimos jogos
       upcoming: upcoming // Próximos jogos
     });
+  } catch (e) {
+    next(e);
+  }
+};
+
+// Nova função para o Elenco
+export const squad = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { season_id } = req.query; // Opcional: Front pode mandar a temporada
+
+    const squadData = await apiGetTeamSquad(id, season_id);
+    res.json(squadData);
   } catch (e) {
     next(e);
   }
