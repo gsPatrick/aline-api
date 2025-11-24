@@ -4,7 +4,6 @@ import {
   apiGetLeagueById, 
   apiGetStandings, 
   apiGetFixturesBySeason,
-  apiGetLeaguesByDate,
   normalizeMatchCard 
 } from "../../services/sports.service.js"; 
 
@@ -59,28 +58,3 @@ export const show = async (req, res, next) => {
   }
 };
 
-// 3. Calendário por Data (Aba Calendário) - Rota: GET /leagues/:id/matches?date=YYYY-MM-DD
-export const getMatchesByDate = async (req, res, next) => {
-  try {
-    const { id } = req.params; // ID da Liga (ex: 8 da Premier League)
-    const { date } = req.query; // Data (ex: 2025-11-24)
-
-    if (!date) return res.status(400).json({ error: "Data obrigatória" });
-
-    // A função apiGetLeaguesByDate retorna um array de TODAS as ligas que têm jogos no dia
-    const allLeaguesToday = await apiGetLeaguesByDate(date);
-
-    // Nós filtramos apenas a liga que o usuário está acessando (ID 8, por exemplo)
-    // Convertemos para String para garantir que a comparação funcione (ex: "8" == 8)
-    const targetLeague = allLeaguesToday.find(l => String(l.id) === String(id));
-
-    if (!targetLeague || !targetLeague.matches) {
-      return res.json([]); // Nenhum jogo encontrado para esta liga nesta data
-    }
-
-    // Retorna apenas os jogos normalizados dessa liga
-    res.json(targetLeague.matches);
-  } catch (e) {
-    next(e);
-  }
-};
