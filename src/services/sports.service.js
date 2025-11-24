@@ -424,7 +424,6 @@ export const normalizeLineups = (fixture) => {
 };
 
 export const normalizeMatchDetails = (fixture) => {
-    // Função simples para detalhe, usando a base do card
     const base = normalizeMatchCard(fixture);
     if(!base) return null;
     return {
@@ -592,34 +591,23 @@ export const apiGetRoundFixtures = async (roundId) => {
     .sort((a, b) => a.timestamp - b.timestamp);
 };
 
-// 9. Calendário/Histórico do Time (Nested/Flattened)
+// 9. Calendário/Histórico do Time (Upcoming + Latest) - ATUALIZADO
 export const apiGetTeamSchedule = async (teamId) => {
-  const includes = [
-    "rounds.fixtures.participants",
-    "rounds.fixtures.scores",
-    "rounds.fixtures.league.country",
-    "aggregates.fixtures.participants",
-    "aggregates.fixtures.scores",
-    "aggregates.fixtures.league.country",
-    "fixtures.participants",
-    "fixtures.scores",
-    "fixtures.league.country"
-  ];
+  // Busca os próximos jogos (upcoming) e os últimos resultados (latest) em uma única chamada
+  const params = {
+    include: "upcoming.participants;upcoming.league;latest.participants;latest.scores;latest.league"
+  };
 
-  const data = await request(`/schedules/teams/${teamId}`, { include: includes });
+  const data = await request(`/teams/${teamId}`, params);
 
   if (!data) return [];
 
-  const allMatches = [];
-  data.forEach(stage => {
-    if (stage.rounds) stage.rounds.forEach(r => r.fixtures && r.fixtures.forEach(f => allMatches.push(f)));
-    if (stage.aggregates) stage.aggregates.forEach(a => a.fixtures && a.fixtures.forEach(f => allMatches.push(f)));
-    if (stage.fixtures) stage.fixtures.forEach(f => allMatches.push(f));
-  });
+  // Normaliza os arrays 'upcoming' e 'latest' retornados dentro do objeto do time
+  const upcoming = (data.upcoming || []).map(normalizeMatchCard);
+  const latest = (data.latest || []).map(normalizeMatchCard);
 
-  return allMatches
-    .map(normalizeMatchCard)
-    .sort((a, b) => a.timestamp - b.timestamp);
+  // Retorna tudo junto para o controller fazer a ordenação/filtragem
+  return [...latest, ...upcoming];
 };
 
 // 10. Classificação Ao Vivo / Por Rodada
@@ -657,18 +645,13 @@ export const apiGetFixtureLineups = async (fixtureId) => {
   return normalizeLineups(data);
 };
 
-// 12. Elenco do Time (Squad) - ATUALIZADO
+// 12. Elenco do Time (Squad)
 export const apiGetTeamSquad = async (teamId, seasonId) => {
-  // Usa a estrutura de include e filters solicitada
-  
-  // Se seasonId não for passado, definimos um fallback ou retornamos vazio. 
-  // No seu exemplo era 25184. Idealmente o frontend deve enviar.
   if (!seasonId) {
-     console.warn("SeasonID não fornecido para squad, usando fallback ou retornando vazio");
+     console.warn("SeasonID não fornecido para squad, usando fallback");
      seasonId = "25184"; 
   }
 
-  // Monta a string exata de include solicitada
   const params = {
     include: "team;player.nationality;player.statistics.details.type;player.position",
     filters: `playerstatisticSeasons:${seasonId}`
