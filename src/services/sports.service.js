@@ -678,3 +678,21 @@ export const apiGetTeamSquad = async (teamId, seasonId) => {
 
   return (data || []).map(normalizeSquadPlayer);
 };
+
+export const apiGetTeamById = async (teamId) => {
+  const data = await request(`/teams/${teamId}`, {
+    include: ["country", "venue"]
+  });
+
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    name: data.name,
+    short_code: data.short_code,
+    image_path: data.image_path,
+    founded: data.founded,
+    country: data.country?.name,
+    venue_name: data.venue?.name
+  };
+};

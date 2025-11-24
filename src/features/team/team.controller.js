@@ -1,4 +1,4 @@
-import { apiGetTeamSchedule, apiGetTeamSquad } from "../../services/sports.service.js";
+import { apiGetTeamSchedule, apiGetTeamSquad, apiGetTeamById } from "../../services/sports.service.js";
 
 export const schedule = async (req, res, next) => {
   try {
@@ -36,6 +36,21 @@ export const squad = async (req, res, next) => {
 
     const squadData = await apiGetTeamSquad(id, season_id);
     res.json(squadData);
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const info = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const team = await apiGetTeamById(id);
+    
+    if (!team) {
+        return res.status(404).json({ error: "Time não encontrado na API externa" });
+    }
+    
+    res.json(team);
   } catch (e) {
     next(e);
   }
