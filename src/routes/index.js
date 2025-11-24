@@ -1,5 +1,6 @@
-
 import { Router } from "express";
+
+// Importação das rotas de cada feature
 import userRoutes from "../features/user/user.routes.js";
 import planRoutes from "../features/plan/plan.routes.js";
 import subRoutes from "../features/subscription/subscription.routes.js";
@@ -7,22 +8,35 @@ import adminRoutes from "../features/admin/admin.routes.js";
 import leagueRoutes from "../features/league/league.routes.js";
 import matchRoutes from "../features/match/match.routes.js";
 import playerRoutes from "../features/player/player.routes.js";
+import teamRoutes from "../features/team/team.routes.js";
 
 const router = Router();
 
-// Rotas de Autenticação e Perfil
+// --- Rotas do Sistema (Auth, Pagamentos, Admin) ---
+
+// Autenticação e Perfil de Usuário
 router.use("/auth", userRoutes);
 
-// Rotas de Planos e Assinaturas
+// Planos e Assinaturas (MercadoPago)
 router.use("/plans", planRoutes);
 router.use("/subscription", subRoutes);
 
-// Rotas Administrativas
+// Painel Administrativo
 router.use("/admin", adminRoutes);
 
-// --- Rotas de Futebol (Sportmonks Integration) ---
-router.use("/leagues", leagueRoutes); // Listagem e Tabela
-router.use("/matches", matchRoutes);  // Livescore e Detalhes
-router.use("/players", playerRoutes); // Estatísticas de Jogador
+
+// --- Rotas de Dados Esportivos (Sportmonks Integration) ---
+
+// Ligas: Listagem, Detalhes e Tabelas de Classificação
+router.use("/leagues", leagueRoutes);
+
+// Partidas: Livescore, Detalhes (Stats, H2H, Odds) e Escalações
+router.use("/matches", matchRoutes);
+
+// Jogadores: Estatísticas individuais
+router.use("/players", playerRoutes);
+
+// Times: Calendário, Resultados, Elenco e Informações
+router.use("/teams", teamRoutes);
 
 export default router;
