@@ -730,3 +730,36 @@ export const fetchLeagues = async () => {
 
 // Exportando normalizador para uso externo se necessário
 export const normalizeFixture = normalizeMatchCard;
+
+export const apiGetLeaguesByDate = async (date) => {
+  // Parâmetros exatos para buscar ligas e jogos do dia
+  const params = {
+    include: "today.scores;today.participants;today.stage;today.group;today.round"
+  };
+
+  const data = await request(`/leagues/date/${date}`, params);
+
+  if (!data) return [];
+
+  // Transforma a resposta para retornar uma estrutura amigável
+  return data.map(league => {
+      // Normaliza informações da liga
+      const leagueInfo = normalizeLeagueList(league);
+
+      // Normaliza jogos contidos em 'today'
+      // Os jogos dentro de 'today' não possuem o objeto 'league' completo dentro deles (apenas league_id).
+      // Então injetamos as informações da liga pai neles manualmente após normalizar.
+      const matches = (league.today || []).map(f => {
+          const normalized = normalizeMatchCard(f);
+          if(normalized) {
+              normalized.league = leagueInfo; // Injeta a info da liga pai para o frontend saber a qual liga pertence
+          }
+          return normalized;
+      }).filter(Boolean);
+
+      return {
+          ...leagueInfo,
+          matches // Array de jogos normalizados
+      };
+  }).filter(l => l.matches.length > 0); // Retorna apenas ligas que têm jogos na data
+};
