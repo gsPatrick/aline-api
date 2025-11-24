@@ -1,4 +1,3 @@
---- START OF FILE routes/index.js ---
 
 import { Router } from "express";
 import userRoutes from "./user.routes.js";
