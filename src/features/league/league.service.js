@@ -7,7 +7,7 @@ import {
   fetchLiveFixtures,
   fetchFixtureById,
   normalizeFixture
-} from "../../services/sports.service";
+} from "./sports.service.js";
 
 /**
  * Lista todas as ligas disponíveis com detalhes do país.
