@@ -2,7 +2,7 @@
 import { 
   apiGetLiveMatches, 
   apiGetFixtureDetails 
-} from "../services/sports.service.js";
+} from "../../services/sports.service.js";
 
 // Lista de Jogos (Home/Live)
 export const live = async (req, res, next) => {
