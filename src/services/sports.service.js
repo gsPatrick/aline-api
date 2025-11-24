@@ -40,33 +40,32 @@ const request = async (endpoint, params = {}) => {
     return data?.data ?? data;
   } catch (err) {
     console.error(`Erro na requisição ${endpoint}:`, err.message);
-    return null; // Retorna null para não quebrar a aplicação inteira
+    return null; 
   }
 };
 
-// --- INCLUDES PADRÃO (PARA TRAZER TUDO) ---
+// --- INCLUDES PADRÃO ---
 const fixtureIncludes = [
-  "participants",           // Times
-  "league.country",         // Liga e País
-  "season",                 // Temporada
-  "round",                  // Rodada
-  "stage",                  // Fase
-  "state",                  // Status do jogo
-  "venue",                  // Estádio
-  "scores",                 // Placar
-  "events.type",            // Gols, Cartões, Substituições
-  "statistics.type",        // Estatísticas (Chutes, Posse, etc)
-  "lineups.player",         // Escalações
-  "lineups.details",        // Detalhes da escalação (camisa, posição)
-  "referee",                // Árbitro
-  "probability"             // Probabilidades/Previsões (se disponível no plano)
+  "participants",
+  "league.country",
+  "season",
+  "round",
+  "stage",
+  "state",
+  "venue",
+  "scores",
+  "events.type",
+  "statistics.type",
+  "lineups.player",
+  "lineups.details",
+  "referee",
+  "probability"
 ];
 
-// --- HELPERS DE NORMALIZAÇÃO (PARSERS) ---
+// --- HELPERS DE NORMALIZAÇÃO ---
 
 const getParticipant = (participants, location) => {
   if (!Array.isArray(participants)) return {};
-  // Encontra time baseado na location (home/away)
   const team = participants.find(p => p.meta?.location === location);
   return team ? {
     id: team.id,
@@ -79,7 +78,6 @@ const getParticipant = (participants, location) => {
 
 const getScore = (scores, location) => {
   if (!Array.isArray(scores)) return 0;
-  // Tenta pegar o score "CURRENT"
   const current = scores.find(s => s.description === "CURRENT" && s.score_participant === location);
   if (current) return current.score?.goals || 0;
   return 0;
@@ -91,25 +89,23 @@ const normalizeEvents = (events, participants) => {
   return events.map(ev => {
     const teamId = ev.participant_id;
     const team = participants.find(p => p.id === teamId);
-    const location = team?.meta?.location; // home ou away
+    const location = team?.meta?.location; 
 
     return {
       id: ev.id,
       minute: ev.minute,
       extra_minute: ev.extra_minute,
-      type: ev.type?.data?.name || "Unknown", // ex: Goal, Yellow Card
+      type: ev.type?.data?.name || "Unknown",
       player_name: ev.player_name || ev.player?.data?.name,
-      related_player_name: ev.related_player?.data?.name, // ex: Assistência ou jogador substituído
-      team_location: location, // 'home' ou 'away'
-      result: ev.info // ex: placar após o gol "1-0"
+      related_player_name: ev.related_player?.data?.name,
+      team_location: location,
+      result: ev.info
     };
   }).sort((a, b) => a.minute - b.minute);
 };
 
 const normalizeStats = (stats, participants) => {
   if (!Array.isArray(stats)) return [];
-  
-  // Agrupa estatísticas por tipo (ex: "Ball Possession")
   const map = {};
   
   stats.forEach(stat => {
@@ -118,11 +114,9 @@ const normalizeStats = (stats, participants) => {
 
     const teamId = stat.participant_id;
     const team = participants.find(p => p.id === teamId);
-    const location = team?.meta?.location; // home ou away
+    const location = team?.meta?.location; 
 
     if (!map[typeName]) map[typeName] = { name: typeName, home: 0, away: 0 };
-    
-    // Valor pode vir em 'value' ou 'data.value'
     const val = stat.value?.total ?? stat.value ?? 0;
     if (location) map[typeName][location] = val;
   });
@@ -145,8 +139,8 @@ const normalizeLineups = (lineups, participants) => {
       id: l.player_id,
       name: l.player_name || l.player?.data?.display_name,
       number: l.jersey_number,
-      position: l.position_id, // Precisa mapear ID para texto se quiser
-      type: l.type?.data?.name || (l.formation_position ? "Starting XI" : "Bench"), // Simplificação
+      position: l.position_id, 
+      type: l.type?.data?.name || (l.formation_position ? "Starting XI" : "Bench"),
       image: l.player?.data?.image_path
     };
 
@@ -157,7 +151,7 @@ const normalizeLineups = (lineups, participants) => {
   return { home, away };
 };
 
-// --- FUNÇÃO PRINCIPAL DE NORMALIZAÇÃO DE PARTIDA ---
+// --- FUNÇÃO PRINCIPAL DE NORMALIZAÇÃO ---
 export const normalizeFixture = (f) => {
   if (!f) return null;
 
@@ -186,7 +180,7 @@ export const normalizeFixture = (f) => {
     timestamp: f.starting_at_timestamp,
     status: {
       id: f.state_id,
-      short: f.state?.data?.short_name, // FT, NS, HT, LIVE
+      short: f.state?.data?.short_name, 
       name: f.state?.data?.name,
       minute: f.minute
     },
@@ -202,9 +196,8 @@ export const normalizeFixture = (f) => {
   };
 };
 
-// --- EXPORTS DAS CHAMADAS API (Mapeando APIFUTEBOL.json) ---
+// --- EXPORTS DAS CHAMADAS API ---
 
-// 1. Fixtures
 export const fetchFixturesBetween = (start, end, filters = {}) => 
   request(`/fixtures/between/${start}/${end}`, { ...filters, include: fixtureIncludes });
 
@@ -214,24 +207,32 @@ export const fetchFixtureById = (id) =>
 export const fetchLiveFixtures = () => 
   request(`/livescores/inplay`, { include: fixtureIncludes });
 
-// 2. Leagues
 export const fetchLeagues = (params = {}) => 
   request(`/leagues`, { ...params, include: ["country", "currentSeason"] });
 
 export const fetchLeagueById = (id) => 
   request(`/leagues/${id}`, { include: ["country", "currentSeason"] });
 
-// 3. Standings
 export const fetchStandingsBySeason = (seasonId) => 
   request(`/standings/seasons/${seasonId}`, { include: ["details.type", "participant"] });
 
-// 4. Topscorers
 export const fetchTopscorersBySeason = (seasonId) => 
   request(`/topscorers/seasons/${seasonId}`, { include: ["player", "participant"] });
 
-// 5. Teams
 export const fetchTeamById = (id) =>
   request(`/teams/${id}`, { include: ["country", "venue"] });
 
-// 6. Search
 export const searchTeams = (name) => request(`/teams/search/${encodeURIComponent(name)}`);
+
+// --- EXPORTS DE CONVENIÊNCIA (CORREÇÃO DO ERRO) ---
+
+export const getLiveMatches = async () => {
+  const fixtures = await fetchLiveFixtures();
+  if (!Array.isArray(fixtures)) return [];
+  return fixtures.map(normalizeFixture);
+};
+
+export const getMatchStats = async (matchId) => {
+  const fixture = await fetchFixtureById(matchId);
+  return normalizeFixture(fixture);
+};
