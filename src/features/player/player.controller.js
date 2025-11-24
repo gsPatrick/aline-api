@@ -1,4 +1,4 @@
-import { apiGetPlayerStats } from "../services/sports.service.js";
+import { apiGetPlayerStats } from "../../services/sports.service.js";
 
 export const show = async (req, res, next) => {
   try {
