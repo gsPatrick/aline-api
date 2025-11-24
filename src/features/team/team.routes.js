@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { schedule, squad } from "./team.controller.js";
+import { schedule, squad, info } from "./team.controller.js";
 
 const r = Router();
 
