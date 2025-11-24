@@ -1,12 +1,12 @@
 
 import { Router } from "express";
 import userRoutes from "../features/user/user.routes.js";
-import planRoutes from "../featuresplan.routes.js";
-import subRoutes from "../featuressubscription.routes.js";
-import adminRoutes from "../featuresadmin.routes.js";
-import leagueRoutes from "../featuresleague.routes.js";
-import matchRoutes from "../featuresmatch.routes.js";
-import playerRoutes from "../featuresplayer.routes.js";
+import planRoutes from "../features/plan/plan.routes.js";
+import subRoutes from "../features/subscription/subscription.routes.js";
+import adminRoutes from "../features/admin/admin.routes.js";
+import leagueRoutes from "../features/league/league.routes.js";
+import matchRoutes from "../features/match/match.routes.js";
+import playerRoutes from "../features/player/player.routes.js";
 
 const router = Router();
 
