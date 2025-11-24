@@ -570,9 +570,11 @@ export const apiGetLiveMatches = async () => {
 // 6. Jogos do Dia (Fallback)
 export const apiGetDailyMatches = async () => {
   const today = new Date().toISOString().split('T')[0];
-  const data = await request(`/fixtures/date/${today}`, {
-    include: ["participants", "scores", "state", "league.country"]
-  });
+  const params = {
+    include: "participants;scores;state;league.country;odds.market;odds.bookmaker", // Adicionado Odds
+    filters: "markets:1;bookmakers:2" // Bet365
+  };
+  const data = await request(`/fixtures/date/${today}`, params);
   return (data || []).map(normalizeMatchCard).filter(Boolean);
 };
 

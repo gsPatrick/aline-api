@@ -1,19 +1,10 @@
-
 import { Router } from "express";
-import { auth, requiresPremium } from "../../middleware/auth.middleware.js";
-import { live, show, lineups } from "./match.controller.js"; // Importe o novo controller
+import { live, daily, show } from "./match.controller.js";
 
 const r = Router();
 
-r.get("/live", live); // Lista de jogos (Publico ou Autenticado simples)
-r.get("/:id", auth, requiresPremium, show); // Detalhes (Premium)
-r.get("/:id/lineups", auth, requiresPremium, lineups); // Rota protegida
-
-
-// Rota para listar jogos ao vivo: GET /api/matches/live
-
-
-// Rota para detalhes da partida: GET /api/matches/12345
-r.get("/:id", show);
+r.get("/live", live);   // Jogos Ao Vivo
+r.get("/daily", daily); // Jogos do Dia (Novo)
+r.get("/:id", show);    // Detalhes (IMPORTANTE: Deve ficar por último)
 
 export default r;
