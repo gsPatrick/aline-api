@@ -498,43 +498,106 @@ export const apiGetFixturesBySeason = async (seasonId) => {
   return (data || []).map(normalizeMatchCard).filter(Boolean); 
 };
 
-// 4. Detalhes da Partida (Genérico)
+// --- HELPER: Normalizar Previsões (Predictions) ---
+const normalizePredictions = (predictionsArray) => {
+  if (!Array.isArray(predictionsArray)) return null;
+
+  const result = {
+    fulltime: null,
+    goals_home: null,
+    goals_away: null,
+    btts: null, // Both Teams To Score
+    corners: null
+  };
+
+  predictionsArray.forEach(pred => {
+    const typeId = pred.type_id;
+    const vals = pred.predictions;
+
+    // Mapeamento baseado no seu JSON e IDs comuns da Sportmonks
+    // 237: Fulltime Result Probability
+    if (typeId === 237) {
+      result.fulltime = {
+        home: vals.home,
+        draw: vals.draw,
+        away: vals.away
+      };
+    }
+    // 1679: Over/Under 4.5 (Exemplo) - Você pode mapear outros se quiser
+    // BTTS geralmente é outro ID, mas vamos focar no principal
+  });
+
+  return result;
+};
+
+// --- FUNÇÃO PRINCIPAL DE DETALHES (Atualizada) ---
 export const apiGetFixtureDetails = async (fixtureId) => {
-  // Includes solicitados + extras úteis
+  // Includes solicitados no seu prompt
   const include = [
     "participants",
-    "league.country",
+    "league",
     "venue",
     "state",
     "scores",
     "events.type",
+    "events.period",
     "events.player",
     "statistics.type",
     "lineups.player",
     "lineups.position",
-    "lineups.details.type", // Para ratings
+    "lineups.details.type",
+    "sidelined.sideline.player",
+    "sidelined.sideline.type",
     "weatherReport",
-    "odds.market", 
+    "predictions.type", // <--- Adicionado para jogos futuros
+    "odds.market",
     "odds.bookmaker"
-  ].join(";"); // Sportmonks v3 usa ;
+  ].join(";");
 
   const data = await request(`/fixtures/${fixtureId}`, { include });
   
   if (!data) return null;
 
-  // Normaliza usando a função robusta que já temos
-  // Adiciona campos específicos de detalhes se necessário
+  // Normaliza o básico (Placar, Times, Status)
   const normalized = normalizeMatchCard(data);
   
-  // Adiciona dados extras que não estão no Card padrão
   if (normalized) {
+      // Adiciona dados detalhados
       normalized.venue = data.venue?.name;
       normalized.weather = data.weather_report;
-      // Aqui você pode processar events e stats se quiser retornar mastigado
-      // Por enquanto retornamos o raw normalized + extras
-      normalized.events = data.events || [];
-      normalized.stats_raw = data.statistics || [];
-      normalized.lineups_raw = data.lineups || [];
+      
+      // Eventos (Timeline)
+      normalized.events = (data.events || []).map(e => ({
+          id: e.id,
+          minute: e.minute,
+          type: e.type?.name,
+          player_name: e.player?.display_name || e.player_name,
+          team_id: e.participant_id,
+          // Helper para saber se é casa ou fora
+          is_home: e.participant_id === normalized.home_team.id
+      })).sort((a, b) => b.minute - a.minute);
+
+      // Estatísticas (Posse, Chutes, etc)
+      // A Sportmonks retorna array [ { type: { code: 'possession' }, data: { value: 50 } } ... ]
+      // Precisamos transformar num objeto { home: { possession: 50 }, away: { possession: 50 } }
+      const statsObj = { home: {}, away: {} };
+      if (Array.isArray(data.statistics)) {
+          data.statistics.forEach(stat => {
+              const code = stat.type?.code; // ex: 'possession'
+              const isHome = stat.participant_id === normalized.home_team.id;
+              const target = isHome ? statsObj.home : statsObj.away;
+              
+              // O valor as vezes vem direto ou dentro de data.value
+              const val = stat.data?.value ?? stat.value ?? 0;
+              if (code) target[code] = val;
+          });
+      }
+      normalized.stats = statsObj;
+
+      // Previsões (Predictions) - Apenas para jogos NS (Not Started)
+      if (data.predictions && data.predictions.length > 0) {
+          normalized.predictions = normalizePredictions(data.predictions);
+      }
   }
 
   return normalized;
