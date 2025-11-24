@@ -591,9 +591,8 @@ export const apiGetRoundFixtures = async (roundId) => {
     .sort((a, b) => a.timestamp - b.timestamp);
 };
 
-// 9. Calendário/Histórico do Time (Upcoming + Latest) - ATUALIZADO
+// 9. Calendário/Histórico do Time (Upcoming + Latest)
 export const apiGetTeamSchedule = async (teamId) => {
-  // Busca os próximos jogos (upcoming) e os últimos resultados (latest) em uma única chamada
   const params = {
     include: "upcoming.participants;upcoming.league;latest.participants;latest.scores;latest.league"
   };
@@ -602,11 +601,9 @@ export const apiGetTeamSchedule = async (teamId) => {
 
   if (!data) return [];
 
-  // Normaliza os arrays 'upcoming' e 'latest' retornados dentro do objeto do time
   const upcoming = (data.upcoming || []).map(normalizeMatchCard);
   const latest = (data.latest || []).map(normalizeMatchCard);
 
-  // Retorna tudo junto para o controller fazer a ordenação/filtragem
   return [...latest, ...upcoming];
 };
 
@@ -682,6 +679,41 @@ export const apiGetTeamById = async (teamId) => {
     venue_name: data.venue?.name
   };
 };
+
+// 14. Calendário de Ligas por Data (NOVO)
+export const apiGetLeaguesByDate = async (date) => {
+  // Parâmetros exatos solicitados
+  const params = {
+    include: "today.scores;today.participants;today.stage;today.group;today.round"
+  };
+
+  const data = await request(`/leagues/date/${date}`, params);
+
+  if (!data) return [];
+
+  // Transforma a resposta para retornar uma estrutura amigável
+  return data.map(league => {
+      // Normaliza informações da liga
+      const leagueInfo = normalizeLeagueList(league);
+
+      // Normaliza jogos contidos em 'today'
+      // Importante: os jogos dentro de 'today' não possuem o objeto 'league' completo dentro deles (apenas league_id).
+      // Então injetamos as informações da liga neles manualmente após normalizar.
+      const matches = (league.today || []).map(f => {
+          const normalized = normalizeMatchCard(f);
+          if(normalized) {
+              normalized.league = leagueInfo; // Injeta a info da liga pai
+          }
+          return normalized;
+      }).filter(Boolean);
+
+      return {
+          ...leagueInfo,
+          matches
+      };
+  }).filter(l => l.matches.length > 0); // Retorna apenas ligas que têm jogos hoje
+};
+
 
 // Helper para buscar jogos em intervalo (usado no sync)
 export const fetchFixturesBetween = async (startStr, endStr, extraParams = {}) => {
