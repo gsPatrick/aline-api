@@ -1,5 +1,4 @@
 
-
 import axios from "axios";
 import dotenv from "dotenv";
 
@@ -200,7 +199,7 @@ const getFormationFromMetadata = (metadata) => {
   return formationData.values; 
 };
 
-// Helper para extrair valor estatístico do array de details
+// Helper para extrair valor estatístico do array de details de forma robusta
 const getStatValueFromDetails = (detailsArray, typeId, field = 'total') => {
   if (!Array.isArray(detailsArray)) return 0;
 
@@ -208,7 +207,7 @@ const getStatValueFromDetails = (detailsArray, typeId, field = 'total') => {
   const stat = detailsArray.find(s => s.type_id === typeId);
   if (!stat || !stat.value) return 0;
 
-  // Se o valor for um objeto, tenta pegar o campo específico
+  // Se o valor for um objeto, tenta pegar o campo específico, senão retorna o primitivo
   if (typeof stat.value === 'object') {
     return stat.value[field] ?? stat.value.total ?? 0;
   }
@@ -680,9 +679,9 @@ export const apiGetTeamById = async (teamId) => {
   };
 };
 
-// 14. Calendário de Ligas por Data (NOVO)
+// 14. Calendário de Ligas por Data (NOVO e COMPLETO)
 export const apiGetLeaguesByDate = async (date) => {
-  // Parâmetros exatos solicitados
+  // Parâmetros exatos para buscar ligas e jogos do dia
   const params = {
     include: "today.scores;today.participants;today.stage;today.group;today.round"
   };
@@ -697,25 +696,24 @@ export const apiGetLeaguesByDate = async (date) => {
       const leagueInfo = normalizeLeagueList(league);
 
       // Normaliza jogos contidos em 'today'
-      // Importante: os jogos dentro de 'today' não possuem o objeto 'league' completo dentro deles (apenas league_id).
-      // Então injetamos as informações da liga neles manualmente após normalizar.
+      // Os jogos dentro de 'today' não possuem o objeto 'league' completo dentro deles (apenas league_id).
+      // Então injetamos as informações da liga pai neles manualmente após normalizar.
       const matches = (league.today || []).map(f => {
           const normalized = normalizeMatchCard(f);
           if(normalized) {
-              normalized.league = leagueInfo; // Injeta a info da liga pai
+              normalized.league = leagueInfo; // Injeta a info da liga pai para o frontend saber a qual liga pertence
           }
           return normalized;
       }).filter(Boolean);
 
       return {
           ...leagueInfo,
-          matches
+          matches // Array de jogos normalizados
       };
-  }).filter(l => l.matches.length > 0); // Retorna apenas ligas que têm jogos hoje
+  }).filter(l => l.matches.length > 0); // Retorna apenas ligas que têm jogos na data
 };
 
-
-// Helper para buscar jogos em intervalo (usado no sync)
+// Helper para buscar jogos em intervalo (usado no sync service se necessário)
 export const fetchFixturesBetween = async (startStr, endStr, extraParams = {}) => {
   const params = {
       include: ["participants", "scores", "state", "league.country", "periods"],
@@ -725,7 +723,7 @@ export const fetchFixturesBetween = async (startStr, endStr, extraParams = {}) =
   return data || [];
 };
 
-// Helper para buscar ligas (usado no sync)
+// Helper para buscar ligas (usado no sync service)
 export const fetchLeagues = async () => {
     return apiGetLeagues();
 };
