@@ -9,13 +9,26 @@ const apiKey = process.env.MYSPORTMONKS_API_KEY;
 const baseURL = process.env.MYSPORTMONKS_API_BASE || "https://api.sportmonks.com/v3/football";
 const defaultTimezone = process.env.MYSPORTMONKS_TIMEZONE || "UTC";
 
+// Configuração do Axios para enviar parâmetros repetidos corretamente
+// Ex: include=participants&include=scores
 const http = axios.create({
   baseURL,
   timeout: 15000,
-  // MÁGICA: Isso garante que a vírgula seja enviada corretamente para a API
-  paramsSerializer: {
-    indexes: null,
-    encode: (param) => param, 
+  paramsSerializer: params => {
+    const searchParams = new URLSearchParams();
+    
+    // Adiciona cada chave/valor ao URLSearchParams
+    Object.keys(params).forEach(key => {
+      const value = params[key];
+      if (Array.isArray(value)) {
+        // Se for array (como o include), adiciona múltiplas vezes
+        value.forEach(item => searchParams.append(key, item));
+      } else if (value !== undefined && value !== null) {
+        searchParams.append(key, value);
+      }
+    });
+    
+    return searchParams.toString();
   }
 });
 
@@ -24,39 +37,38 @@ const http = axios.create({
 const request = async (endpoint, params = {}) => {
   if (!apiKey) throw new Error("MYSPORTMONKS_API_KEY ausente.");
 
+  // Prepara os parâmetros base
   const requestParams = {
     api_token: apiKey,
     timezone: defaultTimezone,
     ...params
   };
 
-  // Garante que o include seja uma string única separada por vírgulas
-  if (requestParams.include && Array.isArray(requestParams.include)) {
-    requestParams.include = requestParams.include.join(",");
-  }
+  // REMOVIDO: Não fazemos mais .join(",") aqui. 
+  // Deixamos o array como array para o paramsSerializer tratar.
 
   try {
     const { data } = await http.get(endpoint, { params: requestParams });
     return data?.data ?? data;
   } catch (err) {
+    // Log melhorado para mostrar a URL exata que falhou
     console.error(`Erro Sportmonks [${endpoint}]:`, err.response?.data?.message || err.message);
     return null;
   }
 };
 
-// --- MAPPER HELPERS ---
+// --- MAPPER HELPERS (Convertem IDs da Sportmonks para Data Contract) ---
 
-// Dicionário para traduzir os IDs da Sportmonks para o seu Front-End
 const STANDING_CODES = {
-  129: "games_played", // PJ
-  130: "won",          // V
-  131: "draw",         // E
-  132: "lost",         // D
-  133: "goals_for",    // GP
-  134: "goals_against",// GC
-  179: "goal_difference", // SG
-  186: "points",       // PTS (Algumas ligas usam este ID)
-  187: "points"        // PTS (Outras ligas usam este)
+  129: "games_played",
+  130: "won",
+  131: "draw",
+  132: "lost",
+  133: "goals_for",
+  134: "goals_against",
+  179: "goal_difference",
+  186: "points",
+  187: "points"
 };
 
 const mapStatus = (state) => {
@@ -72,7 +84,7 @@ const mapStatus = (state) => {
     return { id: 3, short: "FT", long: "Encerrado" };
   }
   if (["POST", "CANC", "SUSP", "INT", "ABD"].includes(short)) {
-    return { id: 4, short: short, long: long }; 
+    return { id: 4, short: short, long: long };
   }
   
   return { id: 1, short: "NS", long: "Agendado" };
@@ -94,11 +106,12 @@ const STAT_TYPES = {
   POSSESSION: 45,
   SHOTS_TOTAL: 43,
   SHOTS_ON_TARGET: 34,
-  CORNERS: 34, 
+  CORNERS: 34,
   FOULS: 44,
   YELLOW_CARDS: 84,
   RED_CARDS: 83,
-  DANGEROUS_ATTACKS: 42
+  DANGEROUS_ATTACKS: 42,
+  PASSES_TOTAL: 80
 };
 
 // --- NORMALIZADORES ---
@@ -113,11 +126,9 @@ export const normalizeLeagueList = (league) => ({
   current_season_id: league.current_season_id || league.currentseason?.id || null
 });
 
-// AQUI ESTÁ A MÁGICA DA TABELA
 export const normalizeStanding = (entry) => {
   const detailsMap = {};
   
-  // Itera sobre o array 'details' e mapeia usando os códigos
   if (Array.isArray(entry.details)) {
     entry.details.forEach(det => {
       const key = STANDING_CODES[det.type_id];
@@ -127,10 +138,7 @@ export const normalizeStanding = (entry) => {
     });
   }
 
-  // Garante dados visuais do time
   const teamData = entry.participant || {};
-
-  // Tradução da forma recente (W/D/L -> V/E/D)
   const formArray = Array.isArray(entry.form) 
       ? entry.form.slice(-5).map(f => f.form || "-") 
       : [];
@@ -142,17 +150,14 @@ export const normalizeStanding = (entry) => {
       name: teamData.name || "Time Desconhecido",
       logo: teamData.image_path || "https://cdn.sportmonks.com/images/soccer/placeholder.png"
     },
-    // Se não achar no detailsMap, retorna 0
     games_played: detailsMap.games_played || 0,
     won: detailsMap.won || 0,
     draw: detailsMap.draw || 0,
     lost: detailsMap.lost || 0,
     goals_for: detailsMap.goals_for || 0,
     goals_against: detailsMap.goals_against || 0,
-    // Calcula saldo se não vier pronto
     goal_difference: detailsMap.goal_difference ?? ((detailsMap.goals_for || 0) - (detailsMap.goals_against || 0)),
     points: entry.points || detailsMap.points || 0,
-    // Retorna array visual para o front desenhar as bolinhas (W,L,D)
     recent_form: formArray
   };
 };
@@ -265,7 +270,7 @@ export const normalizeMatchDetails = (fixture) => {
   return {
     ...base,
     venue: fixture.venue?.name || "Estádio não informado",
-    referee: "Árbitro não informado", 
+    referee: fixture.referee?.name || "Árbitro não informado", 
     timeline: events,
     stats: {
       home: buildStats(homeStatsArr),
@@ -290,7 +295,7 @@ export const apiGetLeagueById = async (id) => {
 };
 
 export const apiGetStandings = async (seasonId) => {
-  // AQUI ESTÁ A CORREÇÃO: Manda o array de includes e o axios serializa certo
+  // Agora o paramsSerializer vai gerar: include=participant&include=details&include=form
   const data = await request(`/standings/seasons/${seasonId}`, { 
     include: ["participant", "details", "form"] 
   });
@@ -305,6 +310,7 @@ export const apiGetFixturesBySeason = async (seasonId) => {
 };
 
 export const apiGetFixtureDetails = async (fixtureId) => {
+  // REMOVIDO 'referee' DOS INCLUDES
   const data = await request(`/fixtures/${fixtureId}`, {
     include: [
       "participants", "scores", "state", "statistics", "odds",
