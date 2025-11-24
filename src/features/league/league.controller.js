@@ -4,57 +4,64 @@ import {
   apiGetLeagueById, 
   apiGetStandings, 
   apiGetFixturesBySeason,
-  normalizeMatchCard 
+  apiGetLeaguesByDate,
+  normalizeMatchCard // Importando para normalizar o resultado do today
 } from "../../services/sports.service.js"; 
 
-// 1. Lista Ligas (Para o Sidebar) - Rota: GET /leagues
 export const index = async (req, res, next) => {
   try {
-    const leagues = await apiGetLeagues();
-    res.json(leagues);
-  } catch (e) {
-    next(e);
-  }
+    res.json(await apiGetLeagues());
+  } catch (e) { next(e); }
 };
 
-// 2. Detalhes da Liga (Carga Inicial da Página) - Rota: GET /leagues/:id
 export const show = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
-    // Busca informações básicas da liga
     const league = await apiGetLeagueById(id);
     if (!league) return res.status(404).json({ error: "Liga não encontrada" });
-
-    const currentSeasonId = league.current_season_id;
 
     let standings = [];
     let upcoming = [];
 
-    // Se tiver temporada atual, busca tabela e jogos
-    if (currentSeasonId) {
-      const [standingsData, fixturesData] = await Promise.all([
-        apiGetStandings(currentSeasonId),
-        apiGetFixturesBySeason(currentSeasonId)
+    if (league.current_season_id) {
+      const [std, fix] = await Promise.all([
+        apiGetStandings(league.current_season_id),
+        apiGetFixturesBySeason(league.current_season_id)
       ]);
-
-      standings = standingsData || [];
+      standings = std || [];
       
-      // Filtra para pegar apenas jogos futuros (para a sidebar de 48h do front)
+      // Filtra jogos futuros para a feature de 48h na home da liga
       const now = Date.now() / 1000;
-      upcoming = (fixturesData || [])
-        .filter(f => f.timestamp >= now) 
-        .sort((a, b) => a.timestamp - b.timestamp);
+      upcoming = (fix || []).filter(f => f.timestamp >= now).sort((a, b) => a.timestamp - b.timestamp);
     }
 
-    res.json({
-      info: league,
-      standings: standings,
-      upcoming_matches: upcoming 
-    });
+    res.json({ info: league, standings, upcoming_matches: upcoming });
+  } catch (e) { next(e); }
+};
 
+// NOVA FUNÇÃO: Busca jogos de uma liga específica numa data específica
+export const getMatchesByDate = async (req, res, next) => {
+  try {
+    const { id } = req.params; // ID da Liga
+    const { date } = req.query; // Data YYYY-MM-DD
+
+    if (!date) return res.status(400).json({ error: "Data obrigatória" });
+
+    // 1. Busca todas as ligas com jogos nessa data
+    const allLeaguesToday = await apiGetLeaguesByDate(date);
+
+    // 2. Encontra a liga específica dentro da resposta
+    const targetLeague = allLeaguesToday.find(l => l.id == id);
+
+    if (!targetLeague || !targetLeague.today) {
+      return res.json([]); // Nenhum jogo dessa liga nesta data
+    }
+
+    // 3. Normaliza os jogos encontrados no array 'today'
+    const matches = targetLeague.today.map(normalizeMatchCard).filter(Boolean);
+
+    res.json(matches);
   } catch (e) {
     next(e);
   }
 };
-
