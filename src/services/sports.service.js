@@ -500,30 +500,72 @@ export const apiGetFixturesBySeason = async (seasonId) => {
 
 // 4. Detalhes da Partida (Genérico)
 export const apiGetFixtureDetails = async (fixtureId) => {
-  const data = await request(`/fixtures/${fixtureId}`, {
-    include: [
-      "participants", "scores", "state", "statistics", "odds.market", "odds.bookmaker",
-      "venue", "events.player", "events.type", "lineups.player", "lineups.position", "league.country"
-    ],
-    filters: "markets:1;bookmakers:2" // Tenta filtrar odds na requisição detalhada também
-  });
+  // Includes solicitados + extras úteis
+  const include = [
+    "participants",
+    "league.country",
+    "venue",
+    "state",
+    "scores",
+    "events.type",
+    "events.player",
+    "statistics.type",
+    "lineups.player",
+    "lineups.position",
+    "lineups.details.type", // Para ratings
+    "weatherReport",
+    "odds.market", 
+    "odds.bookmaker"
+  ].join(";"); // Sportmonks v3 usa ;
+
+  const data = await request(`/fixtures/${fixtureId}`, { include });
+  
   if (!data) return null;
-  return normalizeMatchDetails(data);
+
+  // Normaliza usando a função robusta que já temos
+  // Adiciona campos específicos de detalhes se necessário
+  const normalized = normalizeMatchCard(data);
+  
+  // Adiciona dados extras que não estão no Card padrão
+  if (normalized) {
+      normalized.venue = data.venue?.name;
+      normalized.weather = data.weather_report;
+      // Aqui você pode processar events e stats se quiser retornar mastigado
+      // Por enquanto retornamos o raw normalized + extras
+      normalized.events = data.events || [];
+      normalized.stats_raw = data.statistics || [];
+      normalized.lineups_raw = data.lineups || [];
+  }
+
+  return normalized;
 };
+
 
 // 5. Jogos ao Vivo (LiveScores)
 export const apiGetLiveMatches = async () => {
-  const includes = [
-    "participants",
-    "scores",
-    "periods",
-    "events",
-    "league.country",
-    "round"
-  ];
-  const data = await request("/livescores/inplay", { include: includes });
-  return (data || []).map(normalizeMatchCard).filter(Boolean);
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Busca TODOS os jogos do dia para garantir
+  const params = {
+    include: "participants;scores;periods;league.country;state;odds.market;odds.bookmaker"
+  };
+  
+  const data = await request(`/fixtures/date/${today}`, params);
+  if (!data) return [];
+
+  // Filtra apenas os que estão AO VIVO
+  // Status comuns: LIVE, 1st, 2nd, HT, ET, PEN, BREAK
+  const liveStatuses = [2, 3, 22, 23, 25, 26]; // IDs: 2=LIVE, 3=1st, 22=2nd...
+  const liveShorts = ['LIVE', '1st', '2nd', 'HT', 'ET', 'PEN', 'BREAK', 'INT'];
+
+  const liveMatches = data.filter(f => {
+      const state = f.state || {};
+      return liveStatuses.includes(state.id) || liveShorts.includes(state.short_name);
+  });
+
+  return liveMatches.map(normalizeMatchCard).sort((a, b) => a.league.id - b.league.id);
 };
+
 
 // 6. Jogos do Dia (Fallback)
 export const apiGetDailyMatches = async () => {
