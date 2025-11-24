@@ -1,4 +1,3 @@
-// Importando explicitamente as funções que acabamos de garantir que existem no sports.service.js
 import { 
   fetchLeagues, 
   fetchLeagueById, 
@@ -7,10 +6,9 @@ import {
 } from "../../services/sports.service.js";
 
 export const listAllLeagues = async () => {
-  // Adicionamos include country para ter a bandeira
+  // Busca ligas da Sportmonks
   const leagues = await fetchLeagues({ include: ["country"] }); 
   
-  // Tratamento de erro caso a API da Sportmonks falhe ou retorne vazio
   if (!Array.isArray(leagues)) {
     console.error("Erro: fetchLeagues não retornou um array", leagues);
     return [];
@@ -26,19 +24,23 @@ export const listAllLeagues = async () => {
 };
 
 export const getLeagueDetails = async (leagueId) => {
-  const league = await fetchLeagueById(leagueId, { include: ["country", "season"] });
+  // CORREÇÃO: Removido 'season' dos includes pois causava erro 404.
+  // Usamos apenas 'country'. O 'current_season_id' já vem no objeto da liga.
+  const league = await fetchLeagueById(leagueId, { include: ["country"] });
   
   if (!league) throw new Error("Liga não encontrada");
 
-  const currentSeasonId = league.current_season_id || league.season?.data?.id;
+  // Tenta pegar o ID da temporada atual diretamente da propriedade da liga
+  const currentSeasonId = league.current_season_id;
   
   let standings = [];
   if (currentSeasonId) {
     try {
       const stdData = await fetchStandingsBySeason(currentSeasonId);
-      standings = stdData || [];
+      // A Sportmonks pode retornar os standings dentro de 'data' ou direto
+      standings = Array.isArray(stdData) ? stdData : (stdData?.data || []);
     } catch (e) {
-      console.log("Sem standings disponíveis");
+      console.log(`Sem standings disponíveis para a season ${currentSeasonId}:`, e.message);
     }
   }
 
@@ -53,6 +55,7 @@ export const getLeagueDetails = async (leagueId) => {
 };
 
 export const getLeagueFixtures = async (leagueId) => {
+  // Busca fixtures filtrando pela liga
   const fixtures = await fetchFixtures({ 
     league_id: leagueId, 
     include: ["participants", "scores", "state"] 
@@ -63,10 +66,9 @@ export const getLeagueFixtures = async (leagueId) => {
   if (!Array.isArray(fixtures)) return [];
 
   return fixtures
-    .filter(f => new Date(f.starting_at) >= now)
-    .slice(0, 10)
+    .filter(f => new Date(f.starting_at) >= now) // Apenas jogos futuros
+    .slice(0, 10) // Limita a 10 jogos
     .map(f => {
-        // Lógica de participantes similar ao normalizeFixture
         const participants = f.participants?.data || [];
         const home = participants.find(p => p.meta?.location === 'home');
         const away = participants.find(p => p.meta?.location === 'away');
