@@ -628,46 +628,58 @@ const getSquadStat = (statsArray, typeId) => {
 
 export const normalizeSquadPlayer = (entry) => {
   const p = entry.player;
-  const stats = entry.player.statistics || [];
-
-  // IDs de estatísticas baseados no seu JSON:
-  // 321: Appearances (Jogos)
-  // 52: Goals
-  // 79: Assists
-  // 118: Rating (Average)
+  const statsArr = p.statistics || [];
   
-  // Extraindo Rating Médio
-  let rating = 0;
-  const ratingStat = stats[0]?.details?.find(s => s.type_id === 118);
-  if (ratingStat) rating = ratingStat.value?.average || 0;
+  // Pega os detalhes da primeira temporada encontrada no filtro
+  const details = statsArr[0]?.details || [];
 
+  // Helper interno para buscar no array de details
+  const findStat = (typeId, field = 'total') => {
+    const stat = details.find(s => s.type_id === typeId);
+    return getStatValue(stat, field);
+  };
+
+  // Códigos do seu JSON:
+  // 321: Appearances (Jogos) -> value.total
+  // 52: Goals -> value.goals (ou value.total)
+  // 118: Rating -> value.average
+  
   return {
     id: p.id,
     name: p.display_name,
     photo: p.image_path,
-    position: p.position_id, // ID da posição
-    position_name: entry.position?.name || "Desconhecido", // Ex: Attacker
-    number: entry.jersey_number,
     nationality: p.nationality?.image_path,
+    position: p.position_id, 
+    position_name: entry.position?.name || "Desconhecido",
+    number: entry.jersey_number,
     stats: {
-      matches: getSquadStat(stats, 321),
-      goals: getSquadStat(stats, 52),
-      assists: getSquadStat(stats, 79),
-      rating: Number(rating).toFixed(2)
+      matches: findStat(321, 'total'), // Appearances
+      goals: findStat(52, 'goals') || findStat(52, 'total'), // Goals
+      rating: Number(findStat(118, 'average')).toFixed(2) // Rating
     }
   };
 };
 
+
 // 12. Elenco do Time (NOVO)
 export const apiGetTeamSquad = async (teamId, seasonId) => {
   const includes = [
+    "team",
     "player.nationality",
     "player.statistics.details.type",
     "player.position"
   ];
 
-  // Se tiver seasonId, filtramos. Se não, a API pode retornar tudo ou a atual.
-  const filters = seasonId ? { playerstatisticSeasons: seasonId } : {};
+  // Usa o seasonId passado ou um padrão se necessário (ex: 25184 do seu exemplo)
+  // Se seasonId vier null do front, idealmente deveriamos pegar a season atual da liga.
+  // Por enquanto, vamos garantir que o filtro seja aplicado se o valor existir.
+  const filters = {};
+  if (seasonId) {
+    filters.playerstatisticSeasons = seasonId;
+  } else {
+     // Fallback hardcoded para o seu exemplo, ou remova para pegar histórico geral
+     filters.playerstatisticSeasons = "25184"; 
+  }
 
   const data = await request(`/squads/teams/${teamId}`, {
     include: includes,
@@ -695,4 +707,13 @@ export const apiGetTeamById = async (teamId) => {
     country: data.country?.name,
     venue_name: data.venue?.name
   };
+};
+
+const getStatValue = (statEntry, field = 'total') => {
+  if (!statEntry || !statEntry.value) return 0;
+  // Se value for objeto, tenta pegar o campo (total/average), senão retorna o próprio value
+  if (typeof statEntry.value === 'object') {
+    return statEntry.value[field] || 0;
+  }
+  return statEntry.value;
 };
