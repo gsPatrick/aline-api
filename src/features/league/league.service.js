@@ -2,11 +2,10 @@ import {
   fetchLeagues, 
   fetchLeagueById, 
   fetchStandingsBySeason, 
-  fetchFixtures 
+  fetchFixturesBetween
 } from "../../services/sports.service.js";
 
 export const listAllLeagues = async () => {
-  // Busca ligas da Sportmonks
   const leagues = await fetchLeagues({ include: ["country"] }); 
   
   if (!Array.isArray(leagues)) {
@@ -24,23 +23,22 @@ export const listAllLeagues = async () => {
 };
 
 export const getLeagueDetails = async (leagueId) => {
-  // CORREÇÃO: Removido 'season' dos includes pois causava erro 404.
-  // Usamos apenas 'country'. O 'current_season_id' já vem no objeto da liga.
-  const league = await fetchLeagueById(leagueId, { include: ["country"] });
+  // 1. Buscamos a liga incluindo a temporada atual para garantir o ID
+  const league = await fetchLeagueById(leagueId, { include: ["country", "currentSeason"] });
   
   if (!league) throw new Error("Liga não encontrada");
 
-  // Tenta pegar o ID da temporada atual diretamente da propriedade da liga
-  const currentSeasonId = league.current_season_id;
+  // 2. Identificamos a temporada atual
+  const currentSeasonId = league.current_season_id || league.currentSeason?.data?.id;
   
+  // 3. Buscamos a tabela (Standings)
   let standings = [];
   if (currentSeasonId) {
     try {
       const stdData = await fetchStandingsBySeason(currentSeasonId);
-      // A Sportmonks pode retornar os standings dentro de 'data' ou direto
       standings = Array.isArray(stdData) ? stdData : (stdData?.data || []);
     } catch (e) {
-      console.log(`Sem standings disponíveis para a season ${currentSeasonId}:`, e.message);
+      console.log(`Aviso: Sem standings para a season ${currentSeasonId}`);
     }
   }
 
@@ -55,19 +53,26 @@ export const getLeagueDetails = async (leagueId) => {
 };
 
 export const getLeagueFixtures = async (leagueId) => {
-  // Busca fixtures filtrando pela liga
-  const fixtures = await fetchFixtures({ 
+  // 1. Define intervalo de datas (Hoje até +30 dias)
+  const today = new Date();
+  const future = new Date();
+  future.setDate(today.getDate() + 30);
+
+  const startDate = today.toISOString().split('T')[0];
+  const endDate = future.toISOString().split('T')[0];
+
+  // 2. Usa o endpoint BETWEEN para filtrar na API (não no código)
+  // Passamos league_id como filtro adicional
+  const fixtures = await fetchFixturesBetween(startDate, endDate, { 
     league_id: leagueId, 
-    include: ["participants", "scores", "state"] 
+    include: ["participants", "scores"] 
   });
-  
-  const now = new Date();
   
   if (!Array.isArray(fixtures)) return [];
 
+  // 3. Mapeia para o formato do frontend
   return fixtures
-    .filter(f => new Date(f.starting_at) >= now) // Apenas jogos futuros
-    .slice(0, 10) // Limita a 10 jogos
+    .slice(0, 10) // Pega apenas os 10 próximos
     .map(f => {
         const participants = f.participants?.data || [];
         const home = participants.find(p => p.meta?.location === 'home');
