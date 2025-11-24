@@ -5,62 +5,81 @@ import {
   apiGetStandings, 
   apiGetFixturesBySeason,
   apiGetLeaguesByDate,
-  normalizeMatchCard // Importando para normalizar o resultado do today
+  normalizeMatchCard 
 } from "../../services/sports.service.js"; 
 
+// 1. Lista Ligas (Para o Sidebar) - Rota: GET /leagues
 export const index = async (req, res, next) => {
   try {
-    res.json(await apiGetLeagues());
-  } catch (e) { next(e); }
+    const leagues = await apiGetLeagues();
+    res.json(leagues);
+  } catch (e) {
+    next(e);
+  }
 };
 
+// 2. Detalhes da Liga (Carga Inicial da Página) - Rota: GET /leagues/:id
 export const show = async (req, res, next) => {
   try {
     const { id } = req.params;
+    
+    // Busca informações básicas da liga
     const league = await apiGetLeagueById(id);
     if (!league) return res.status(404).json({ error: "Liga não encontrada" });
+
+    const currentSeasonId = league.current_season_id;
 
     let standings = [];
     let upcoming = [];
 
-    if (league.current_season_id) {
-      const [std, fix] = await Promise.all([
-        apiGetStandings(league.current_season_id),
-        apiGetFixturesBySeason(league.current_season_id)
+    // Se tiver temporada atual, busca tabela e jogos
+    if (currentSeasonId) {
+      const [standingsData, fixturesData] = await Promise.all([
+        apiGetStandings(currentSeasonId),
+        apiGetFixturesBySeason(currentSeasonId)
       ]);
-      standings = std || [];
+
+      standings = standingsData || [];
       
-      // Filtra jogos futuros para a feature de 48h na home da liga
+      // Filtra para pegar apenas jogos futuros (para a sidebar de 48h do front)
       const now = Date.now() / 1000;
-      upcoming = (fix || []).filter(f => f.timestamp >= now).sort((a, b) => a.timestamp - b.timestamp);
+      upcoming = (fixturesData || [])
+        .filter(f => f.timestamp >= now) 
+        .sort((a, b) => a.timestamp - b.timestamp);
     }
 
-    res.json({ info: league, standings, upcoming_matches: upcoming });
-  } catch (e) { next(e); }
+    res.json({
+      info: league,
+      standings: standings,
+      upcoming_matches: upcoming 
+    });
+
+  } catch (e) {
+    next(e);
+  }
 };
 
-// NOVA FUNÇÃO: Busca jogos de uma liga específica numa data específica
+// 3. Calendário por Data (Aba Calendário) - Rota: GET /leagues/:id/matches?date=YYYY-MM-DD
 export const getMatchesByDate = async (req, res, next) => {
   try {
-    const { id } = req.params; // ID da Liga
-    const { date } = req.query; // Data YYYY-MM-DD
+    const { id } = req.params; // ID da Liga (ex: 8 da Premier League)
+    const { date } = req.query; // Data (ex: 2025-11-24)
 
     if (!date) return res.status(400).json({ error: "Data obrigatória" });
 
-    // 1. Busca todas as ligas com jogos nessa data
+    // A função apiGetLeaguesByDate retorna um array de TODAS as ligas que têm jogos no dia
     const allLeaguesToday = await apiGetLeaguesByDate(date);
 
-    // 2. Encontra a liga específica dentro da resposta
-    const targetLeague = allLeaguesToday.find(l => l.id == id);
+    // Nós filtramos apenas a liga que o usuário está acessando (ID 8, por exemplo)
+    // Convertemos para String para garantir que a comparação funcione (ex: "8" == 8)
+    const targetLeague = allLeaguesToday.find(l => String(l.id) === String(id));
 
-    if (!targetLeague || !targetLeague.today) {
-      return res.json([]); // Nenhum jogo dessa liga nesta data
+    if (!targetLeague || !targetLeague.matches) {
+      return res.json([]); // Nenhum jogo encontrado para esta liga nesta data
     }
 
-    // 3. Normaliza os jogos encontrados no array 'today'
-    const matches = targetLeague.today.map(normalizeMatchCard).filter(Boolean);
-
-    res.json(matches);
+    // Retorna apenas os jogos normalizados dessa liga
+    res.json(targetLeague.matches);
   } catch (e) {
     next(e);
   }
