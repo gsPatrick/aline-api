@@ -1,3 +1,5 @@
+
+
 import axios from "axios";
 import dotenv from "dotenv";
 
@@ -196,6 +198,22 @@ const getFormationFromMetadata = (metadata) => {
   const formationData = metadata.find(m => m.type_id === 159); 
   if (!formationData || !formationData.values) return { home: null, away: null };
   return formationData.values; 
+};
+
+// Helper para extrair valor estatístico do array de details
+const getStatValueFromDetails = (detailsArray, typeId, field = 'total') => {
+  if (!Array.isArray(detailsArray)) return 0;
+
+  // Encontra o objeto com o type_id específico
+  const stat = detailsArray.find(s => s.type_id === typeId);
+  if (!stat || !stat.value) return 0;
+
+  // Se o valor for um objeto, tenta pegar o campo específico
+  if (typeof stat.value === 'object') {
+    return stat.value[field] ?? stat.value.total ?? 0;
+  }
+  
+  return Number(stat.value);
 };
 
 // --- NORMALIZADORES ---
@@ -409,11 +427,39 @@ export const normalizeMatchDetails = (fixture) => {
     // Função simples para detalhe, usando a base do card
     const base = normalizeMatchCard(fixture);
     if(!base) return null;
-    // Aqui você pode expandir se precisar de 'events', 'venue' detalhado, etc.
     return {
         ...base,
         venue: fixture.venue?.name || "Estádio não informado"
     };
+};
+
+export const normalizeSquadPlayer = (entry) => {
+  const p = entry.player;
+  
+  if (!p) return null;
+
+  // Pega as estatísticas da temporada filtrada (array statistics do JSON)
+  const statsDetails = p.statistics && p.statistics.length > 0 
+    ? p.statistics[0].details 
+    : [];
+
+  return {
+    id: p.id,
+    name: p.display_name || p.common_name || p.name,
+    photo: p.image_path,
+    nationality_flag: p.nationality?.image_path,
+    country: p.nationality?.name,
+    position_id: p.position_id, 
+    position_name: p.position?.name || "Desconhecido",
+    number: entry.jersey_number,
+    is_captain: entry.captain || false,
+    stats: {
+      matches: Number(getStatValueFromDetails(statsDetails, 321, 'total')), // ID 321: Appearances
+      goals: Number(getStatValueFromDetails(statsDetails, 52, 'total')),    // ID 52: Goals
+      assists: Number(getStatValueFromDetails(statsDetails, 79, 'total')),  // ID 79: Assists
+      rating: Number(getStatValueFromDetails(statsDetails, 118, 'average')).toFixed(2) // ID 118: Rating
+    }
+  };
 };
 
 // --- FUNÇÕES EXPORTADAS (API CALLS) ---
@@ -499,7 +545,6 @@ export const apiGetPlayerStats = async (playerId) => {
   
   if (!data) return null;
 
-  // Lógica simplificada de jogador
   const seasonStats = data.statistics || [];
   const currentSeasonStats = seasonStats.length > 0 ? (seasonStats[seasonStats.length - 1].details || []) : [];
   
@@ -515,7 +560,7 @@ export const apiGetPlayerStats = async (playerId) => {
     team: data.teams?.[0] ? { id: data.teams[0].id, name: data.teams[0].name, logo: data.teams[0].image_path } : null,
     stats: {
         goals: getVal(STAT_TYPES.GOALS),
-        assists: 0 // Precisaria mapear o código de assistencia
+        assists: 0 
     }
   };
 };
@@ -527,7 +572,7 @@ export const apiGetRoundFixtures = async (roundId) => {
     "fixtures.odds.bookmaker",
     "fixtures.participants",
     "league.country",
-    "fixtures.scores" // Adicionado para garantir placar correto mesmo na lista de rodada
+    "fixtures.scores" 
   ];
 
   const filters = {
@@ -612,85 +657,31 @@ export const apiGetFixtureLineups = async (fixtureId) => {
   return normalizeLineups(data);
 };
 
-const getSquadStat = (statsArray, typeId) => {
-  // Procura no array de estatísticas do jogador pelo type_id específico
-  // O JSON mostra que stats é um array, e dentro dele tem 'details' com os tipos
-  if (!Array.isArray(statsArray)) return 0;
-  
-  // Geralmente há um objeto de stats por temporada. Pegamos o primeiro (ou filtramos se necessário)
-  const seasonStats = statsArray[0]?.details || [];
-  const stat = seasonStats.find(s => s.type_id === typeId);
-  
-  // O valor pode ser um objeto { total: 5 } ou número direto dependendo da API
-  const val = stat?.value?.total ?? stat?.value ?? 0;
-  return Number(val);
-};
-
-export const normalizeSquadPlayer = (entry) => {
-  const p = entry.player;
-  const statsArr = p.statistics || [];
-  
-  // Pega os detalhes da primeira temporada encontrada no filtro
-  const details = statsArr[0]?.details || [];
-
-  // Helper interno para buscar no array de details
-  const findStat = (typeId, field = 'total') => {
-    const stat = details.find(s => s.type_id === typeId);
-    return getStatValue(stat, field);
-  };
-
-  // Códigos do seu JSON:
-  // 321: Appearances (Jogos) -> value.total
-  // 52: Goals -> value.goals (ou value.total)
-  // 118: Rating -> value.average
-  
-  return {
-    id: p.id,
-    name: p.display_name,
-    photo: p.image_path,
-    nationality: p.nationality?.image_path,
-    position: p.position_id, 
-    position_name: entry.position?.name || "Desconhecido",
-    number: entry.jersey_number,
-    stats: {
-      matches: findStat(321, 'total'), // Appearances
-      goals: findStat(52, 'goals') || findStat(52, 'total'), // Goals
-      rating: Number(findStat(118, 'average')).toFixed(2) // Rating
-    }
-  };
-};
-
-
-// 12. Elenco do Time (NOVO)
+// 12. Elenco do Time (Squad) - ATUALIZADO
 export const apiGetTeamSquad = async (teamId, seasonId) => {
-  const includes = [
-    "team",
-    "player.nationality",
-    "player.statistics.details.type",
-    "player.position"
-  ];
-
-  // Usa o seasonId passado ou um padrão se necessário (ex: 25184 do seu exemplo)
-  // Se seasonId vier null do front, idealmente deveriamos pegar a season atual da liga.
-  // Por enquanto, vamos garantir que o filtro seja aplicado se o valor existir.
-  const filters = {};
-  if (seasonId) {
-    filters.playerstatisticSeasons = seasonId;
-  } else {
-     // Fallback hardcoded para o seu exemplo, ou remova para pegar histórico geral
-     filters.playerstatisticSeasons = "25184"; 
+  // Usa a estrutura de include e filters solicitada
+  
+  // Se seasonId não for passado, definimos um fallback ou retornamos vazio. 
+  // No seu exemplo era 25184. Idealmente o frontend deve enviar.
+  if (!seasonId) {
+     console.warn("SeasonID não fornecido para squad, usando fallback ou retornando vazio");
+     seasonId = "25184"; 
   }
 
-  const data = await request(`/squads/teams/${teamId}`, {
-    include: includes,
-    filters: filters
-  });
+  // Monta a string exata de include solicitada
+  const params = {
+    include: "team;player.nationality;player.statistics.details.type;player.position",
+    filters: `playerstatisticSeasons:${seasonId}`
+  };
+
+  const data = await request(`/squads/teams/${teamId}`, params);
 
   if (!data) return [];
 
-  return (data || []).map(normalizeSquadPlayer);
+  return (data || []).map(normalizeSquadPlayer).filter(Boolean);
 };
 
+// 13. Detalhes do Time (Info Básica)
 export const apiGetTeamById = async (teamId) => {
   const data = await request(`/teams/${teamId}`, {
     include: ["country", "venue"]
@@ -709,11 +700,20 @@ export const apiGetTeamById = async (teamId) => {
   };
 };
 
-const getStatValue = (statEntry, field = 'total') => {
-  if (!statEntry || !statEntry.value) return 0;
-  // Se value for objeto, tenta pegar o campo (total/average), senão retorna o próprio value
-  if (typeof statEntry.value === 'object') {
-    return statEntry.value[field] || 0;
-  }
-  return statEntry.value;
+// Helper para buscar jogos em intervalo (usado no sync)
+export const fetchFixturesBetween = async (startStr, endStr, extraParams = {}) => {
+  const params = {
+      include: ["participants", "scores", "state", "league.country", "periods"],
+      ...extraParams
+  };
+  const data = await request(`/fixtures/between/${startStr}/${endStr}`, params);
+  return data || [];
 };
+
+// Helper para buscar ligas (usado no sync)
+export const fetchLeagues = async () => {
+    return apiGetLeagues();
+};
+
+// Exportando normalizador para uso externo se necessário
+export const normalizeFixture = normalizeMatchCard;
