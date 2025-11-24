@@ -6,7 +6,7 @@ import {
   apiGetLeagueById, 
   apiGetStandings, 
   apiGetFixturesBySeason 
-} from "../../services/sports.service"; 
+} from "./teste.js"; 
 
 // Lista Ligas (Sidebar)
 export const index = async (req, res, next) => {
