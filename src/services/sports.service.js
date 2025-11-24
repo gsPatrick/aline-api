@@ -26,6 +26,8 @@ const normalizeInclude = (include) => {
   return include;
 };
 
+
+
 const request = async (endpoint, params = {}) => {
   ensureApiKey();
 
@@ -476,15 +478,62 @@ const normalizeIncidents = (fixture, participants) => {
     .filter((incident) => incident.type !== null);
 };
 
+// Função auxiliar para extrair dados do participante por local (home/away)
+const getParticipantByLocation = (participants, location) => {
+  return participants.find((p) => {
+    const loc = p.meta?.location || p.pivot?.location;
+    return loc === location;
+  });
+};
+
 const normalizeFixture = (fixture) => {
   const participants = getParticipants(fixture);
+  const homeTeam = getParticipantByLocation(participants, "home");
+  const awayTeam = getParticipantByLocation(participants, "away");
+
+  // Extraindo placar atual
+  const scoreArray = buildScoreArray(fixture, participants);
+  const homeScore = scoreArray[2][0]; // Placar casa
+  const awayScore = scoreArray[3][0]; // Placar fora
 
   return {
     id: String(fixture?.id ?? ""),
-    score: buildScoreArray(fixture, participants),
+    status_id: computeStatusCode(fixture), // ID do status (2 = Live, etc)
+    status_name: fixture?.state?.name || "Unknown",
+    minute: fixture?.minute || null,
+    
+    // Dados da Liga
+    league: {
+      id: fixture?.league_id,
+      name: fixture?.league?.data?.name || "Liga Desconhecida",
+      country: fixture?.league?.data?.country?.data?.name || "Mundo",
+      flag: fixture?.league?.data?.country?.data?.image_path || null, // URL da bandeira
+      logo: fixture?.league?.data?.image_path || null,
+    },
+
+    // Times
+    homeTeam: {
+      id: homeTeam?.id,
+      name: homeTeam?.name || "Time da Casa",
+      logo: homeTeam?.image_path || null,
+      score: homeScore
+    },
+    awayTeam: {
+      id: awayTeam?.id,
+      name: awayTeam?.name || "Visitante",
+      logo: awayTeam?.image_path || null,
+      score: awayScore
+    },
+
+    // Dados técnicos mantidos
+    score: scoreArray,
     stats: normalizeStats(fixture, participants),
     incidents: normalizeIncidents(fixture, participants),
-    tlive: [],
+    events: fixture?.events?.data || [], // Passando eventos brutos se necessário
+    tlive: [], // Placeholder para timeline
+    
+    // Odds (se disponíveis)
+    odds: fixture?.odds?.data || [] 
   };
 };
 
