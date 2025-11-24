@@ -1,7 +1,10 @@
 import { Router } from "express";
-import { index, show } from "./league.controller.js";
+import { index, show, listByDate } from "./league.controller.js";
 
 const r = Router();
+
 r.get("/", index);
-r.get("/:id", show); // Nova rota para detalhes
+r.get("/date/:date", listByDate); // <--- Nova rota adicionada
+r.get("/:id", show);
+
 export default r;
