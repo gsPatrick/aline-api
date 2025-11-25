@@ -114,6 +114,19 @@ const STAT_TYPES = {
   PASSES_TOTAL: 80
 };
 
+// IDs de Estatísticas (Sportmonks v3)
+const PLAYER_STAT_IDS = {
+  GOALS: 52,
+  ASSISTS: 79,
+  RATING: 118,
+  MINUTES: 119,
+  APPEARANCES: 321,
+  YELLOW_CARDS: 84,
+  RED_CARDS: 83,
+  SHOTS_TOTAL: 42,
+  PASSES_TOTAL: 80
+};
+
 // --- HELPERS DE FORMATAÇÃO ---
 
 const getMatchTime = (periods) => {
@@ -969,4 +982,149 @@ export const apiGetHeadToHead = async (teamA, teamB) => {
   
   // Normaliza usando a função padrão de card
   return (data || []).map(normalizeMatchCard).sort((a, b) => b.timestamp - a.timestamp); // Mais recente primeiro
+};
+
+
+// --- NORMALIZADOR DE PERFIL DE JOGADOR ---
+const normalizePlayerProfile = (p) => {
+  if (!p) return null;
+
+  // 1. Pé Preferido (Metadata type_id 229)
+  const footMeta = p.metadata?.find(m => m.type_id === 229);
+  const preferredFoot = footMeta ? footMeta.values : "N/A";
+
+  // 2. Time Atual (Baseado na data de fim do contrato)
+  const currentTeamEntry = p.teams?.sort((a, b) => new Date(b.start) - new Date(a.start))[0];
+  const currentTeam = currentTeamEntry ? {
+      id: currentTeamEntry.team.id,
+      name: currentTeamEntry.team.name,
+      logo: currentTeamEntry.team.image_path,
+      shirt_number: currentTeamEntry.jersey_number
+  } : null;
+
+  // 3. Estatísticas por Temporada (Tabela)
+  // Agrupa estatísticas úteis e remove duplicatas ou temporadas vazias
+  const careerStats = (p.statistics || []).map(stat => {
+      const getVal = (id) => {
+          const item = stat.details?.find(d => d.type_id === id);
+          return item ? Number(item.value.total || item.value.average || item.value) : 0;
+      };
+
+      // Pula se não tiver stats relevantes
+      if (!stat.has_values && !stat.details?.length) return null;
+
+      return {
+          id: stat.id,
+          season_id: stat.season_id,
+          season_name: stat.season?.name,
+          league_name: stat.season?.league?.name,
+          league_logo: stat.season?.league?.image_path,
+          team_logo: stat.team?.image_path,
+          matches: getVal(PLAYER_STAT_IDS.APPEARANCES),
+          goals: getVal(PLAYER_STAT_IDS.GOALS),
+          assists: getVal(PLAYER_STAT_IDS.ASSISTS),
+          rating: getVal(PLAYER_STAT_IDS.RATING).toFixed(2),
+          minutes: getVal(PLAYER_STAT_IDS.MINUTES)
+      };
+  }).filter(Boolean).sort((a, b) => b.season_id - a.season_id); // Mais recente primeiro
+
+  // 4. Totais da Carreira (Somatório simples dos dados retornados)
+  const totals = careerStats.reduce((acc, curr) => ({
+      matches: acc.matches + curr.matches,
+      goals: acc.goals + curr.goals,
+      assists: acc.assists + curr.assists
+  }), { matches: 0, goals: 0, assists: 0 });
+
+  // 5. Últimos Jogos (Latest Matches)
+  const lastMatches = (p.latest || []).map(latest => {
+      const fix = latest.fixture;
+      if (!fix) return null;
+
+      // Busca a nota específica desse jogo nos details do 'latest'
+      const ratingDetail = latest.details?.find(d => d.type_id === PLAYER_STAT_IDS.RATING);
+      const rating = ratingDetail ? Number(ratingDetail.value.average || ratingDetail.value).toFixed(1) : "-";
+
+      // Busca estatísticas chave do jogo
+      const goalsDetail = latest.details?.find(d => d.type_id === PLAYER_STAT_IDS.GOALS);
+      const goals = goalsDetail ? Number(goalsDetail.value.total || goalsDetail.value) : 0;
+
+      // Determina o adversário
+      const opponent = fix.participants?.find(part => part.id !== latest.team_id);
+      const myTeam = fix.participants?.find(part => part.id === latest.team_id);
+
+      return {
+          id: fix.id,
+          date: fix.starting_at,
+          league_name: fix.league?.name,
+          logo: fix.league?.image_path,
+          opponent_name: opponent?.name || "TBD",
+          opponent_logo: opponent?.image_path,
+          result: fix.scores?.find(s => s.description === "CURRENT") ? 
+                  `${fix.scores.find(s => s.participant_id === myTeam?.id)?.score?.goals}-${fix.scores.find(s => s.participant_id === opponent?.id)?.score?.goals}` : "VS",
+          rating: rating,
+          goals: goals,
+          minutes: latest.details?.find(d => d.type_id === PLAYER_STAT_IDS.MINUTES)?.value?.total || 0
+      };
+  }).filter(Boolean);
+
+  // 6. Troféus
+  const trophies = (p.trophies || []).map(t => ({
+      id: t.id,
+      league_name: t.league?.name,
+      season: t.season?.name,
+      status: t.trophy?.name, // "Winner", "Runner-up"
+      team_logo: t.team?.image_path
+  })).filter(t => t.status === "Winner"); // Filtra apenas títulos ganhos (opcional)
+
+  return {
+      info: {
+          id: p.id,
+          name: p.common_name || p.display_name,
+          fullname: p.name,
+          photo: p.image_path,
+          age: p.date_of_birth ? Math.floor((new Date() - new Date(p.date_of_birth).getTime()) / 3.15576e+10) : "-",
+          birthdate: p.date_of_birth,
+          height: p.height,
+          weight: p.weight,
+          nationality: p.nationality?.name,
+          flag: p.nationality?.image_path,
+          position: p.detailedposition?.name || "Jogador",
+          foot: preferredFoot,
+          current_team: currentTeam
+      },
+      career: {
+          stats: careerStats,
+          totals: totals
+      },
+      latest: lastMatches,
+      trophies: trophies
+  };
+};
+
+// --- 16. OBTER PERFIL COMPLETO DO JOGADOR ---
+export const apiGetPlayerProfile = async (playerId) => {
+  // Includes solicitados para montar o perfil completo
+  const include = [
+      "trophies.league",
+      "trophies.season",
+      "trophies.trophy",
+      "trophies.team",
+      "teams.team",
+      "statistics.details.type",
+      "statistics.team",
+      "statistics.season.league",
+      "latest.fixture.participants",
+      "latest.fixture.league",
+      "latest.fixture.scores",
+      "latest.details.type",
+      "nationality",
+      "detailedPosition",
+      "metadata.type"
+  ].join(";");
+
+  const data = await request(`/players/${playerId}`, { include });
+
+  if (!data) return null;
+
+  return normalizePlayerProfile(data);
 };
