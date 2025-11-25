@@ -591,26 +591,36 @@ const normalizePredictions = (predictionsArray) => {
 
 
 // --- FUNÇÃO PRINCIPAL DE DETALHES (Atualizada) ---
+// --- FUNÇÃO PRINCIPAL DE DETALHES (CORRIGIDA) ---
 export const apiGetFixtureDetails = async (fixtureId) => {
   console.log(`📡 SERVICE: Buscando detalhes completos para ID ${fixtureId}...`);
 
-  // Lista completa de includes solicitados
-  // NOTA: Se o seu plano não suportar 'predictions', remova 'predictions.type' da string abaixo.
+  // Lista completa de includes (MERGE DO SEU PEDIDO + NECESSIDADES DO APP)
   const include = [
+    // Básico
     "participants",
-    "league.country",
+    "league.country", // Traz a liga e o país
     "venue",
     "state",
     "scores",
-    "events.type", "events.period", "events.player", // Timeline
-    "statistics.type", // Estatísticas
-    "lineups.player", "lineups.position", "lineups.details.type", // Escalações + Ratings
-    "sidelined.sideline.player", "sidelined.sideline.type", // Lesionados
-    "weatherReport", // Clima
-    "odds.market", "odds.bookmaker" // Cotações
+    
+    // Lineups (CORRIGIDO PARA INCLUIR TUDO QUE VC PEDIU)
+    "lineups.player", 
+    "lineups.type",         // <--- ADICIONADO (Faltava)
+    "lineups.details.type", 
+    "lineups.position",     // Mantemos para ordenação
+    "metadata.type",        // <--- ADICIONADO (Para Formação 4-3-3)
+    "coaches",              // <--- ADICIONADO (Para Técnicos)
+    
+    // Outras Abas (Timeline, Stats, Odds, Lesões)
+    "events.type", "events.period", "events.player", 
+    "statistics.type", 
+    "sidelined.sideline.player", "sidelined.sideline.type", 
+    "weatherReport", 
+    "odds.market", "odds.bookmaker"
   ].join(";");
 
-  // Requisição à API (Sem filtros restritivos para garantir retorno)
+  // Requisição à API
   const data = await request(`/fixtures/${fixtureId}`, { include });
   
   if (!data) {
@@ -627,45 +637,38 @@ export const apiGetFixtureDetails = async (fixtureId) => {
       normalized.weather = data.weather_report;
       
       // 3. Estatísticas (Stats)
-      // Transforma array da API em objeto { home: {...}, away: {...} }
       const statsObj = { home: {}, away: {} };
       if (Array.isArray(data.statistics)) {
           data.statistics.forEach(stat => {
-              const code = stat.type?.code; // ex: 'possession', 'shots_total'
+              const code = stat.type?.code;
               const isHome = stat.participant_id === normalized.home_team.id;
               const target = isHome ? statsObj.home : statsObj.away;
-              
-              // Sportmonks v3: valor pode estar em data.value ou direto em value
               const val = stat.data?.value ?? stat.value ?? 0;
-              
               if (code) target[code] = val;
           });
       }
       normalized.stats = statsObj;
 
       // 4. Linha do Tempo (Events)
-      // Mapeia eventos e ordena por minuto (decrescente = mais recente no topo)
       normalized.events = (data.events || []).map(e => ({
           id: e.id,
           minute: e.minute,
           extra_minute: e.extra_minute,
-          type: e.type?.name, // Goal, Yellow Card, Substitution
+          type: e.type?.name,
           player_name: e.player?.display_name || e.player_name,
-          related_player_name: e.related_player_name, // Para substituições
-          result: e.result, // Placar no momento do gol
+          related_player_name: e.related_player_name,
+          result: e.result,
           is_home: e.participant_id === normalized.home_team.id
       })).sort((a, b) => b.minute - a.minute);
 
-      // 5. Escalações (Lineups)
+      // 5. Escalações (Lineups) - AGORA VAI PEGAR FORMAÇÃO E TÉCNICO
       if (data.lineups) {
-          // Usa a função normalizeLineups que já existe no arquivo sports.service.js
           normalized.lineups = normalizeLineups(data);
       } else {
           normalized.lineups = null;
       }
 
       // 6. Projeções (Predictions)
-      // Verifica se existem antes de normalizar
       if (data.predictions && data.predictions.length > 0) {
           normalized.predictions = normalizePredictions(data.predictions);
       } else {
