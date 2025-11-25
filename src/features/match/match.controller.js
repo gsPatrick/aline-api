@@ -1,7 +1,8 @@
 import { 
   apiGetLiveMatches, 
   apiGetDailyMatches,
-  apiGetFixtureDetails 
+  apiGetFixtureDetails,
+  apiGetHeadToHead // <--- ADICIONE ISSO
 } from "../../services/sports.service.js";
 
 export const live = async (req, res, next) => {
@@ -22,10 +23,8 @@ export const daily = async (req, res, next) => {
   }
 };
 
-// --- CORREÇÃO E LOGS AQUI ---
 export const show = async (req, res, next) => {
   const { id } = req.params;
-  
   console.log(`🔍 CONTROLLER: Buscando partida ID [${id}]...`);
 
   try {
@@ -44,6 +43,7 @@ export const show = async (req, res, next) => {
   }
 };
 
+// --- FUNÇÃO H2H QUE ESTAVA DANDO ERRO ---
 export const h2h = async (req, res, next) => {
   try {
     const { id } = req.params; // ID da partida atual
@@ -56,14 +56,15 @@ export const h2h = async (req, res, next) => {
     const teamA = match.home_team.id;
     const teamB = match.away_team.id;
 
-    // Busca o histórico entre eles
+    // Agora a função vai existir pois foi importada
     const history = await apiGetHeadToHead(teamA, teamB);
     
-    // Filtra a partida atual da lista (se ela já aconteceu)
+    // Filtra a partida atual da lista (se ela já aconteceu e estiver na lista)
     const filteredHistory = history.filter(h => String(h.id) !== String(id));
 
     res.json(filteredHistory);
   } catch (e) {
+    console.error("Erro no H2H:", e);
     next(e);
   }
 };
