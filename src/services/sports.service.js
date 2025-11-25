@@ -568,7 +568,6 @@ export const apiGetFixtureDetails = async (fixtureId) => {
     "lineups.player", "lineups.position", "lineups.details.type", // Escalações + Ratings
     "sidelined.sideline.player", "sidelined.sideline.type", // Lesionados
     "weatherReport", // Clima
-    "predictions.type", // Projeções (IA)
     "odds.market", "odds.bookmaker" // Cotações
   ].join(";");
 
