@@ -549,7 +549,7 @@ const normalizePredictions = (predictionsArray) => {
 
 // --- FUNÇÃO PRINCIPAL DE DETALHES (Atualizada) ---
 export const apiGetFixtureDetails = async (fixtureId) => {
-  console.log(`📡 SERVICE: Requisitando fixture/${fixtureId} à Sportmonks...`);
+  console.log(`📡 SERVICE: Buscando detalhes para ID ${fixtureId}...`);
 
   const include = [
     "participants",
@@ -563,16 +563,16 @@ export const apiGetFixtureDetails = async (fixtureId) => {
     "lineups.player",
     "lineups.position",
     "weatherReport",
-    "predictions.type",
+    // "predictions.type", // <--- REMOVIDO POIS SEU PLANO NÃO SUPORTA
     "odds.market",
     "odds.bookmaker"
   ].join(";");
 
-  // REMOVI 'filters' para garantir que o jogo venha, mesmo sem odds
+  // Removido filtro de odds para garantir que a partida carregue mesmo sem cotações
   const data = await request(`/fixtures/${fixtureId}`, { include });
   
   if (!data) {
-      console.warn(`⚠️ SERVICE: Sportmonks retornou vazio para ${fixtureId}`);
+      console.warn(`⚠️ SERVICE: Retorno vazio para ${fixtureId}`);
       return null;
   }
 
@@ -582,11 +582,11 @@ export const apiGetFixtureDetails = async (fixtureId) => {
       normalized.venue = data.venue?.name;
       normalized.weather = data.weather_report;
       
-      // Stats
+      // Processa Stats
       const statsObj = { home: {}, away: {} };
       if (Array.isArray(data.statistics)) {
           data.statistics.forEach(stat => {
-              const code = stat.type?.code;
+              const code = stat.type?.code; // ex: 'possession'
               const isHome = stat.participant_id === normalized.home_team.id;
               const target = isHome ? statsObj.home : statsObj.away;
               const val = stat.data?.value ?? stat.value ?? 0;
@@ -595,7 +595,7 @@ export const apiGetFixtureDetails = async (fixtureId) => {
       }
       normalized.stats = statsObj;
 
-      // Events
+      // Processa Eventos (Timeline)
       normalized.events = (data.events || []).map(e => ({
           id: e.id,
           minute: e.minute,
@@ -603,12 +603,8 @@ export const apiGetFixtureDetails = async (fixtureId) => {
           player_name: e.player?.display_name || e.player_name,
           is_home: e.participant_id === normalized.home_team.id
       })).sort((a,b) => b.minute - a.minute);
-
-      // Predictions
-      if (data.predictions) normalized.predictions = normalizePredictions(data.predictions);
   }
 
-  console.log(`✅ SERVICE: Normalização concluída com sucesso.`);
   return normalized;
 };
 
@@ -616,18 +612,12 @@ export const apiGetFixtureDetails = async (fixtureId) => {
 // 5. Jogos ao Vivo (LiveScores)
 export const apiGetLiveMatches = async () => {
   const today = new Date().toISOString().split('T')[0];
-  
-  // Busca TODOS os jogos do dia para garantir
-  const params = {
-    include: "participants;scores;periods;league.country;state;odds.market;odds.bookmaker"
-  };
+  const params = { include: "participants;scores;periods;league.country;state;odds.market;odds.bookmaker" };
   
   const data = await request(`/fixtures/date/${today}`, params);
   if (!data) return [];
-
-  // Filtra apenas os que estão AO VIVO
-  // Status comuns: LIVE, 1st, 2nd, HT, ET, PEN, BREAK
-  const liveStatuses = [2, 3, 22, 23, 25, 26]; // IDs: 2=LIVE, 3=1st, 22=2nd...
+  
+  const liveStatuses = [2, 3, 22, 23, 25, 26]; 
   const liveShorts = ['LIVE', '1st', '2nd', 'HT', 'ET', 'PEN', 'BREAK', 'INT'];
 
   const liveMatches = data.filter(f => {
@@ -635,21 +625,20 @@ export const apiGetLiveMatches = async () => {
       return liveStatuses.includes(state.id) || liveShorts.includes(state.short_name);
   });
 
-  return liveMatches.map(normalizeMatchCard).sort((a, b) => a.league.id - b.league.id);
+  return liveMatches.map(normalizeMatchCard);
 };
-
 
 // 6. Jogos do Dia (Fallback)
 export const apiGetDailyMatches = async () => {
   const today = new Date().toISOString().split('T')[0];
+  // Filtra apenas jogos com odds da Bet365 e Mercado 1x2 para a lista principal ficar limpa
   const params = {
-    include: "participants;scores;state;league.country;odds.market;odds.bookmaker", // Adicionado Odds
-    filters: "markets:1;bookmakers:2" // Bet365
+    include: "participants;scores;state;league.country;odds.market;odds.bookmaker",
+    filters: "markets:1;bookmakers:2" 
   };
   const data = await request(`/fixtures/date/${today}`, params);
-  return (data || []).map(normalizeMatchCard).filter(Boolean);
+  return (data || []).map(normalizeMatchCard);
 };
-
 // 7. Estatísticas Jogador
 export const apiGetPlayerStats = async (playerId) => {
   const data = await request(`/players/${playerId}`, {
