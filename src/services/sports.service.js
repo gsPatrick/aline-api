@@ -311,6 +311,31 @@ export const normalizeStanding = (entry) => {
   };
 };
 
+const normalizeSidelined = (sidelinedArray, homeId, awayId) => {
+    if (!Array.isArray(sidelinedArray)) return { home: [], away: [] };
+
+    const result = { home: [], away: [] };
+
+    sidelinedArray.forEach(entry => {
+        const player = entry.player;
+        if (!player) return;
+
+        const item = {
+            id: player.id,
+            name: player.display_name,
+            photo: player.image_path,
+            reason: entry.type?.name || "Desconhecido", // Lesão, Suspensão
+            start_date: entry.start_date
+        };
+
+        if (entry.team_id === homeId) result.home.push(item);
+        else if (entry.team_id === awayId) result.away.push(item);
+    });
+
+    return result;
+};
+
+
 export const normalizeMatchCard = (fixture) => {
   if (!fixture) return null;
 
