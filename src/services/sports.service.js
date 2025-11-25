@@ -31,6 +31,9 @@ const http = axios.create({
   }
 });
 
+
+
+
 // --- HELPER DE REQUISIÇÃO ---
 const request = async (endpoint, params = {}) => {
   if (!apiKey) throw new Error("MYSPORTMONKS_API_KEY ausente.");
@@ -42,13 +45,27 @@ const request = async (endpoint, params = {}) => {
   };
 
   try {
+    console.log(`📡 SPORTMONKS REQUEST: ${endpoint}`);
+    // console.log(`👉 Params:`, JSON.stringify(params)); // Descomente se quiser ver os params detalhados
+
     const { data } = await http.get(endpoint, { params: requestParams });
+    
+    if (!data) {
+        console.warn(`⚠️ SPORTMONKS: Resposta vazia (sem data) para ${endpoint}`);
+    } else {
+        console.log(`✅ SPORTMONKS: Sucesso para ${endpoint}`);
+    }
+
     return data?.data ?? data;
   } catch (err) {
-    console.error(`Erro Sportmonks [${endpoint}]:`, err.response?.data?.message || err.message);
+    console.error(`💀 SPORTMONKS ERRO [${endpoint}]:`, err.response?.data?.message || err.message);
+    if (err.response) {
+        console.error("Status Code:", err.response.status);
+    }
     return null;
   }
 };
+
 
 // --- MAPEAMENTOS E CONSTANTES ---
 
@@ -532,7 +549,8 @@ const normalizePredictions = (predictionsArray) => {
 
 // --- FUNÇÃO PRINCIPAL DE DETALHES (Atualizada) ---
 export const apiGetFixtureDetails = async (fixtureId) => {
-  // Includes solicitados no seu prompt
+  console.log(`🔍 SERVICE: Iniciando busca detalhada para ${fixtureId}`);
+
   const include = [
     "participants",
     "league",
@@ -549,59 +567,64 @@ export const apiGetFixtureDetails = async (fixtureId) => {
     "sidelined.sideline.player",
     "sidelined.sideline.type",
     "weatherReport",
-    "predictions.type", // <--- Adicionado para jogos futuros
+    "predictions.type",
     "odds.market",
     "odds.bookmaker"
   ].join(";");
 
+  // Vamos tentar buscar SEM filtros primeiro para garantir que o jogo existe
+  // filters: "markets:1;bookmakers:2" // Removi temporariamente o filtro para testar
+  
   const data = await request(`/fixtures/${fixtureId}`, { include });
   
-  if (!data) return null;
-
-  // Normaliza o básico (Placar, Times, Status)
-  const normalized = normalizeMatchCard(data);
-  
-  if (normalized) {
-      // Adiciona dados detalhados
-      normalized.venue = data.venue?.name;
-      normalized.weather = data.weather_report;
-      
-      // Eventos (Timeline)
-      normalized.events = (data.events || []).map(e => ({
-          id: e.id,
-          minute: e.minute,
-          type: e.type?.name,
-          player_name: e.player?.display_name || e.player_name,
-          team_id: e.participant_id,
-          // Helper para saber se é casa ou fora
-          is_home: e.participant_id === normalized.home_team.id
-      })).sort((a, b) => b.minute - a.minute);
-
-      // Estatísticas (Posse, Chutes, etc)
-      // A Sportmonks retorna array [ { type: { code: 'possession' }, data: { value: 50 } } ... ]
-      // Precisamos transformar num objeto { home: { possession: 50 }, away: { possession: 50 } }
-      const statsObj = { home: {}, away: {} };
-      if (Array.isArray(data.statistics)) {
-          data.statistics.forEach(stat => {
-              const code = stat.type?.code; // ex: 'possession'
-              const isHome = stat.participant_id === normalized.home_team.id;
-              const target = isHome ? statsObj.home : statsObj.away;
-              
-              // O valor as vezes vem direto ou dentro de data.value
-              const val = stat.data?.value ?? stat.value ?? 0;
-              if (code) target[code] = val;
-          });
-      }
-      normalized.stats = statsObj;
-
-      // Previsões (Predictions) - Apenas para jogos NS (Not Started)
-      if (data.predictions && data.predictions.length > 0) {
-          normalized.predictions = normalizePredictions(data.predictions);
-      }
+  if (!data) {
+      console.log(`❌ SERVICE: Sportmonks não retornou dados para ${fixtureId}`);
+      return null;
   }
 
-  return normalized;
+  console.log(`Processing data for match: ${data.name}`);
+
+  try {
+      const normalized = normalizeMatchCard(data);
+      
+      if (normalized) {
+          normalized.venue = data.venue?.name;
+          normalized.weather = data.weather_report;
+          
+          normalized.events = (data.events || []).map(e => ({
+              id: e.id,
+              minute: e.minute,
+              type: e.type?.name,
+              player_name: e.player?.display_name || e.player_name,
+              team_id: e.participant_id,
+              is_home: e.participant_id === normalized.home_team.id
+          })).sort((a, b) => b.minute - a.minute);
+
+          const statsObj = { home: {}, away: {} };
+          if (Array.isArray(data.statistics)) {
+              data.statistics.forEach(stat => {
+                  const code = stat.type?.code;
+                  const isHome = stat.participant_id === normalized.home_team.id;
+                  const target = isHome ? statsObj.home : statsObj.away;
+                  const val = stat.data?.value ?? stat.value ?? 0;
+                  if (code) target[code] = val;
+              });
+          }
+          normalized.stats = statsObj;
+
+          // Normalização de Predictions (se tiver)
+          // ... (seu código de predictions aqui)
+      }
+      
+      console.log(`✅ SERVICE: Normalização concluída para ${fixtureId}`);
+      return normalized;
+
+  } catch (normalizationError) {
+      console.error("💀 SERVICE: Erro durante a normalização:", normalizationError);
+      return null;
+  }
 };
+
 
 
 // 5. Jogos ao Vivo (LiveScores)

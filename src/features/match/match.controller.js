@@ -1,10 +1,9 @@
 import { 
   apiGetLiveMatches, 
-  apiGetDailyMatches, // <--- Importe isso
+  apiGetDailyMatches,
   apiGetFixtureDetails 
 } from "../../services/sports.service.js";
 
-// Lista de Jogos ao Vivo
 export const live = async (req, res, next) => {
   try {
     const matches = await apiGetLiveMatches();
@@ -14,7 +13,6 @@ export const live = async (req, res, next) => {
   }
 };
 
-// NOVA: Lista de Todos os Jogos do Dia (Para a Home)
 export const daily = async (req, res, next) => {
   try {
     const matches = await apiGetDailyMatches();
@@ -24,16 +22,26 @@ export const daily = async (req, res, next) => {
   }
 };
 
-// Detalhes da Partida
+// --- AQUI ESTÁ O FOCO DO DEBUG ---
 export const show = async (req, res, next) => {
+  const { id } = req.params;
+  
+  console.log("========================================");
+  console.log(`🔥 CONTROLLER: Recebida requisição para partida ID: ${id}`);
+  console.log("========================================");
+
   try {
-    const { id } = req.params;
     const details = await apiGetFixtureDetails(id);
     
-    if (!details) return res.status(404).json({ error: "Partida não encontrada" });
+    if (!details) {
+      console.log(`❌ CONTROLLER: apiGetFixtureDetails retornou null para o ID ${id}`);
+      return res.status(404).json({ error: "Partida não encontrada" });
+    }
 
+    console.log(`✅ CONTROLLER: Dados encontrados para ID ${id}. Enviando resposta...`);
     res.json(details);
   } catch (e) {
+    console.error(`💀 CONTROLLER ERRO:`, e.message);
     next(e);
   }
 };
