@@ -523,7 +523,7 @@ const normalizePredictions = (predictionsArray) => {
     fulltime: null,
     goals_home: null,
     goals_away: null,
-    btts: null, // Both Teams To Score
+    btts: null,
     corners: null
   };
 
@@ -531,8 +531,7 @@ const normalizePredictions = (predictionsArray) => {
     const typeId = pred.type_id;
     const vals = pred.predictions;
 
-    // Mapeamento baseado no seu JSON e IDs comuns da Sportmonks
-    // 237: Fulltime Result Probability
+    // 237: Probabilidade Resultado Final (1x2)
     if (typeId === 237) {
       result.fulltime = {
         home: vals.home,
@@ -540,71 +539,110 @@ const normalizePredictions = (predictionsArray) => {
         away: vals.away
       };
     }
-    // 1679: Over/Under 4.5 (Exemplo) - Você pode mapear outros se quiser
-    // BTTS geralmente é outro ID, mas vamos focar no principal
+    // 1683: Escanteios Over/Under 5 (Exemplo)
+    if (typeId === 1683) {
+        result.corners = vals;
+    }
+    // Você pode adicionar outros IDs aqui conforme aparecem na sua API
   });
 
   return result;
 };
 
+
+
 // --- FUNÇÃO PRINCIPAL DE DETALHES (Atualizada) ---
 export const apiGetFixtureDetails = async (fixtureId) => {
-  console.log(`📡 SERVICE: Buscando detalhes para ID ${fixtureId}...`);
+  console.log(`📡 SERVICE: Buscando detalhes completos para ID ${fixtureId}...`);
 
+  // Lista completa de includes solicitados
+  // NOTA: Se o seu plano não suportar 'predictions', remova 'predictions.type' da string abaixo.
   const include = [
     "participants",
     "league.country",
     "venue",
     "state",
     "scores",
-    "events.type",
-    "events.player",
-    "statistics.type",
-    "lineups.player",
-    "lineups.position",
-    "weatherReport",
-    // "predictions.type", // <--- REMOVIDO POIS SEU PLANO NÃO SUPORTA
-    "odds.market",
-    "odds.bookmaker"
+    "events.type", "events.period", "events.player", // Timeline
+    "statistics.type", // Estatísticas
+    "lineups.player", "lineups.position", "lineups.details.type", // Escalações + Ratings
+    "sidelined.sideline.player", "sidelined.sideline.type", // Lesionados
+    "weatherReport", // Clima
+    "predictions.type", // Projeções (IA)
+    "odds.market", "odds.bookmaker" // Cotações
   ].join(";");
 
-  // Removido filtro de odds para garantir que a partida carregue mesmo sem cotações
+  // Requisição à API (Sem filtros restritivos para garantir retorno)
   const data = await request(`/fixtures/${fixtureId}`, { include });
   
   if (!data) {
-      console.warn(`⚠️ SERVICE: Retorno vazio para ${fixtureId}`);
+      console.warn(`⚠️ SERVICE: Sportmonks retornou vazio para ${fixtureId}`);
       return null;
   }
 
+  // 1. Normalização Básica (Card da Partida)
   const normalized = normalizeMatchCard(data);
   
   if (normalized) {
+      // 2. Dados de Estádio e Clima
       normalized.venue = data.venue?.name;
       normalized.weather = data.weather_report;
       
-      // Processa Stats
+      // 3. Estatísticas (Stats)
+      // Transforma array da API em objeto { home: {...}, away: {...} }
       const statsObj = { home: {}, away: {} };
       if (Array.isArray(data.statistics)) {
           data.statistics.forEach(stat => {
-              const code = stat.type?.code; // ex: 'possession'
+              const code = stat.type?.code; // ex: 'possession', 'shots_total'
               const isHome = stat.participant_id === normalized.home_team.id;
               const target = isHome ? statsObj.home : statsObj.away;
+              
+              // Sportmonks v3: valor pode estar em data.value ou direto em value
               const val = stat.data?.value ?? stat.value ?? 0;
+              
               if (code) target[code] = val;
           });
       }
       normalized.stats = statsObj;
 
-      // Processa Eventos (Timeline)
+      // 4. Linha do Tempo (Events)
+      // Mapeia eventos e ordena por minuto (decrescente = mais recente no topo)
       normalized.events = (data.events || []).map(e => ({
           id: e.id,
           minute: e.minute,
-          type: e.type?.name,
+          extra_minute: e.extra_minute,
+          type: e.type?.name, // Goal, Yellow Card, Substitution
           player_name: e.player?.display_name || e.player_name,
+          related_player_name: e.related_player_name, // Para substituições
+          result: e.result, // Placar no momento do gol
           is_home: e.participant_id === normalized.home_team.id
-      })).sort((a,b) => b.minute - a.minute);
+      })).sort((a, b) => b.minute - a.minute);
+
+      // 5. Escalações (Lineups)
+      if (data.lineups) {
+          // Usa a função normalizeLineups que já existe no arquivo sports.service.js
+          normalized.lineups = normalizeLineups(data);
+      } else {
+          normalized.lineups = null;
+      }
+
+      // 6. Projeções (Predictions)
+      // Verifica se existem antes de normalizar
+      if (data.predictions && data.predictions.length > 0) {
+          normalized.predictions = normalizePredictions(data.predictions);
+      } else {
+          normalized.predictions = null;
+      }
+
+      // 7. Desfalques (Sidelined)
+      if (data.sidelined) {
+          normalized.sidelined = normalizeSidelined(data.sidelined, normalized.home_team.id, normalized.away_team.id);
+      } else {
+          normalized.sidelined = { home: [], away: [] };
+      }
   }
 
+  console.log(`✅ SERVICE: Dados normalizados com sucesso para ID ${fixtureId}`);
   return normalized;
 };
 
@@ -867,4 +905,27 @@ export const apiGetLeaguesByDate = async (date) => {
           matches // Array de jogos normalizados
       };
   }).filter(l => l.matches.length > 0); // Retorna apenas ligas que têm jogos na data
+};
+
+
+// HELPER H2H
+export const normalizeH2H = (fixturesArray) => {
+  if (!Array.isArray(fixturesArray)) return [];
+  
+  // Retorna os últimos 5 jogos
+  return fixturesArray.slice(0, 5).map(normalizeMatchCard);
+};
+
+// NOVO: Buscar Head-to-Head
+export const apiGetHeadToHead = async (teamA, teamB) => {
+  const params = {
+    include: "participants;league;scores;state;venue"
+  };
+  
+  const data = await request(`/fixtures/head-to-head/${teamA}/${teamB}`, params);
+  
+  if (!data) return [];
+  
+  // Normaliza usando a função padrão de card
+  return (data || []).map(normalizeMatchCard).sort((a, b) => b.timestamp - a.timestamp); // Mais recente primeiro
 };

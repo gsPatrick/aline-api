@@ -43,3 +43,27 @@ export const show = async (req, res, next) => {
     next(e);
   }
 };
+
+export const h2h = async (req, res, next) => {
+  try {
+    const { id } = req.params; // ID da partida atual
+    
+    // Primeiro precisamos saber quem são os times dessa partida
+    const match = await apiGetFixtureDetails(id);
+    
+    if (!match) return res.status(404).json({ error: "Partida não encontrada" });
+
+    const teamA = match.home_team.id;
+    const teamB = match.away_team.id;
+
+    // Busca o histórico entre eles
+    const history = await apiGetHeadToHead(teamA, teamB);
+    
+    // Filtra a partida atual da lista (se ela já aconteceu)
+    const filteredHistory = history.filter(h => String(h.id) !== String(id));
+
+    res.json(filteredHistory);
+  } catch (e) {
+    next(e);
+  }
+};
