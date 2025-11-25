@@ -549,82 +549,68 @@ const normalizePredictions = (predictionsArray) => {
 
 // --- FUNÇÃO PRINCIPAL DE DETALHES (Atualizada) ---
 export const apiGetFixtureDetails = async (fixtureId) => {
-  console.log(`🔍 SERVICE: Iniciando busca detalhada para ${fixtureId}`);
+  console.log(`📡 SERVICE: Requisitando fixture/${fixtureId} à Sportmonks...`);
 
   const include = [
     "participants",
-    "league",
+    "league.country",
     "venue",
     "state",
     "scores",
     "events.type",
-    "events.period",
     "events.player",
     "statistics.type",
     "lineups.player",
     "lineups.position",
-    "lineups.details.type",
-    "sidelined.sideline.player",
-    "sidelined.sideline.type",
     "weatherReport",
     "predictions.type",
     "odds.market",
     "odds.bookmaker"
   ].join(";");
 
-  // Vamos tentar buscar SEM filtros primeiro para garantir que o jogo existe
-  // filters: "markets:1;bookmakers:2" // Removi temporariamente o filtro para testar
-  
+  // REMOVI 'filters' para garantir que o jogo venha, mesmo sem odds
   const data = await request(`/fixtures/${fixtureId}`, { include });
   
   if (!data) {
-      console.log(`❌ SERVICE: Sportmonks não retornou dados para ${fixtureId}`);
+      console.warn(`⚠️ SERVICE: Sportmonks retornou vazio para ${fixtureId}`);
       return null;
   }
 
-  console.log(`Processing data for match: ${data.name}`);
-
-  try {
-      const normalized = normalizeMatchCard(data);
+  const normalized = normalizeMatchCard(data);
+  
+  if (normalized) {
+      normalized.venue = data.venue?.name;
+      normalized.weather = data.weather_report;
       
-      if (normalized) {
-          normalized.venue = data.venue?.name;
-          normalized.weather = data.weather_report;
-          
-          normalized.events = (data.events || []).map(e => ({
-              id: e.id,
-              minute: e.minute,
-              type: e.type?.name,
-              player_name: e.player?.display_name || e.player_name,
-              team_id: e.participant_id,
-              is_home: e.participant_id === normalized.home_team.id
-          })).sort((a, b) => b.minute - a.minute);
-
-          const statsObj = { home: {}, away: {} };
-          if (Array.isArray(data.statistics)) {
-              data.statistics.forEach(stat => {
-                  const code = stat.type?.code;
-                  const isHome = stat.participant_id === normalized.home_team.id;
-                  const target = isHome ? statsObj.home : statsObj.away;
-                  const val = stat.data?.value ?? stat.value ?? 0;
-                  if (code) target[code] = val;
-              });
-          }
-          normalized.stats = statsObj;
-
-          // Normalização de Predictions (se tiver)
-          // ... (seu código de predictions aqui)
+      // Stats
+      const statsObj = { home: {}, away: {} };
+      if (Array.isArray(data.statistics)) {
+          data.statistics.forEach(stat => {
+              const code = stat.type?.code;
+              const isHome = stat.participant_id === normalized.home_team.id;
+              const target = isHome ? statsObj.home : statsObj.away;
+              const val = stat.data?.value ?? stat.value ?? 0;
+              if (code) target[code] = val;
+          });
       }
-      
-      console.log(`✅ SERVICE: Normalização concluída para ${fixtureId}`);
-      return normalized;
+      normalized.stats = statsObj;
 
-  } catch (normalizationError) {
-      console.error("💀 SERVICE: Erro durante a normalização:", normalizationError);
-      return null;
+      // Events
+      normalized.events = (data.events || []).map(e => ({
+          id: e.id,
+          minute: e.minute,
+          type: e.type?.name,
+          player_name: e.player?.display_name || e.player_name,
+          is_home: e.participant_id === normalized.home_team.id
+      })).sort((a,b) => b.minute - a.minute);
+
+      // Predictions
+      if (data.predictions) normalized.predictions = normalizePredictions(data.predictions);
   }
-};
 
+  console.log(`✅ SERVICE: Normalização concluída com sucesso.`);
+  return normalized;
+};
 
 
 // 5. Jogos ao Vivo (LiveScores)
