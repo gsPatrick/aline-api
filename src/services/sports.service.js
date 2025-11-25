@@ -406,8 +406,10 @@ export const normalizeLineups = (fixture) => {
   const homeId = fixture.participants.find(p => p.meta?.location === 'home')?.id;
   const awayId = fixture.participants.find(p => p.meta?.location === 'away')?.id;
 
+  // Pega formação do metadata
   const formations = getFormationFromMetadata(fixture.metadata);
 
+  // Pega treinadores
   const coaches = { home: null, away: null };
   if (Array.isArray(fixture.coaches)) {
     const homeCoach = fixture.coaches.find(c => c.meta?.participant_id === homeId);
@@ -439,28 +441,39 @@ export const normalizeLineups = (fixture) => {
       const isHome = entry.team_id === homeId;
       const targetTeam = isHome ? result.home : result.away;
       
+      // Helper para pegar Rating e Capitão dos 'details'
+      const ratingStat = entry.details?.find(d => d.type_id === 118); // 118 = Rating
+      const captainStat = entry.details?.find(d => d.type_id === 40); // 40 = Captain
+
       const playerObj = {
         id: entry.player_id,
         name: entry.player_name || entry.player?.display_name,
         number: entry.jersey_number,
         photo: entry.player?.image_path,
         position: entry.position_id,
-        grid: entry.formation_field,
-        rating: getRating(entry.details),
-        is_captain: entry.details?.some(d => d.type_id === 40) || false
+        grid: entry.formation_field, // ex: "1:1"
+        rating: ratingStat ? Number(ratingStat.data?.value).toFixed(1) : null,
+        is_captain: !!captainStat
       };
 
+      // type_id 11 = Titular, 12 = Banco
       if (entry.type_id === 11) targetTeam.starters.push(playerObj);
       else if (entry.type_id === 12) targetTeam.bench.push(playerObj);
     });
   }
 
-  const sortLineup = (a, b) => (a.grid && b.grid) ? 0 : a.number - b.number;
+   // Ordena por posição no campo (grid) ou número da camisa
+  const sortLineup = (a, b) => {
+      if (a.grid && b.grid) return a.grid.localeCompare(b.grid);
+      return a.number - b.number;
+  };
+
   result.home.starters.sort(sortLineup);
   result.away.starters.sort(sortLineup);
 
   return result;
 };
+
 
 export const normalizeMatchDetails = (fixture) => {
     const base = normalizeMatchCard(fixture);
