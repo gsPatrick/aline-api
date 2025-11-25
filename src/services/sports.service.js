@@ -406,33 +406,31 @@ export const normalizeLineups = (fixture) => {
   const homeId = fixture.participants.find(p => p.meta?.location === 'home')?.id;
   const awayId = fixture.participants.find(p => p.meta?.location === 'away')?.id;
 
-  // Pega formação do metadata
+  // Extrai formação do metadata (type_id 159)
+  // Ex: { home: "4-2-3-1", away: "4-2-3-1" }
   const formations = getFormationFromMetadata(fixture.metadata);
 
-  // Pega treinadores
+  // Extrai técnicos
   const coaches = { home: null, away: null };
   if (Array.isArray(fixture.coaches)) {
-    const homeCoach = fixture.coaches.find(c => c.meta?.participant_id === homeId);
-    const awayCoach = fixture.coaches.find(c => c.meta?.participant_id === awayId);
-    
-    if (homeCoach) coaches.home = { name: homeCoach.display_name, photo: homeCoach.image_path };
-    if (awayCoach) coaches.away = { name: awayCoach.display_name, photo: awayCoach.image_path };
+    const hCoach = fixture.coaches.find(c => c.meta?.participant_id === homeId);
+    const aCoach = fixture.coaches.find(c => c.meta?.participant_id === awayId);
+    if(hCoach) coaches.home = { name: hCoach.display_name, photo: hCoach.image_path };
+    if(aCoach) coaches.away = { name: aCoach.display_name, photo: aCoach.image_path };
   }
 
   const result = {
-    home: {
-      team_id: homeId,
-      formation: formations.home,
-      coach: coaches.home,
-      starters: [],
-      bench: []
+    home: { 
+        formation: formations.home || "N/A", 
+        coach: coaches.home, 
+        starters: [], 
+        bench: [] 
     },
-    away: {
-      team_id: awayId,
-      formation: formations.away,
-      coach: coaches.away,
-      starters: [],
-      bench: []
+    away: { 
+        formation: formations.away || "N/A", 
+        coach: coaches.away, 
+        starters: [], 
+        bench: [] 
     }
   };
 
@@ -441,36 +439,39 @@ export const normalizeLineups = (fixture) => {
       const isHome = entry.team_id === homeId;
       const targetTeam = isHome ? result.home : result.away;
       
-      // Helper para pegar Rating e Capitão dos 'details'
-      const ratingStat = entry.details?.find(d => d.type_id === 118); // 118 = Rating
-      const captainStat = entry.details?.find(d => d.type_id === 40); // 40 = Captain
+      // Rating (type_id 118 dentro de details)
+      const rating = getRating(entry.details);
 
       const playerObj = {
         id: entry.player_id,
         name: entry.player_name || entry.player?.display_name,
         number: entry.jersey_number,
         photo: entry.player?.image_path,
-        position: entry.position_id,
-        grid: entry.formation_field, // ex: "1:1"
-        rating: ratingStat ? Number(ratingStat.data?.value).toFixed(1) : null,
-        is_captain: !!captainStat
+        position: entry.position_id, // 24=GK, 25=DEF, 26=MID, 27=ATT
+        grid: entry.formation_field, // "1:1", "4:2" etc (para desenhar no campo)
+        rating: rating,
+        is_captain: entry.details?.some(d => d.type_id === 40) || false
       };
 
-      // type_id 11 = Titular, 12 = Banco
+      // Type ID: 11 = Titular, 12 = Banco
       if (entry.type_id === 11) targetTeam.starters.push(playerObj);
       else if (entry.type_id === 12) targetTeam.bench.push(playerObj);
     });
   }
 
-   // Ordena por posição no campo (grid) ou número da camisa
-  const sortLineup = (a, b) => {
-      if (a.grid && b.grid) return a.grid.localeCompare(b.grid);
-      return a.number - b.number;
+  // Ordena titulares por posição no grid (Goleiro -> Ataque) e banco por número
+  const sortGrid = (a, b) => (a.grid && b.grid) ? 0 : a.number - b.number; // Simplificado, idealmente parse grid string
+  
+  // Ordenação simples para lista: Goleiro (24) primeiro
+  const sortPos = (a, b) => {
+      if (a.position === 24) return -1;
+      if (b.position === 24) return 1;
+      return a.position - b.position;
   };
 
-  result.home.starters.sort(sortLineup);
-  result.away.starters.sort(sortLineup);
-
+  result.home.starters.sort(sortPos);
+  result.away.starters.sort(sortPos);
+  
   return result;
 };
 
