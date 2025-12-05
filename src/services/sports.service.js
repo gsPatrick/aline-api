@@ -1303,10 +1303,10 @@ export const apiGetTeamStats = async (teamId) => {
     // order: 'desc' (depende da API, mas vamos ordenar manualmente se precisar)
   });
 
-  // 2. Próximo Jogo
+  // 2. Próximo Jogo (Busca 5 para listar na aba "Próximos")
   const upcoming = await request(`/fixtures/upcoming/teams/${teamId}`, {
     include: "participants;league;odds.market;odds.bookmaker",
-    per_page: 1
+    per_page: 5
   });
 
   // 3. Stats da Temporada (Radar)
@@ -1336,9 +1336,12 @@ export const apiGetTeamStats = async (teamId) => {
     };
   };
 
+  const upcomingMatches = (upcoming || []).map(normalizeMatchCard);
+
   return {
     latest_matches: (latestMatches || []).map(normalizeMatchCard),
-    next_match: (upcoming || []).map(normalizeMatchCard)[0] || null,
+    next_match: upcomingMatches[0] || null,
+    upcoming_matches: upcomingMatches,
     radar_data: processRadar(seasonStats)
   };
 };
