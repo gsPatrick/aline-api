@@ -799,15 +799,12 @@ export const apiGetTeamSchedule = async (teamId) => {
   };
 
   const data = await request(`/teams/${teamId}`, params);
-  if (!data) return { upcoming: null, latest: [] };
+  if (!data) return [];
 
-  const upcoming = (data.upcoming || []).map(normalizeMatchCard).sort((a, b) => a.timestamp - b.timestamp);
-  const latest = (data.latest || []).map(normalizeMatchCard).sort((a, b) => b.timestamp - a.timestamp);
+  const upcoming = (data.upcoming || []).map(normalizeMatchCard);
+  const latest = (data.latest || []).map(normalizeMatchCard);
 
-  return {
-    upcoming: upcoming[0] || null, // Próximo jogo
-    latest: latest // Histórico recente
-  };
+  return [...upcoming, ...latest];
 };
 
 
