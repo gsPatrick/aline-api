@@ -46,6 +46,18 @@ export const initSocket = (httpServer) => {
     userIds.forEach((id) => io.sendToUser(id, event, payload));
   };
 
+  // Novo método para broadcast geral (Live Updates)
+  io.broadcastMatchUpdate = (event, payload) => {
+    io.emit(event, payload);
+  };
+
   global.__io = io;
   return io;
+};
+
+export const getIO = () => {
+  if (!global.__io) {
+    throw new Error("Socket.io não inicializado!");
+  }
+  return global.__io;
 };

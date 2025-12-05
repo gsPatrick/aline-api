@@ -14,7 +14,7 @@ app.use(morgan("dev"));
 
 app.use("/api", router);
 
-app.use(errorMiddleware);
+app.use(errorMiddlewares);
 
 export default app;
 

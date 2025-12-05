@@ -37,11 +37,11 @@ const http = axios.create({
 // --- HELPER DE REQUISIÇÃO ---
 const request = async (endpoint, params = {}) => {
   if (!apiKey) throw new Error("MYSPORTMONKS_API_KEY ausente.");
-  
-  const requestParams = { 
-    api_token: apiKey, 
-    timezone: defaultTimezone, 
-    ...params 
+
+  const requestParams = {
+    api_token: apiKey,
+    timezone: defaultTimezone,
+    ...params
   };
 
   try {
@@ -49,18 +49,18 @@ const request = async (endpoint, params = {}) => {
     // console.log(`👉 Params:`, JSON.stringify(params)); // Descomente se quiser ver os params detalhados
 
     const { data } = await http.get(endpoint, { params: requestParams });
-    
+
     if (!data) {
-        console.warn(`⚠️ SPORTMONKS: Resposta vazia (sem data) para ${endpoint}`);
+      console.warn(`⚠️ SPORTMONKS: Resposta vazia (sem data) para ${endpoint}`);
     } else {
-        console.log(`✅ SPORTMONKS: Sucesso para ${endpoint}`);
+      console.log(`✅ SPORTMONKS: Sucesso para ${endpoint}`);
     }
 
     return data?.data ?? data;
   } catch (err) {
     console.error(`💀 SPORTMONKS ERRO [${endpoint}]:`, err.response?.data?.message || err.message);
     if (err.response) {
-        console.error("Status Code:", err.response.status);
+      console.error("Status Code:", err.response.status);
     }
     return null;
   }
@@ -80,7 +80,7 @@ const STANDING_CODES = {
   134: "goals_against",
   179: "goal_difference",
   187: "points", // Overall Points
-  
+
   // CASA
   135: "home_played",
   136: "home_won",
@@ -131,18 +131,18 @@ const PLAYER_STAT_IDS = {
 
 const getMatchTime = (periods) => {
   if (!Array.isArray(periods) || periods.length === 0) return null;
-  
+
   // Pega o último período ativo
   const currentPeriod = periods[periods.length - 1];
-  
+
   let timeString = `${currentPeriod.minutes || 0}'`;
   if (currentPeriod.time_added > 0) {
     timeString += `+${currentPeriod.time_added}`;
   }
-  
+
   let phase = "";
   const desc = (currentPeriod.description || "").toLowerCase();
-  
+
   if (desc.includes("1st")) phase = "1T";
   else if (desc.includes("2nd")) phase = "2T";
   else if (desc.includes("halftime") || desc.includes("break")) return "INT"; // Intervalo
@@ -156,13 +156,13 @@ const mapMatchStatus = (fixture) => {
   // Lógica 1: Se tem periods ativos e não acabou, calcula tempo
   const periods = fixture.periods || [];
   if (periods.length > 0 && !fixture.finished && fixture.state?.short_name !== 'FT') {
-      const timeStr = getMatchTime(periods);
-      if (timeStr) return { id: 2, short: timeStr, long: "Em Andamento" };
+    const timeStr = getMatchTime(periods);
+    if (timeStr) return { id: 2, short: timeStr, long: "Em Andamento" };
   }
 
   // Lógica 2: Baseado no State ID ou Short Name
   const stateShort = fixture.state?.short_name || "NS";
-  
+
   if (["LIVE", "1st", "2nd", "ET", "PEN", "HT", "BREAK"].includes(stateShort)) {
     return { id: 2, short: "LIVE", long: "Ao Vivo" };
   }
@@ -170,9 +170,9 @@ const mapMatchStatus = (fixture) => {
     return { id: 3, short: "FT", long: "Encerrado" };
   }
   if (["POST", "CANC", "SUSP", "INT", "ABD"].includes(stateShort)) {
-    return { id: 4, short: stateShort, long: "Adiado/Cancelado" }; 
+    return { id: 4, short: stateShort, long: "Adiado/Cancelado" };
   }
-  
+
   return { id: 1, short: "NS", long: "Agendado" };
 };
 
@@ -201,7 +201,7 @@ const normalizeOdds = (oddsArray) => {
     }
 
     const label = (odd.original_label || odd.label || "").toLowerCase();
-    
+
     if (label === "1" || label === "home") {
       bookmakersMap[bookieId].home = { value: Number(odd.value).toFixed(2), prob: odd.probability };
     } else if (label === "x" || label === "draw") {
@@ -213,28 +213,28 @@ const normalizeOdds = (oddsArray) => {
 
   // Retorna o primeiro bookmaker encontrado (geralmente Bet365 se filtrado)
   const firstBookie = Object.values(bookmakersMap)[0];
-  
+
   if (!firstBookie || !firstBookie.home || !firstBookie.away) return null;
 
   return {
-      bookmaker: firstBookie.name,
-      home: firstBookie.home,
-      draw: firstBookie.draw,
-      away: firstBookie.away
+    bookmaker: firstBookie.name,
+    home: firstBookie.home,
+    draw: firstBookie.draw,
+    away: firstBookie.away
   };
 };
 
 const getRating = (details) => {
   if (!Array.isArray(details)) return null;
-  const ratingStat = details.find(d => d.type_id === 118); 
+  const ratingStat = details.find(d => d.type_id === 118);
   return ratingStat ? Number(ratingStat.data?.value || ratingStat.value).toFixed(1) : null;
 };
 
 const getFormationFromMetadata = (metadata) => {
   if (!Array.isArray(metadata)) return { home: null, away: null };
-  const formationData = metadata.find(m => m.type_id === 159); 
+  const formationData = metadata.find(m => m.type_id === 159);
   if (!formationData || !formationData.values) return { home: null, away: null };
-  return formationData.values; 
+  return formationData.values;
 };
 
 // Helper para extrair valor estatístico do array de details
@@ -249,7 +249,7 @@ const getStatValueFromDetails = (detailsArray, typeId, field = 'total') => {
   if (typeof stat.value === 'object') {
     return stat.value[field] ?? stat.value.total ?? 0;
   }
-  
+
   return Number(stat.value);
 };
 
@@ -267,7 +267,7 @@ export const normalizeLeagueList = (league) => ({
 
 export const normalizeStanding = (entry) => {
   const detailsMap = {};
-  
+
   // Processa estatísticas
   if (Array.isArray(entry.details)) {
     entry.details.forEach(det => {
@@ -325,27 +325,27 @@ export const normalizeStanding = (entry) => {
 };
 
 const normalizeSidelined = (sidelinedArray, homeId, awayId) => {
-    if (!Array.isArray(sidelinedArray)) return { home: [], away: [] };
+  if (!Array.isArray(sidelinedArray)) return { home: [], away: [] };
 
-    const result = { home: [], away: [] };
+  const result = { home: [], away: [] };
 
-    sidelinedArray.forEach(entry => {
-        const player = entry.player;
-        if (!player) return;
+  sidelinedArray.forEach(entry => {
+    const player = entry.player;
+    if (!player) return;
 
-        const item = {
-            id: player.id,
-            name: player.display_name,
-            photo: player.image_path,
-            reason: entry.type?.name || "Desconhecido", // Lesão, Suspensão
-            start_date: entry.start_date
-        };
+    const item = {
+      id: player.id,
+      name: player.display_name,
+      photo: player.image_path,
+      reason: entry.type?.name || "Desconhecido", // Lesão, Suspensão
+      start_date: entry.start_date
+    };
 
-        if (entry.team_id === homeId) result.home.push(item);
-        else if (entry.team_id === awayId) result.away.push(item);
-    });
+    if (entry.team_id === homeId) result.home.push(item);
+    else if (entry.team_id === awayId) result.away.push(item);
+  });
 
-    return result;
+  return result;
 };
 
 
@@ -362,7 +362,7 @@ export const normalizeMatchCard = (fixture) => {
   // Placar
   const scores = fixture.scores || [];
   const currentScores = scores.filter(s => s.description === 'CURRENT');
-  
+
   let homeScore = 0;
   let awayScore = 0;
 
@@ -371,12 +371,12 @@ export const normalizeMatchCard = (fixture) => {
 
   if (homeScoreObj) homeScore = homeScoreObj.score.goals;
   if (awayScoreObj) awayScore = awayScoreObj.score.goals;
-  
+
   if (!homeScoreObj && !awayScoreObj && currentScores.length > 0) {
-     const h = currentScores.find(s => s.participant_id === home.id);
-     const a = currentScores.find(s => s.participant_id === away.id);
-     if (h) homeScore = h.score?.goals || 0;
-     if (a) awayScore = a.score?.goals || 0;
+    const h = currentScores.find(s => s.participant_id === home.id);
+    const a = currentScores.find(s => s.participant_id === away.id);
+    if (h) homeScore = h.score?.goals || 0;
+    if (a) awayScore = a.score?.goals || 0;
   }
 
   // Odds
@@ -395,7 +395,7 @@ export const normalizeMatchCard = (fixture) => {
     home_team: {
       id: home.id,
       name: home.name || "TBD",
-      short_code: home.short_code || home.name?.substring(0,3).toUpperCase(),
+      short_code: home.short_code || home.name?.substring(0, 3).toUpperCase(),
       logo: home.image_path || "",
       score: Number(homeScore),
       is_winner: home.meta?.winner
@@ -403,7 +403,7 @@ export const normalizeMatchCard = (fixture) => {
     away_team: {
       id: away.id,
       name: away.name || "TBD",
-      short_code: away.short_code || away.name?.substring(0,3).toUpperCase(),
+      short_code: away.short_code || away.name?.substring(0, 3).toUpperCase(),
       logo: away.image_path || "",
       score: Number(awayScore),
       is_winner: away.meta?.winner
@@ -428,22 +428,22 @@ export const normalizeLineups = (fixture) => {
   if (Array.isArray(fixture.coaches)) {
     const hCoach = fixture.coaches.find(c => c.meta?.participant_id === homeId);
     const aCoach = fixture.coaches.find(c => c.meta?.participant_id === awayId);
-    if(hCoach) coaches.home = { name: hCoach.display_name, photo: hCoach.image_path };
-    if(aCoach) coaches.away = { name: aCoach.display_name, photo: aCoach.image_path };
+    if (hCoach) coaches.home = { name: hCoach.display_name, photo: hCoach.image_path };
+    if (aCoach) coaches.away = { name: aCoach.display_name, photo: aCoach.image_path };
   }
 
   const result = {
-    home: { 
-        formation: formations.home || "N/A", 
-        coach: coaches.home, 
-        starters: [], 
-        bench: [] 
+    home: {
+      formation: formations.home || "N/A",
+      coach: coaches.home,
+      starters: [],
+      bench: []
     },
-    away: { 
-        formation: formations.away || "N/A", 
-        coach: coaches.away, 
-        starters: [], 
-        bench: [] 
+    away: {
+      formation: formations.away || "N/A",
+      coach: coaches.away,
+      starters: [],
+      bench: []
     }
   };
 
@@ -451,7 +451,7 @@ export const normalizeLineups = (fixture) => {
     fixture.lineups.forEach(entry => {
       const isHome = entry.team_id === homeId;
       const targetTeam = isHome ? result.home : result.away;
-      
+
       // Rating (type_id 118 dentro de details)
       const rating = getRating(entry.details);
 
@@ -474,38 +474,38 @@ export const normalizeLineups = (fixture) => {
 
   // Ordena titulares por posição no grid (Goleiro -> Ataque) e banco por número
   const sortGrid = (a, b) => (a.grid && b.grid) ? 0 : a.number - b.number; // Simplificado, idealmente parse grid string
-  
+
   // Ordenação simples para lista: Goleiro (24) primeiro
   const sortPos = (a, b) => {
-      if (a.position === 24) return -1;
-      if (b.position === 24) return 1;
-      return a.position - b.position;
+    if (a.position === 24) return -1;
+    if (b.position === 24) return 1;
+    return a.position - b.position;
   };
 
   result.home.starters.sort(sortPos);
   result.away.starters.sort(sortPos);
-  
+
   return result;
 };
 
 
 export const normalizeMatchDetails = (fixture) => {
-    const base = normalizeMatchCard(fixture);
-    if(!base) return null;
-    return {
-        ...base,
-        venue: fixture.venue?.name || "Estádio não informado"
-    };
+  const base = normalizeMatchCard(fixture);
+  if (!base) return null;
+  return {
+    ...base,
+    venue: fixture.venue?.name || "Estádio não informado"
+  };
 };
 
 export const normalizeSquadPlayer = (entry) => {
   const p = entry.player;
-  
+
   if (!p) return null;
 
   // Pega as estatísticas da temporada filtrada (array statistics do JSON)
-  const statsDetails = p.statistics && p.statistics.length > 0 
-    ? p.statistics[0].details 
+  const statsDetails = p.statistics && p.statistics.length > 0
+    ? p.statistics[0].details
     : [];
 
   return {
@@ -514,7 +514,7 @@ export const normalizeSquadPlayer = (entry) => {
     photo: p.image_path,
     nationality_flag: p.nationality?.image_path,
     country: p.nationality?.name,
-    position_id: p.position_id, 
+    position_id: p.position_id,
     position_name: p.position?.name || "Desconhecido",
     number: entry.jersey_number,
     is_captain: entry.captain || false,
@@ -564,7 +564,7 @@ export const apiGetFixturesBySeason = async (seasonId) => {
   const data = await request(`/fixtures/seasons/${seasonId}`, {
     include: ["participants", "scores", "state", "league.country"]
   });
-  return (data || []).map(normalizeMatchCard).filter(Boolean); 
+  return (data || []).map(normalizeMatchCard).filter(Boolean);
 };
 
 // --- HELPER: Normalizar Previsões (Predictions) ---
@@ -593,7 +593,7 @@ const normalizePredictions = (predictionsArray) => {
     }
     // 1683: Escanteios Over/Under 5 (Exemplo)
     if (typeId === 1683) {
-        result.corners = vals;
+      result.corners = vals;
     }
     // Você pode adicionar outros IDs aqui conforme aparecem na sua API
   });
@@ -616,84 +616,84 @@ export const apiGetFixtureDetails = async (fixtureId) => {
     "venue",
     "state",
     "scores",
-    
+
     // Lineups (CORRIGIDO PARA INCLUIR TUDO QUE VC PEDIU)
-    "lineups.player", 
+    "lineups.player",
     "lineups.type",         // <--- ADICIONADO (Faltava)
-    "lineups.details.type", 
+    "lineups.details.type",
     "lineups.position",     // Mantemos para ordenação
     "metadata.type",        // <--- ADICIONADO (Para Formação 4-3-3)
     "coaches",              // <--- ADICIONADO (Para Técnicos)
-    
+
     // Outras Abas (Timeline, Stats, Odds, Lesões)
-    "events.type", "events.period", "events.player", 
-    "statistics.type", 
-    "sidelined.sideline.player", "sidelined.sideline.type", 
-    "weatherReport", 
+    "events.type", "events.period", "events.player",
+    "statistics.type",
+    "sidelined.sideline.player", "sidelined.sideline.type",
+    "weatherReport",
     "odds.market", "odds.bookmaker"
   ].join(";");
 
   // Requisição à API
   const data = await request(`/fixtures/${fixtureId}`, { include });
-  
+
   if (!data) {
-      console.warn(`⚠️ SERVICE: Sportmonks retornou vazio para ${fixtureId}`);
-      return null;
+    console.warn(`⚠️ SERVICE: Sportmonks retornou vazio para ${fixtureId}`);
+    return null;
   }
 
   // 1. Normalização Básica (Card da Partida)
   const normalized = normalizeMatchCard(data);
-  
+
   if (normalized) {
-      // 2. Dados de Estádio e Clima
-      normalized.venue = data.venue?.name;
-      normalized.weather = data.weather_report;
-      
-      // 3. Estatísticas (Stats)
-      const statsObj = { home: {}, away: {} };
-      if (Array.isArray(data.statistics)) {
-          data.statistics.forEach(stat => {
-              const code = stat.type?.code;
-              const isHome = stat.participant_id === normalized.home_team.id;
-              const target = isHome ? statsObj.home : statsObj.away;
-              const val = stat.data?.value ?? stat.value ?? 0;
-              if (code) target[code] = val;
-          });
-      }
-      normalized.stats = statsObj;
+    // 2. Dados de Estádio e Clima
+    normalized.venue = data.venue?.name;
+    normalized.weather = data.weather_report;
 
-      // 4. Linha do Tempo (Events)
-      normalized.events = (data.events || []).map(e => ({
-          id: e.id,
-          minute: e.minute,
-          extra_minute: e.extra_minute,
-          type: e.type?.name,
-          player_name: e.player?.display_name || e.player_name,
-          related_player_name: e.related_player_name,
-          result: e.result,
-          is_home: e.participant_id === normalized.home_team.id
-      })).sort((a, b) => b.minute - a.minute);
+    // 3. Estatísticas (Stats)
+    const statsObj = { home: {}, away: {} };
+    if (Array.isArray(data.statistics)) {
+      data.statistics.forEach(stat => {
+        const code = stat.type?.code;
+        const isHome = stat.participant_id === normalized.home_team.id;
+        const target = isHome ? statsObj.home : statsObj.away;
+        const val = stat.data?.value ?? stat.value ?? 0;
+        if (code) target[code] = val;
+      });
+    }
+    normalized.stats = statsObj;
 
-      // 5. Escalações (Lineups) - AGORA VAI PEGAR FORMAÇÃO E TÉCNICO
-      if (data.lineups) {
-          normalized.lineups = normalizeLineups(data);
-      } else {
-          normalized.lineups = null;
-      }
+    // 4. Linha do Tempo (Events)
+    normalized.events = (data.events || []).map(e => ({
+      id: e.id,
+      minute: e.minute,
+      extra_minute: e.extra_minute,
+      type: e.type?.name,
+      player_name: e.player?.display_name || e.player_name,
+      related_player_name: e.related_player_name,
+      result: e.result,
+      is_home: e.participant_id === normalized.home_team.id
+    })).sort((a, b) => b.minute - a.minute);
 
-      // 6. Projeções (Predictions)
-      if (data.predictions && data.predictions.length > 0) {
-          normalized.predictions = normalizePredictions(data.predictions);
-      } else {
-          normalized.predictions = null;
-      }
+    // 5. Escalações (Lineups) - AGORA VAI PEGAR FORMAÇÃO E TÉCNICO
+    if (data.lineups) {
+      normalized.lineups = normalizeLineups(data);
+    } else {
+      normalized.lineups = null;
+    }
 
-      // 7. Desfalques (Sidelined)
-      if (data.sidelined) {
-          normalized.sidelined = normalizeSidelined(data.sidelined, normalized.home_team.id, normalized.away_team.id);
-      } else {
-          normalized.sidelined = { home: [], away: [] };
-      }
+    // 6. Projeções (Predictions)
+    if (data.predictions && data.predictions.length > 0) {
+      normalized.predictions = normalizePredictions(data.predictions);
+    } else {
+      normalized.predictions = null;
+    }
+
+    // 7. Desfalques (Sidelined)
+    if (data.sidelined) {
+      normalized.sidelined = normalizeSidelined(data.sidelined, normalized.home_team.id, normalized.away_team.id);
+    } else {
+      normalized.sidelined = { home: [], away: [] };
+    }
   }
 
   console.log(`✅ SERVICE: Dados normalizados com sucesso para ID ${fixtureId}`);
@@ -705,16 +705,16 @@ export const apiGetFixtureDetails = async (fixtureId) => {
 export const apiGetLiveMatches = async () => {
   const today = new Date().toISOString().split('T')[0];
   const params = { include: "participants;scores;periods;league.country;state;odds.market;odds.bookmaker" };
-  
+
   const data = await request(`/fixtures/date/${today}`, params);
   if (!data) return [];
-  
-  const liveStatuses = [2, 3, 22, 23, 25, 26]; 
+
+  const liveStatuses = [2, 3, 22, 23, 25, 26];
   const liveShorts = ['LIVE', '1st', '2nd', 'HT', 'ET', 'PEN', 'BREAK', 'INT'];
 
   const liveMatches = data.filter(f => {
-      const state = f.state || {};
-      return liveStatuses.includes(state.id) || liveShorts.includes(state.short_name);
+    const state = f.state || {};
+    return liveStatuses.includes(state.id) || liveShorts.includes(state.short_name);
   });
 
   return liveMatches.map(normalizeMatchCard);
@@ -726,7 +726,7 @@ export const apiGetDailyMatches = async () => {
   // Filtra apenas jogos com odds da Bet365 e Mercado 1x2 para a lista principal ficar limpa
   const params = {
     include: "participants;scores;state;league.country;odds.market;odds.bookmaker",
-    filters: "markets:1;bookmakers:2" 
+    filters: "markets:1;bookmakers:2"
   };
   const data = await request(`/fixtures/date/${today}`, params);
   return (data || []).map(normalizeMatchCard);
@@ -736,15 +736,15 @@ export const apiGetPlayerStats = async (playerId) => {
   const data = await request(`/players/${playerId}`, {
     include: ["teams", "statistics.season", "latest.stats"]
   });
-  
+
   if (!data) return null;
 
   const seasonStats = data.statistics || [];
   const currentSeasonStats = seasonStats.length > 0 ? (seasonStats[seasonStats.length - 1].details || []) : [];
-  
+
   const getVal = (id) => {
-      const stat = currentSeasonStats.find(s => s.type_id === id);
-      return stat ? Number(stat.value) : 0;
+    const stat = currentSeasonStats.find(s => s.type_id === id);
+    return stat ? Number(stat.value) : 0;
   };
 
   return {
@@ -753,8 +753,8 @@ export const apiGetPlayerStats = async (playerId) => {
     photo: data.image_path,
     team: data.teams?.[0] ? { id: data.teams[0].id, name: data.teams[0].name, logo: data.teams[0].image_path } : null,
     stats: {
-        goals: getVal(STAT_TYPES.GOALS),
-        assists: 0 
+      goals: getVal(STAT_TYPES.GOALS),
+      assists: 0
     }
   };
 };
@@ -766,7 +766,7 @@ export const apiGetRoundFixtures = async (roundId) => {
     "fixtures.odds.bookmaker",
     "fixtures.participants",
     "league.country",
-    "fixtures.scores" 
+    "fixtures.scores"
   ];
 
   const filters = {
@@ -800,8 +800,46 @@ export const apiGetTeamSchedule = async (teamId) => {
   const upcoming = (data.upcoming || []).map(normalizeMatchCard);
   const latest = (data.latest || []).map(normalizeMatchCard);
 
-  return [...latest, ...upcoming];
+  return { upcoming, latest };
 };
+
+// --- POLLING SERVICE (LIVE UPDATES) ---
+import { getIO } from "./socket.js";
+
+let lastLiveMatchesHash = "";
+
+export const startLiveMatchPolling = () => {
+  console.log("🔄 Iniciando Polling de Jogos ao Vivo (10s)...");
+
+  setInterval(async () => {
+    try {
+      const liveMatches = await apiGetLiveMatches();
+
+      // Cria um hash simples do estado atual para comparar
+      // Usamos apenas ID, Placar e Status para detectar mudanças relevantes
+      const currentHash = JSON.stringify(liveMatches.map(m => ({
+        id: m.id,
+        score_home: m.home_team.score,
+        score_away: m.away_team.score,
+        status: m.status.short,
+        minute: m.status.short // Minuto também muda
+      })));
+
+      if (currentHash !== lastLiveMatchesHash) {
+        console.log("⚡ Mudança detectada nos jogos ao vivo! Emitindo socket...");
+
+        const io = getIO();
+        io.broadcastMatchUpdate("match:update", liveMatches);
+
+        lastLiveMatchesHash = currentHash;
+      }
+
+    } catch (err) {
+      console.error("❌ Erro no Polling de Jogos:", err.message);
+    }
+  }, 10000); // 10 segundos
+};
+
 
 // 10. Classificação Ao Vivo / Por Rodada
 export const apiGetLiveStandings = async (roundId) => {
@@ -841,7 +879,7 @@ export const apiGetFixtureLineups = async (fixtureId) => {
 // 12. Elenco do Time (Squad)
 export const apiGetTeamSquad = async (teamId, seasonId) => {
   if (!seasonId) {
-     seasonId = "25184"; // Fallback
+    seasonId = "25184"; // Fallback
   }
 
   const params = {
@@ -877,44 +915,44 @@ export const apiGetTeamById = async (teamId) => {
 
 // 14. Calendário de Liga por Data (OTIMIZADO E CORRIGIDO)
 export const apiGetFixturesByDateAndLeague = async (date, leagueId) => {
-    // Busca jogos filtrados por data e ID da liga diretamente
-    const params = {
-        include: "participants;scores;state;league.country;odds.market;odds.bookmaker",
-        filters: `league_ids:${leagueId};markets:1;bookmakers:2`
-    };
-    
-    const data = await request(`/fixtures/date/${date}`, params);
-    
-    if (!data) return [];
-    return (data || []).map(normalizeMatchCard);
+  // Busca jogos filtrados por data e ID da liga diretamente
+  const params = {
+    include: "participants;scores;state;league.country;odds.market;odds.bookmaker",
+    filters: `league_ids:${leagueId};markets:1;bookmakers:2`
+  };
+
+  const data = await request(`/fixtures/date/${date}`, params);
+
+  if (!data) return [];
+  return (data || []).map(normalizeMatchCard);
 };
 
 // 15. Próximos Jogos por Liga (OTIMIZADO - Intervalo de 14 dias)
 export const apiGetUpcomingFixturesByLeague = async (leagueId) => {
-    const today = new Date();
-    const startStr = today.toISOString().split('T')[0];
-    
-    const future = new Date();
-    future.setDate(today.getDate() + 14); // Intervalo de 2 semanas
-    const endStr = future.toISOString().split('T')[0];
+  const today = new Date();
+  const startStr = today.toISOString().split('T')[0];
 
-    const params = {
-        include: "participants;scores;state;league.country;odds.market;odds.bookmaker",
-        filters: `league_ids:${leagueId};markets:1;bookmakers:2`
-    };
+  const future = new Date();
+  future.setDate(today.getDate() + 14); // Intervalo de 2 semanas
+  const endStr = future.toISOString().split('T')[0];
 
-    const data = await request(`/fixtures/between/${startStr}/${endStr}`, params);
-    
-    if (!data) return [];
-    
-    return (data || []).map(normalizeMatchCard).sort((a, b) => a.timestamp - b.timestamp);
+  const params = {
+    include: "participants;scores;state;league.country;odds.market;odds.bookmaker",
+    filters: `league_ids:${leagueId};markets:1;bookmakers:2`
+  };
+
+  const data = await request(`/fixtures/between/${startStr}/${endStr}`, params);
+
+  if (!data) return [];
+
+  return (data || []).map(normalizeMatchCard).sort((a, b) => a.timestamp - b.timestamp);
 };
 
 // Helper para buscar jogos em intervalo (usado no sync)
 export const fetchFixturesBetween = async (startStr, endStr, extraParams = {}) => {
   const params = {
-      include: ["participants", "scores", "state", "league.country", "periods"],
-      ...extraParams
+    include: ["participants", "scores", "state", "league.country", "periods"],
+    ...extraParams
   };
   const data = await request(`/fixtures/between/${startStr}/${endStr}`, params);
   return data || [];
@@ -922,7 +960,7 @@ export const fetchFixturesBetween = async (startStr, endStr, extraParams = {}) =
 
 // Helper para buscar ligas (usado no sync)
 export const fetchLeagues = async () => {
-    return apiGetLeagues();
+  return apiGetLeagues();
 };
 
 // Exportando normalizador para uso externo se necessário
@@ -940,24 +978,24 @@ export const apiGetLeaguesByDate = async (date) => {
 
   // Transforma a resposta para retornar uma estrutura amigável
   return data.map(league => {
-      // Normaliza informações da liga
-      const leagueInfo = normalizeLeagueList(league);
+    // Normaliza informações da liga
+    const leagueInfo = normalizeLeagueList(league);
 
-      // Normaliza jogos contidos em 'today'
-      // Os jogos dentro de 'today' não possuem o objeto 'league' completo dentro deles (apenas league_id).
-      // Então injetamos as informações da liga pai neles manualmente após normalizar.
-      const matches = (league.today || []).map(f => {
-          const normalized = normalizeMatchCard(f);
-          if(normalized) {
-              normalized.league = leagueInfo; // Injeta a info da liga pai para o frontend saber a qual liga pertence
-          }
-          return normalized;
-      }).filter(Boolean);
+    // Normaliza jogos contidos em 'today'
+    // Os jogos dentro de 'today' não possuem o objeto 'league' completo dentro deles (apenas league_id).
+    // Então injetamos as informações da liga pai neles manualmente após normalizar.
+    const matches = (league.today || []).map(f => {
+      const normalized = normalizeMatchCard(f);
+      if (normalized) {
+        normalized.league = leagueInfo; // Injeta a info da liga pai para o frontend saber a qual liga pertence
+      }
+      return normalized;
+    }).filter(Boolean);
 
-      return {
-          ...leagueInfo,
-          matches // Array de jogos normalizados
-      };
+    return {
+      ...leagueInfo,
+      matches // Array de jogos normalizados
+    };
   }).filter(l => l.matches.length > 0); // Retorna apenas ligas que têm jogos na data
 };
 
@@ -965,7 +1003,7 @@ export const apiGetLeaguesByDate = async (date) => {
 // HELPER H2H
 export const normalizeH2H = (fixturesArray) => {
   if (!Array.isArray(fixturesArray)) return [];
-  
+
   // Retorna os últimos 5 jogos
   return fixturesArray.slice(0, 5).map(normalizeMatchCard);
 };
@@ -975,11 +1013,11 @@ export const apiGetHeadToHead = async (teamA, teamB) => {
   const params = {
     include: "participants;league;scores;state;venue"
   };
-  
+
   const data = await request(`/fixtures/head-to-head/${teamA}/${teamB}`, params);
-  
+
   if (!data) return [];
-  
+
   // Normaliza usando a função padrão de card
   return (data || []).map(normalizeMatchCard).sort((a, b) => b.timestamp - a.timestamp); // Mais recente primeiro
 };
@@ -996,108 +1034,108 @@ const normalizePlayerProfile = (p) => {
   // 2. Time Atual (Baseado na data de fim do contrato)
   const currentTeamEntry = p.teams?.sort((a, b) => new Date(b.start) - new Date(a.start))[0];
   const currentTeam = currentTeamEntry ? {
-      id: currentTeamEntry.team.id,
-      name: currentTeamEntry.team.name,
-      logo: currentTeamEntry.team.image_path,
-      shirt_number: currentTeamEntry.jersey_number
+    id: currentTeamEntry.team.id,
+    name: currentTeamEntry.team.name,
+    logo: currentTeamEntry.team.image_path,
+    shirt_number: currentTeamEntry.jersey_number
   } : null;
 
   // 3. Estatísticas por Temporada (Tabela)
   // Agrupa estatísticas úteis e remove duplicatas ou temporadas vazias
   const careerStats = (p.statistics || []).map(stat => {
-      const getVal = (id) => {
-          const item = stat.details?.find(d => d.type_id === id);
-          return item ? Number(item.value.total || item.value.average || item.value) : 0;
-      };
+    const getVal = (id) => {
+      const item = stat.details?.find(d => d.type_id === id);
+      return item ? Number(item.value.total || item.value.average || item.value) : 0;
+    };
 
-      // Pula se não tiver stats relevantes
-      if (!stat.has_values && !stat.details?.length) return null;
+    // Pula se não tiver stats relevantes
+    if (!stat.has_values && !stat.details?.length) return null;
 
-      return {
-          id: stat.id,
-          season_id: stat.season_id,
-          season_name: stat.season?.name,
-          league_name: stat.season?.league?.name,
-          league_logo: stat.season?.league?.image_path,
-          team_logo: stat.team?.image_path,
-          matches: getVal(PLAYER_STAT_IDS.APPEARANCES),
-          goals: getVal(PLAYER_STAT_IDS.GOALS),
-          assists: getVal(PLAYER_STAT_IDS.ASSISTS),
-          rating: getVal(PLAYER_STAT_IDS.RATING).toFixed(2),
-          minutes: getVal(PLAYER_STAT_IDS.MINUTES)
-      };
+    return {
+      id: stat.id,
+      season_id: stat.season_id,
+      season_name: stat.season?.name,
+      league_name: stat.season?.league?.name,
+      league_logo: stat.season?.league?.image_path,
+      team_logo: stat.team?.image_path,
+      matches: getVal(PLAYER_STAT_IDS.APPEARANCES),
+      goals: getVal(PLAYER_STAT_IDS.GOALS),
+      assists: getVal(PLAYER_STAT_IDS.ASSISTS),
+      rating: getVal(PLAYER_STAT_IDS.RATING).toFixed(2),
+      minutes: getVal(PLAYER_STAT_IDS.MINUTES)
+    };
   }).filter(Boolean).sort((a, b) => b.season_id - a.season_id); // Mais recente primeiro
 
   // 4. Totais da Carreira (Somatório simples dos dados retornados)
   const totals = careerStats.reduce((acc, curr) => ({
-      matches: acc.matches + curr.matches,
-      goals: acc.goals + curr.goals,
-      assists: acc.assists + curr.assists
+    matches: acc.matches + curr.matches,
+    goals: acc.goals + curr.goals,
+    assists: acc.assists + curr.assists
   }), { matches: 0, goals: 0, assists: 0 });
 
   // 5. Últimos Jogos (Latest Matches)
   const lastMatches = (p.latest || []).map(latest => {
-      const fix = latest.fixture;
-      if (!fix) return null;
+    const fix = latest.fixture;
+    if (!fix) return null;
 
-      // Busca a nota específica desse jogo nos details do 'latest'
-      const ratingDetail = latest.details?.find(d => d.type_id === PLAYER_STAT_IDS.RATING);
-      const rating = ratingDetail ? Number(ratingDetail.value.average || ratingDetail.value).toFixed(1) : "-";
+    // Busca a nota específica desse jogo nos details do 'latest'
+    const ratingDetail = latest.details?.find(d => d.type_id === PLAYER_STAT_IDS.RATING);
+    const rating = ratingDetail ? Number(ratingDetail.value.average || ratingDetail.value).toFixed(1) : "-";
 
-      // Busca estatísticas chave do jogo
-      const goalsDetail = latest.details?.find(d => d.type_id === PLAYER_STAT_IDS.GOALS);
-      const goals = goalsDetail ? Number(goalsDetail.value.total || goalsDetail.value) : 0;
+    // Busca estatísticas chave do jogo
+    const goalsDetail = latest.details?.find(d => d.type_id === PLAYER_STAT_IDS.GOALS);
+    const goals = goalsDetail ? Number(goalsDetail.value.total || goalsDetail.value) : 0;
 
-      // Determina o adversário
-      const opponent = fix.participants?.find(part => part.id !== latest.team_id);
-      const myTeam = fix.participants?.find(part => part.id === latest.team_id);
+    // Determina o adversário
+    const opponent = fix.participants?.find(part => part.id !== latest.team_id);
+    const myTeam = fix.participants?.find(part => part.id === latest.team_id);
 
-      return {
-          id: fix.id,
-          date: fix.starting_at,
-          league_name: fix.league?.name,
-          logo: fix.league?.image_path,
-          opponent_name: opponent?.name || "TBD",
-          opponent_logo: opponent?.image_path,
-          result: fix.scores?.find(s => s.description === "CURRENT") ? 
-                  `${fix.scores.find(s => s.participant_id === myTeam?.id)?.score?.goals}-${fix.scores.find(s => s.participant_id === opponent?.id)?.score?.goals}` : "VS",
-          rating: rating,
-          goals: goals,
-          minutes: latest.details?.find(d => d.type_id === PLAYER_STAT_IDS.MINUTES)?.value?.total || 0
-      };
+    return {
+      id: fix.id,
+      date: fix.starting_at,
+      league_name: fix.league?.name,
+      logo: fix.league?.image_path,
+      opponent_name: opponent?.name || "TBD",
+      opponent_logo: opponent?.image_path,
+      result: fix.scores?.find(s => s.description === "CURRENT") ?
+        `${fix.scores.find(s => s.participant_id === myTeam?.id)?.score?.goals}-${fix.scores.find(s => s.participant_id === opponent?.id)?.score?.goals}` : "VS",
+      rating: rating,
+      goals: goals,
+      minutes: latest.details?.find(d => d.type_id === PLAYER_STAT_IDS.MINUTES)?.value?.total || 0
+    };
   }).filter(Boolean);
 
   // 6. Troféus
   const trophies = (p.trophies || []).map(t => ({
-      id: t.id,
-      league_name: t.league?.name,
-      season: t.season?.name,
-      status: t.trophy?.name, // "Winner", "Runner-up"
-      team_logo: t.team?.image_path
+    id: t.id,
+    league_name: t.league?.name,
+    season: t.season?.name,
+    status: t.trophy?.name, // "Winner", "Runner-up"
+    team_logo: t.team?.image_path
   })).filter(t => t.status === "Winner"); // Filtra apenas títulos ganhos (opcional)
 
   return {
-      info: {
-          id: p.id,
-          name: p.common_name || p.display_name,
-          fullname: p.name,
-          photo: p.image_path,
-          age: p.date_of_birth ? Math.floor((new Date() - new Date(p.date_of_birth).getTime()) / 3.15576e+10) : "-",
-          birthdate: p.date_of_birth,
-          height: p.height,
-          weight: p.weight,
-          nationality: p.nationality?.name,
-          flag: p.nationality?.image_path,
-          position: p.detailedposition?.name || "Jogador",
-          foot: preferredFoot,
-          current_team: currentTeam
-      },
-      career: {
-          stats: careerStats,
-          totals: totals
-      },
-      latest: lastMatches,
-      trophies: trophies
+    info: {
+      id: p.id,
+      name: p.common_name || p.display_name,
+      fullname: p.name,
+      photo: p.image_path,
+      age: p.date_of_birth ? Math.floor((new Date() - new Date(p.date_of_birth).getTime()) / 3.15576e+10) : "-",
+      birthdate: p.date_of_birth,
+      height: p.height,
+      weight: p.weight,
+      nationality: p.nationality?.name,
+      flag: p.nationality?.image_path,
+      position: p.detailedposition?.name || "Jogador",
+      foot: preferredFoot,
+      current_team: currentTeam
+    },
+    career: {
+      stats: careerStats,
+      totals: totals
+    },
+    latest: lastMatches,
+    trophies: trophies
   };
 };
 
@@ -1105,21 +1143,21 @@ const normalizePlayerProfile = (p) => {
 export const apiGetPlayerProfile = async (playerId) => {
   // Includes solicitados para montar o perfil completo
   const include = [
-      "trophies.league",
-      "trophies.season",
-      "trophies.trophy",
-      "trophies.team",
-      "teams.team",
-      "statistics.details.type",
-      "statistics.team",
-      "statistics.season.league",
-      "latest.fixture.participants",
-      "latest.fixture.league",
-      "latest.fixture.scores",
-      "latest.details.type",
-      "nationality",
-      "detailedPosition",
-      "metadata.type"
+    "trophies.league",
+    "trophies.season",
+    "trophies.trophy",
+    "trophies.team",
+    "teams.team",
+    "statistics.details.type",
+    "statistics.team",
+    "statistics.season.league",
+    "latest.fixture.participants",
+    "latest.fixture.league",
+    "latest.fixture.scores",
+    "latest.details.type",
+    "nationality",
+    "detailedPosition",
+    "metadata.type"
   ].join(";");
 
   const data = await request(`/players/${playerId}`, { include });
