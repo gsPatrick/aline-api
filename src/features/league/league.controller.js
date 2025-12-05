@@ -1,16 +1,17 @@
 
-import { 
-  apiGetLeagues, 
-  apiGetLeagueById, 
-  apiGetStandings, 
+import {
+  apiGetLeagues,
+  apiGetLeagueById,
+  apiGetStandings,
   apiGetFixturesBySeason,
   apiGetLeaguesByDate,
   normalizeMatchCard // Importando para normalizar o resultado do today
-} from "../../services/sports.service.js"; 
+} from "../../services/sports.service.js";
 
 export const index = async (req, res, next) => {
   try {
-    res.json(await apiGetLeagues());
+    const page = req.query.page || 1;
+    res.json(await apiGetLeagues(page));
   } catch (e) { next(e); }
 };
 
@@ -29,7 +30,7 @@ export const show = async (req, res, next) => {
         apiGetFixturesBySeason(league.current_season_id)
       ]);
       standings = std || [];
-      
+
       // Filtra jogos futuros para a feature de 48h na home da liga
       const now = Date.now() / 1000;
       upcoming = (fix || []).filter(f => f.timestamp >= now).sort((a, b) => a.timestamp - b.timestamp);

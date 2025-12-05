@@ -530,8 +530,13 @@ export const normalizeSquadPlayer = (entry) => {
 // --- FUNÇÕES EXPORTADAS (API CALLS) ---
 
 // 1. Listar Ligas
-export const apiGetLeagues = async () => {
-  const data = await request("/leagues", { include: ["country", "currentSeason"] });
+export const apiGetLeagues = async (page = 1) => {
+  // Aumentando o limite para 2000 para tentar buscar todas as ligas
+  const data = await request("/leagues", {
+    include: ["country", "currentSeason"],
+    per_page: 50, // Voltando para 50 para usar paginação corretamente
+    page: page
+  });
   return (data || []).map(normalizeLeagueList);
 };
 
