@@ -535,7 +535,7 @@ export const apiGetLeagues = async (page = 1) => {
   const data = await request("/leagues", {
     include: ["country", "currentSeason"],
     per_page: 50, // Voltando para 50 para usar paginação corretamente
-    page: page
+    page: Number(page)
   });
   return (data || []).map(normalizeLeagueList);
 };

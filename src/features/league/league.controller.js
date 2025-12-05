@@ -10,7 +10,7 @@ import {
 
 export const index = async (req, res, next) => {
   try {
-    const page = req.query.page || 1;
+    const page = parseInt(req.query.page) || 1;
     res.json(await apiGetLeagues(page));
   } catch (e) { next(e); }
 };
