@@ -799,14 +799,17 @@ export const apiGetTeamSchedule = async (teamId) => {
   };
 
   const data = await request(`/teams/${teamId}`, params);
+  if (!data) return { upcoming: null, latest: [] };
 
-  if (!data) return [];
+  const upcoming = (data.upcoming || []).map(normalizeMatchCard).sort((a, b) => a.timestamp - b.timestamp);
+  const latest = (data.latest || []).map(normalizeMatchCard).sort((a, b) => b.timestamp - a.timestamp);
 
-  const upcoming = (data.upcoming || []).map(normalizeMatchCard);
-  const latest = (data.latest || []).map(normalizeMatchCard);
-
-  return { upcoming, latest };
+  return {
+    upcoming: upcoming[0] || null, // Próximo jogo
+    latest: latest // Histórico recente
+  };
 };
+
 
 // --- POLLING SERVICE (LIVE UPDATES) ---
 import { getIO } from "./socket.js";
@@ -1170,4 +1173,149 @@ export const apiGetPlayerProfile = async (playerId) => {
   if (!data) return null;
 
   return normalizePlayerProfile(data);
+};
+
+// 10. Match Analysis (Dashboard do Jogo)
+export const apiGetMatchAnalysis = async (fixtureId) => {
+  const includes = [
+    "league",
+    "venue",
+    "participants",
+    "probability", // Probabilidades (Predictions)
+    "valueBets"    // Value Bets (se disponível no seu plano)
+  ].join(";");
+
+  const data = await request(`/fixtures/${fixtureId}`, { include: includes });
+  if (!data) return null;
+
+  // Busca estatísticas da temporada para os times (Home e Away)
+  const homeId = data.participants.find(p => p.meta?.location === 'home')?.id;
+  const awayId = data.participants.find(p => p.meta?.location === 'away')?.id;
+
+  const [homeStats, awayStats, standings] = await Promise.all([
+    homeId ? request(`/statistics/seasons/teams/${homeId}`) : null,
+    awayId ? request(`/statistics/seasons/teams/${awayId}`) : null,
+    data.league_id && data.season_id ? apiGetStandings(data.season_id) : []
+  ]);
+
+  // Helper para processar estatísticas de temporada
+  const processSeasonStats = (statsData) => {
+    if (!statsData || !Array.isArray(statsData)) return null;
+    // Pega a última estatística disponível (geralmente a da temporada atual/recente)
+    const latest = statsData[0];
+    if (!latest || !latest.details) return null;
+
+    const getVal = (id) => {
+      const item = latest.details.find(d => d.type_id === id);
+      return item ? Number(item.value?.total ?? item.value ?? 0) : 0;
+    };
+
+    // IDs: 52=Gols Marcados, 56=Gols Sofridos, 34=Cantos, 84=Amarelos
+    // Scoring Minutes (Heatmap): type_id geralmente é complexo, simplificando para exemplo
+    // Na v3, scoring minutes vem em 'details' com type específico ou sub-propriedade.
+    // Vamos simular ou pegar se existir.
+
+    return {
+      goals_scored: getVal(52),
+      goals_conceded: getVal(56),
+      corners: getVal(34),
+      yellow_cards: getVal(84),
+      matches_played: getVal(129) || 1, // Evitar divisão por zero
+    };
+  };
+
+  const hStats = processSeasonStats(homeStats);
+  const aStats = processSeasonStats(awayStats);
+
+  // Calcula médias
+  const calcAvg = (total, matches) => matches > 0 ? (total / matches).toFixed(2) : "0.00";
+
+  const homeAvg = hStats ? {
+    goals_scored: calcAvg(hStats.goals_scored, hStats.matches_played),
+    goals_conceded: calcAvg(hStats.goals_conceded, hStats.matches_played),
+    btts_percentage: "N/A", // Requer cálculo mais complexo iterando jogos
+    clean_sheets_percentage: "N/A"
+  } : null;
+
+  const awayAvg = aStats ? {
+    goals_scored: calcAvg(aStats.goals_scored, aStats.matches_played),
+    goals_conceded: calcAvg(aStats.goals_conceded, aStats.matches_played),
+    btts_percentage: "N/A",
+    clean_sheets_percentage: "N/A"
+  } : null;
+
+  // Posição na tabela
+  const getPosition = (teamId) => {
+    const entry = standings.find(s => s.team.id === teamId);
+    return entry ? entry.position : "-";
+  };
+
+  return {
+    fixture: normalizeMatchCard(data),
+    venue: data.venue?.name,
+    standings: {
+      home_position: getPosition(homeId),
+      away_position: getPosition(awayId)
+    },
+    stats: {
+      home: homeAvg,
+      away: awayAvg
+    },
+    predictions: {
+      probabilities: data.probability, // Estrutura bruta da API
+      value_bets: data.value_bets
+    }
+  };
+};
+
+// 11. Team Stats Page (Dashboard do Time)
+export const apiGetTeamStats = async (teamId) => {
+  // 1. Últimos 10 jogos com stats
+  // Usamos o endpoint de fixtures do time, filtrando por data ou limitando
+  // Como a API v3 não tem 'limit' direto em fixtures/team, pegamos por data ou latest
+  const latestMatches = await request(`/fixtures/teams/${teamId}`, {
+    include: "stats;participants;scores;league",
+    per_page: 10,
+    page: 1,
+    // order: 'desc' (depende da API, mas vamos ordenar manualmente se precisar)
+  });
+
+  // 2. Próximo Jogo
+  const upcoming = await request(`/fixtures/upcoming/teams/${teamId}`, {
+    include: "participants;league",
+    per_page: 1
+  });
+
+  // 3. Stats da Temporada (Radar)
+  const seasonStats = await request(`/statistics/seasons/teams/${teamId}`);
+
+  // Processamento do Radar
+  // Normalização 0-100 (Mockada/Estimada pois requer máximos da liga para ser real)
+  const processRadar = (stats) => {
+    if (!stats || !stats[0]) return null;
+    const d = stats[0].details || [];
+    const getVal = (id) => {
+      const item = d.find(x => x.type_id === id);
+      return item ? Number(item.value?.total ?? item.value ?? 0) : 0;
+    };
+
+    // Exemplo de normalização simples (valores arbitrários para 'max')
+    const goals = getVal(52);
+    const shots = getVal(43); // Shots Total
+    const interception = getVal(1565); // Exemplo ID
+    const corners = getVal(34);
+
+    return {
+      attack: Math.min(100, (goals * 2 + shots) / 2), // Lógica fictícia
+      defense: Math.min(100, (interception * 5)),
+      pressure: Math.min(100, corners * 3),
+      // Adicionar outros conforme disponibilidade
+    };
+  };
+
+  return {
+    latest_matches: (latestMatches || []).map(normalizeMatchCard),
+    next_match: (upcoming || []).map(normalizeMatchCard)[0] || null,
+    radar_data: processRadar(seasonStats)
+  };
 };

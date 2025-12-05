@@ -1,8 +1,9 @@
-import { 
-  apiGetLiveMatches, 
+import {
+  apiGetLiveMatches,
   apiGetDailyMatches,
   apiGetFixtureDetails,
-  apiGetHeadToHead // <--- ADICIONE ISSO
+  apiGetHeadToHead,
+  apiGetMatchAnalysis
 } from "../../services/sports.service.js";
 
 export const live = async (req, res, next) => {
@@ -29,7 +30,7 @@ export const show = async (req, res, next) => {
 
   try {
     const details = await apiGetFixtureDetails(id);
-    
+
     if (!details) {
       console.error(`❌ CONTROLLER: Service retornou NULL para ID [${id}]. Retornando 404.`);
       return res.status(404).json({ error: "Partida não encontrada" });
@@ -43,28 +44,33 @@ export const show = async (req, res, next) => {
   }
 };
 
-// --- FUNÇÃO H2H QUE ESTAVA DANDO ERRO ---
 export const h2h = async (req, res, next) => {
   try {
-    const { id } = req.params; // ID da partida atual
-    
-    // Primeiro precisamos saber quem são os times dessa partida
+    const { id } = req.params;
     const match = await apiGetFixtureDetails(id);
-    
+
     if (!match) return res.status(404).json({ error: "Partida não encontrada" });
 
     const teamA = match.home_team.id;
     const teamB = match.away_team.id;
 
-    // Agora a função vai existir pois foi importada
     const history = await apiGetHeadToHead(teamA, teamB);
-    
-    // Filtra a partida atual da lista (se ela já aconteceu e estiver na lista)
     const filteredHistory = history.filter(h => String(h.id) !== String(id));
 
     res.json(filteredHistory);
   } catch (e) {
     console.error("Erro no H2H:", e);
     next(e);
+  }
+};
+
+export const getMatchAnalysis = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = await apiGetMatchAnalysis(id);
+    if (!data) return res.status(404).json({ message: "Análise não encontrada" });
+    res.json(data);
+  } catch (error) {
+    next(error);
   }
 };
