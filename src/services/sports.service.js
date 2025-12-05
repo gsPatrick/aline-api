@@ -409,7 +409,33 @@ export const normalizeMatchCard = (fixture) => {
       is_winner: away.meta?.winner
     },
     odds: mainOdds,
-    is_live: mapMatchStatus(fixture).id === 2
+    is_live: mapMatchStatus(fixture).id === 2,
+    stats: normalizeMatchStats(fixture.stats, home.id, away.id)
+  };
+};
+
+const normalizeMatchStats = (stats, homeId, awayId) => {
+  if (!stats || !Array.isArray(stats)) return null;
+
+  const getStat = (teamId, typeId) => {
+    const s = stats.find(x => x.participant_id === teamId && x.type_id === typeId);
+    return s ? (s.value?.total ?? s.value ?? 0) : 0;
+  };
+
+  // IDs: 34=Corners, 84=Yellow Cards, 85=Red Cards
+  return {
+    corners: {
+      home: getStat(homeId, 34),
+      away: getStat(awayId, 34)
+    },
+    yellow_cards: {
+      home: getStat(homeId, 84),
+      away: getStat(awayId, 84)
+    },
+    red_cards: {
+      home: getStat(homeId, 85),
+      away: getStat(awayId, 85)
+    }
   };
 };
 
@@ -1279,7 +1305,7 @@ export const apiGetTeamStats = async (teamId) => {
 
   // 2. Próximo Jogo
   const upcoming = await request(`/fixtures/upcoming/teams/${teamId}`, {
-    include: "participants;league",
+    include: "participants;league;odds.market;odds.bookmaker",
     per_page: 1
   });
 
