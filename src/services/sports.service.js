@@ -1288,7 +1288,7 @@ export const apiGetMatchAnalysis = async (fixtureId) => {
   // Normaliza listas de jogos
   const normalizeList = (list) => (list || []).map(normalizeMatchCard);
 
-  return {
+  const result = {
     fixture: normalizeMatchCard(data),
     venue: data.venue?.name,
     standings: {
@@ -1301,7 +1301,7 @@ export const apiGetMatchAnalysis = async (fixtureId) => {
       away: awayAvg
     },
     predictions: {
-      probabilities: data.probability,
+      probabilities: data.probability, // Estrutura bruta da API
       value_bets: data.value_bets
     },
     h2h: h2h, // Já normalizado pelo apiGetHeadToHead
@@ -1314,6 +1314,9 @@ export const apiGetMatchAnalysis = async (fixtureId) => {
       away: normalizeList(awayUpcoming)
     }
   };
+
+  console.log("✅ SERVICE DEBUG: Retornando análise completa:", JSON.stringify(result, null, 2));
+  return result;
 };
 
 // 11. Team Stats Page (Dashboard do Time)
