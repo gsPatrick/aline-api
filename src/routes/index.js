@@ -9,6 +9,7 @@ import leagueRoutes from "../features/league/league.routes.js";
 import matchRoutes from "../features/match/match.routes.js";
 import playerRoutes from "../features/player/player.routes.js";
 import teamRoutes from "../features/team/team.routes.js";
+import sportmonksRoutes from "../features/sportmonks/sportmonks.routes.js";
 
 const router = Router();
 
@@ -38,5 +39,8 @@ router.use("/players", playerRoutes);
 
 // Times: Calendário, Resultados, Elenco e Informações
 router.use("/teams", teamRoutes);
+
+// Novas Rotas de Análise (Gols, Cantos, Cartões)
+router.use("/", sportmonksRoutes);
 
 export default router;
