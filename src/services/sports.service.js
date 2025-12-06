@@ -1211,20 +1211,42 @@ export const apiGetMatchAnalysis = async (fixtureId) => {
   const data = await request(`/fixtures/${fixtureId}`, { include: includes });
   if (!data) return null;
 
-  // Busca estatísticas da temporada para os times (Home e Away)
   const homeId = data.participants.find(p => p.meta?.location === 'home')?.id;
   const awayId = data.participants.find(p => p.meta?.location === 'away')?.id;
 
-  const [homeStats, awayStats, standings] = await Promise.all([
+  // --- BUSCAS PARALELAS PARA OTIMIZAR TEMPO ---
+  const [
+    homeStats,
+    awayStats,
+    standings,
+    h2h,
+    homeUpcoming,
+    awayUpcoming,
+    homeLatest,
+    awayLatest
+  ] = await Promise.all([
+    // 1. Stats da Temporada
     homeId ? request(`/statistics/seasons/teams/${homeId}`) : null,
     awayId ? request(`/statistics/seasons/teams/${awayId}`) : null,
-    data.league_id && data.season_id ? apiGetStandings(data.season_id) : []
+
+    // 2. Classificação (Standings)
+    data.league_id && data.season_id ? apiGetStandings(data.season_id) : [],
+
+    // 3. H2H (Últimos 10 jogos entre eles)
+    (homeId && awayId) ? apiGetHeadToHead(homeId, awayId) : [],
+
+    // 4. Próximos Jogos (Upcoming) - Pega 5
+    homeId ? request(`/fixtures/upcoming/teams/${homeId}`, { include: "participants;scores;league", per_page: 5 }) : [],
+    awayId ? request(`/fixtures/upcoming/teams/${awayId}`, { include: "participants;scores;league", per_page: 5 }) : [],
+
+    // 5. Últimos Jogos (Form) - Pega 10
+    homeId ? request(`/fixtures/teams/${homeId}`, { include: "participants;scores;league", per_page: 10, page: 1 }) : [],
+    awayId ? request(`/fixtures/teams/${awayId}`, { include: "participants;scores;league", per_page: 10, page: 1 }) : []
   ]);
 
   // Helper para processar estatísticas de temporada
   const processSeasonStats = (statsData) => {
     if (!statsData || !Array.isArray(statsData)) return null;
-    // Pega a última estatística disponível (geralmente a da temporada atual/recente)
     const latest = statsData[0];
     if (!latest || !latest.details) return null;
 
@@ -1233,38 +1255,28 @@ export const apiGetMatchAnalysis = async (fixtureId) => {
       return item ? Number(item.value?.total ?? item.value ?? 0) : 0;
     };
 
-    // IDs: 52=Gols Marcados, 56=Gols Sofridos, 34=Cantos, 84=Amarelos
-    // Scoring Minutes (Heatmap): type_id geralmente é complexo, simplificando para exemplo
-    // Na v3, scoring minutes vem em 'details' com type específico ou sub-propriedade.
-    // Vamos simular ou pegar se existir.
-
     return {
       goals_scored: getVal(52),
       goals_conceded: getVal(56),
       corners: getVal(34),
       yellow_cards: getVal(84),
-      matches_played: getVal(129) || 1, // Evitar divisão por zero
+      matches_played: getVal(129) || 1,
     };
   };
 
   const hStats = processSeasonStats(homeStats);
   const aStats = processSeasonStats(awayStats);
 
-  // Calcula médias
   const calcAvg = (total, matches) => matches > 0 ? (total / matches).toFixed(2) : "0.00";
 
   const homeAvg = hStats ? {
     goals_scored: calcAvg(hStats.goals_scored, hStats.matches_played),
     goals_conceded: calcAvg(hStats.goals_conceded, hStats.matches_played),
-    btts_percentage: "N/A", // Requer cálculo mais complexo iterando jogos
-    clean_sheets_percentage: "N/A"
   } : null;
 
   const awayAvg = aStats ? {
     goals_scored: calcAvg(aStats.goals_scored, aStats.matches_played),
     goals_conceded: calcAvg(aStats.goals_conceded, aStats.matches_played),
-    btts_percentage: "N/A",
-    clean_sheets_percentage: "N/A"
   } : null;
 
   // Posição na tabela
@@ -1273,10 +1285,14 @@ export const apiGetMatchAnalysis = async (fixtureId) => {
     return entry ? entry.position : "-";
   };
 
+  // Normaliza listas de jogos
+  const normalizeList = (list) => (list || []).map(normalizeMatchCard);
+
   return {
     fixture: normalizeMatchCard(data),
     venue: data.venue?.name,
     standings: {
+      table: standings, // Tabela completa
       home_position: getPosition(homeId),
       away_position: getPosition(awayId)
     },
@@ -1285,8 +1301,17 @@ export const apiGetMatchAnalysis = async (fixtureId) => {
       away: awayAvg
     },
     predictions: {
-      probabilities: data.probability, // Estrutura bruta da API
+      probabilities: data.probability,
       value_bets: data.value_bets
+    },
+    h2h: h2h, // Já normalizado pelo apiGetHeadToHead
+    form: {
+      home: normalizeList(homeLatest),
+      away: normalizeList(awayLatest)
+    },
+    upcoming: {
+      home: normalizeList(homeUpcoming),
+      away: normalizeList(awayUpcoming)
     }
   };
 };
