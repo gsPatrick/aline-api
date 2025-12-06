@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 class SportMonksProvider {
     constructor() {
@@ -36,4 +36,4 @@ class SportMonksProvider {
     }
 }
 
-module.exports = new SportMonksProvider();
+export default new SportMonksProvider();
