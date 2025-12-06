@@ -979,13 +979,21 @@ export const apiGetUpcomingFixturesByLeague = async (leagueId) => {
   return (data || []).map(normalizeMatchCard).sort((a, b) => a.timestamp - b.timestamp);
 };
 
-// Helper para buscar jogos em intervalo (usado no sync)
+// Helper para buscar jogos em intervalo (usado no sync e agora no analysis)
 export const fetchFixturesBetween = async (startStr, endStr, extraParams = {}) => {
+  const { teamId, ...otherParams } = extraParams;
+
   const params = {
     include: ["participants", "scores", "state", "league.country", "periods"],
-    ...extraParams
+    ...otherParams
   };
-  const data = await request(`/fixtures/between/${startStr}/${endStr}`, params);
+
+  let url = `/fixtures/between/${startStr}/${endStr}`;
+  if (teamId) {
+    url += `/${teamId}`;
+  }
+
+  const data = await request(url, params);
   return data || [];
 };
 
@@ -1236,12 +1244,15 @@ export const apiGetMatchAnalysis = async (fixtureId) => {
     (homeId && awayId) ? apiGetHeadToHead(homeId, awayId) : [],
 
     // 4. Próximos Jogos (Upcoming) - Pega 5
-    homeId ? request(`/fixtures/upcoming/teams/${homeId}`, { include: "participants;scores;league", per_page: 5 }) : [],
-    awayId ? request(`/fixtures/upcoming/teams/${awayId}`, { include: "participants;scores;league", per_page: 5 }) : [],
+    // Usando endpoint de range de data para simular "upcoming"
+    homeId ? fetchFixturesBetween(new Date().toISOString().split('T')[0], new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], { teamId: homeId, per_page: 5 }) : [],
+    awayId ? fetchFixturesBetween(new Date().toISOString().split('T')[0], new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], { teamId: awayId, per_page: 5 }) : [],
 
     // 5. Últimos Jogos (Form) - Pega 10
-    homeId ? request(`/fixtures/teams/${homeId}`, { include: "participants;scores;league", per_page: 10, page: 1 }) : [],
-    awayId ? request(`/fixtures/teams/${awayId}`, { include: "participants;scores;league", per_page: 10, page: 1 }) : []
+    // Usando endpoint de range de data para simular "latest" (invertendo datas ou usando endpoint específico se houver, mas o between é seguro)
+    // Para "latest", o ideal seria um endpoint de history, mas vamos tentar buscar um range passado largo
+    homeId ? fetchFixturesBetween(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], new Date().toISOString().split('T')[0], { teamId: homeId, per_page: 10 }) : [],
+    awayId ? fetchFixturesBetween(new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], new Date().toISOString().split('T')[0], { teamId: awayId, per_page: 10 }) : []
   ]);
 
   // Helper para processar estatísticas de temporada
