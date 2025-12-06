@@ -1,4 +1,4 @@
-const sportMonksProvider = require('../../../sportmonks/provider/SportMonksProvider');
+import sportMonksProvider from '../../../sportmonks/provider/SportMonksProvider.js';
 
 // --- CONSTANTES ---
 const INTERVALS = [
@@ -272,7 +272,7 @@ const handleRequest = async (req, res) => {
     }
 };
 
-module.exports = {
+export default {
     path: '/sportmonks/match/:fixtureId/cards-analysis',
     method: 'GET',
     handler: handleRequest

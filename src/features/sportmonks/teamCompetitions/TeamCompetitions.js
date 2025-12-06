@@ -1,4 +1,4 @@
-const sportMonksProvider = require('../../../sportmonks/provider/SportMonksProvider');
+import sportMonksProvider from '../../../sportmonks/provider/SportMonksProvider.js';
 
 // --- HELPER: Calcula V/E/D (Vitória, Empate, Derrota) ---
 // Baseado na estrutura real do JSON que analisamos (scores array + participants)
@@ -113,7 +113,7 @@ const handleRequest = async (req, res) => {
 };
 
 // --- ROTA ---
-module.exports = {
+export default {
     path: '/sportmonks/team/:teamId/competitions',
     method: 'GET',
     handler: handleRequest

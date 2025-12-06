@@ -1,4 +1,4 @@
-const sportMonksProvider = require('../../../sportmonks/provider/SportMonksProvider');
+import sportMonksProvider from '../../../sportmonks/provider/SportMonksProvider.js';
 
 // --- HELPERS INTERNOS (LÓGICA MATEMÁTICA) ---
 
@@ -259,7 +259,7 @@ const handleRequest = async (req, res) => {
 };
 
 // --- ROTA ---
-module.exports = {
+export default {
     path: '/sportmonks/match/:fixtureId/goals-analysis',
     method: 'GET',
     handler: handleRequest

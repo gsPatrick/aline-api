@@ -1,4 +1,4 @@
-const sportMonksProvider = require('../../../sportmonks/provider/SportMonksProvider');
+import sportMonksProvider from '../../../sportmonks/provider/SportMonksProvider.js';
 
 // --- CONSTANTES ---
 const BET365_NAME = 'Bet365';
@@ -246,7 +246,7 @@ const handleRequest = async (req, res) => {
 };
 
 // --- ROTA ---
-module.exports = [
+export default [
     {
         path: '/sportmonks/team/:teamId/schedule',
         method: 'GET',

@@ -1,18 +1,21 @@
-const sportMonksProvider = require('../../../sportmonks/provider/SportMonksProvider');
+import sportMonksProvider from '../../../sportmonks/provider/SportMonksProvider.js';
 
 const RACE_TARGETS = [3, 5, 7, 9];
 const INTERVALS = [
-    { label: '0-10', min: 0, max: 10 },
-    { label: '11-20', min: 11, max: 20 },
-    { label: '21-30', min: 21, max: 30 },
-    { label: '31-HT', min: 31, max: 45 },
-    { label: '46-55', min: 46, max: 55 },
-    { label: '56-65', min: 56, max: 65 },
-    { label: '66-75', min: 66, max: 75 },
-    { label: '76-FT', min: 76, max: 95 }
+    { label: '0-15', start: 0, end: 15 },
+    { label: '16-30', start: 16, end: 30 },
+    { label: '31-45', start: 31, end: 45 }, // Inclui acréscimos 1T
+    { label: '46-60', start: 46, end: 60 },
+    { label: '61-75', start: 61, end: 75 },
+    { label: '76-90', start: 76, end: 90 }  // Inclui acréscimos 2T
 ];
 
-const fetchCornerHistory = async (teamId, location) => {
+// --- HELPERS ---
+
+/**
+ * Busca histórico de partidas
+ */
+const fetchHistory = async (teamId, location) => {
     const today = new Date().toISOString().split('T')[0];
     const pastDate = new Date();
     pastDate.setMonth(pastDate.getMonth() - 6);
@@ -21,114 +24,129 @@ const fetchCornerHistory = async (teamId, location) => {
     const response = await sportMonksProvider.get(
         `/fixtures/between/${startDate}/${today}/${teamId}`,
         {
-            include: 'league;participants;events.type', // Eventos são mais confiáveis para 1T/2T
+            include: 'participants;statistics.type;events.type',
             per_page: 20,
             order: 'desc'
         }
     );
 
     const allMatches = response.data || [];
+
+    // Filtra por location (home/away)
     return allMatches.filter(m => {
         const p = m.participants.find(part => part.id == teamId);
         return p && p.meta && p.meta.location === location;
     });
 };
 
-const processCornerStats = (matches, teamId, period = 'FT') => {
+/**
+ * Processa estatísticas de cantos
+ */
+const processCornerStats = (matches, teamId) => {
     const totalGames = matches.length;
     if (totalGames === 0) return null;
 
     let stats = {
         corners_for: 0,
         corners_against: 0,
-        overs: {
-            // Mercados dinâmicos (ajustamos abaixo conforme periodo)
+        races: { 3: 0, 5: 0, 7: 0, 9: 0 },
+        intervals: {
+            '0-15': { for: 0, against: 0 },
+            '16-30': { for: 0, against: 0 },
+            '31-45': { for: 0, against: 0 },
+            '46-60': { for: 0, against: 0 },
+            '61-75': { for: 0, against: 0 },
+            '76-90': { for: 0, against: 0 }
         },
-        races: {},
-        intervals: {}
+        handicaps: {
+            // Exemplo: Quantas vezes cobriu handicap -1.5
+            minus_1_5: 0,
+            plus_1_5: 0
+        },
+        overs: {
+            ft_85: 0, ft_95: 0, ft_105: 0,
+            ht_45: 0
+        }
     };
 
-    // Define quais OVERS contar baseado no periodo (Escala muda de FT para HT)
-    const thresholds = period === 'FT'
-        ? [6.5, 7.5, 8.5, 9.5, 10.5, 11.5]
-        : [2.5, 3.5, 4.5, 5.5]; // Escala menor para 1T/2T
-
-    thresholds.forEach(t => stats.overs[t] = 0);
-    RACE_TARGETS.forEach(r => stats.races[`race_${r}`] = 0);
-    INTERVALS.forEach(i => stats.intervals[i.label] = { for: 0, against: 0 });
-
     matches.forEach(match => {
-        if (!match.events) return;
+        const isHome = match.participants.find(p => p.meta.location === 'home').id == teamId;
+        const myLoc = isHome ? 'home' : 'away';
+        const opLoc = isHome ? 'away' : 'home';
 
-        // Filtrar e contar Corners via Eventos (Melhor para separar periodos)
-        const cornerEvents = match.events
-            .filter(e => e.type && e.type.name === 'Corner')
-            .filter(e => {
-                if (period === '1T') return e.minute <= 45;
-                if (period === '2T') return e.minute > 45;
-                return true;
-            })
-            .sort((a, b) => a.minute - b.minute);
+        // Helper para pegar valor de estatística
+        const getStat = (code, loc) => {
+            const s = match.statistics.find(stat => stat.location === loc && stat.type.code === code);
+            return s ? s.data.value : 0;
+        };
 
-        let countFor = 0;
-        let countAgainst = 0;
-        let racesWon = {};
+        const myCorners = getStat('corners', myLoc);
+        const opCorners = getStat('corners', opLoc);
+        const totalCorners = myCorners + opCorners;
 
-        cornerEvents.forEach(ev => {
-            const isForMe = ev.participant_id == teamId;
-            const min = ev.minute;
+        // 1. Médias
+        stats.corners_for += myCorners;
+        stats.corners_against += opCorners;
 
-            if (isForMe) countFor++; else countAgainst++;
+        // 2. Overs
+        if (totalCorners > 8.5) stats.overs.ft_85++;
+        if (totalCorners > 9.5) stats.overs.ft_95++;
+        if (totalCorners > 10.5) stats.overs.ft_105++;
 
-            // Intervals (Apenas FT para tabela completa)
-            if (period === 'FT') {
-                const intv = INTERVALS.find(i => min >= i.min && min <= i.max);
-                if (intv) {
-                    if (isForMe) stats.intervals[intv.label].for++;
-                    else stats.intervals[intv.label].against++;
-                }
-            }
+        // 3. Handicaps (Exemplo simples)
+        if (myCorners - opCorners > 1.5) stats.handicaps.minus_1_5++;
+        if (opCorners - myCorners < 1.5) stats.handicaps.plus_1_5++;
 
-            // Races (Apenas FT ou logica especifica)
-            if (period === 'FT') {
+        // 4. Race to X (Requer análise de eventos minuto a minuto)
+        // Se a API não der timeline de cantos fácil, usamos o total como proxy (impreciso)
+        // Ou iteramos sobre events type 'corner'
+        if (match.events) {
+            const corners = match.events.filter(e => e.type.name.toLowerCase().includes('corner'));
+            corners.sort((a, b) => a.minute - b.minute);
+
+            let myCount = 0;
+            let raceWon = { 3: false, 5: false, 7: false, 9: false };
+
+            corners.forEach(c => {
+                if (c.participant_id == teamId) myCount++;
+
                 RACE_TARGETS.forEach(target => {
-                    const key = `race_${target}`;
-                    if (isForMe && countFor === target && countAgainst < target && !racesWon[key]) {
-                        stats.races[key]++;
-                        racesWon[key] = true;
-                    }
-                    if (!isForMe && countAgainst === target && countFor < target) {
-                        racesWon[key] = true; // Perdeu a race
+                    if (myCount === target && !raceWon[target]) {
+                        stats.races[target]++;
+                        raceWon[target] = true;
                     }
                 });
-            }
-        });
 
-        const total = countFor + countAgainst;
-        stats.corners_for += countFor;
-        stats.corners_against += countAgainst;
-
-        // Overs
-        thresholds.forEach(t => {
-            if (total > t) stats.overs[t]++;
-        });
+                // Intervalos
+                const label = INTERVALS.find(i => c.minute >= i.start && c.minute <= i.end)?.label;
+                if (label) {
+                    if (c.participant_id == teamId) stats.intervals[label].for++;
+                    else stats.intervals[label].against++;
+                }
+            });
+        }
     });
 
     const pct = (val) => Math.round((val / totalGames) * 100);
-    const avg = (val) => (val / totalGames).toFixed(1);
-
-    // Formata objeto de porcentagens de Overs
-    let oversPct = {};
-    thresholds.forEach(t => oversPct[`over_${t.toString().replace('.', '')}`] = pct(stats.overs[t]));
 
     return {
+        total_games: totalGames,
         averages: {
-            for: avg(stats.corners_for),
-            against: avg(stats.corners_against),
-            total: avg(stats.corners_for + stats.corners_against)
+            for: (stats.corners_for / totalGames).toFixed(2),
+            against: (stats.corners_against / totalGames).toFixed(2),
+            total: ((stats.corners_for + stats.corners_against) / totalGames).toFixed(2)
         },
-        percentages: oversPct, // Ex: { over_85: 60, over_95: 40 }
-        races: stats.races,
+        percentages: {
+            over_85: pct(stats.overs.ft_85),
+            over_95: pct(stats.overs.ft_95),
+            over_105: pct(stats.overs.ft_105)
+        },
+        races: {
+            race_3: pct(stats.races[3]),
+            race_5: pct(stats.races[5]),
+            race_7: pct(stats.races[7]),
+            race_9: pct(stats.races[9])
+        },
         intervals: stats.intervals
     };
 };
@@ -150,57 +168,36 @@ const handleRequest = async (req, res) => {
         const awayId = match.participants.find(p => p.meta.location === 'away').id;
 
         const [homeHistory, awayHistory] = await Promise.all([
-            fetchCornerHistory(homeId, 'home'),
-            fetchCornerHistory(awayId, 'away')
+            fetchHistory(homeId, 'home'),
+            fetchHistory(awayId, 'away')
         ]);
 
-        const processAll = (hist, id) => ({
-            ft: processCornerStats(hist, id, 'FT'),
-            ht: processCornerStats(hist, id, '1T'),
-            st: processCornerStats(hist, id, '2T')
-        });
+        const homeStats = processCornerStats(homeHistory, homeId);
+        const awayStats = processCornerStats(awayHistory, awayId);
 
-        const homeStats = processAll(homeHistory, homeId);
-        const awayStats = processAll(awayHistory, awayId);
+        if (!homeStats || !awayStats) {
+            return res.status(200).json({ success: false, message: 'Dados insuficientes' });
+        }
 
-        // --- PREDICTION TABLE BUILDER ---
-        const buildTable = (periodKey) => {
-            const h = homeStats[periodKey].percentages;
-            const a = awayStats[periodKey].percentages;
-            const combine = (valH, valA) => Math.round((valH + valA) / 2);
+        // Combine Predictions
+        const combine = (key) => Math.round((homeStats.percentages[key] + awayStats.percentages[key]) / 2);
 
-            let table = {};
-            // Itera pelas chaves disponíveis (ex: over_85, over_95 para FT; over_35 para HT)
-            Object.keys(h).forEach(key => {
-                table[key] = {
-                    home: h[key],
-                    away: a[key],
-                    match: combine(h[key], a[key])
-                };
-            });
-            return table;
+        const responseData = {
+            match: { id: match.id, home: match.participants.find(p => p.id === homeId).name, away: match.participants.find(p => p.id === awayId).name },
+            predictions_table: {
+                full_time: {
+                    over_85: { home: homeStats.percentages.over_85, away: awayStats.percentages.over_85, match: combine('over_85') },
+                    over_95: { home: homeStats.percentages.over_95, away: awayStats.percentages.over_95, match: combine('over_95') },
+                    over_105: { home: homeStats.percentages.over_105, away: awayStats.percentages.over_105, match: combine('over_105') }
+                }
+            },
+            analysis: {
+                home: homeStats,
+                away: awayStats
+            }
         };
 
-        return res.json({
-            success: true,
-            data: {
-                match: {
-                    id: match.id,
-                    home_team: match.participants.find(p => p.id === homeId).name,
-                    away_team: match.participants.find(p => p.id === awayId).name
-                },
-                // Tabela de Previsões com abas
-                predictions_table: {
-                    full_time: buildTable('ft'),
-                    first_half: buildTable('ht'),
-                    second_half: buildTable('st')
-                },
-                analysis: {
-                    home: homeStats,
-                    away: awayStats
-                }
-            }
-        });
+        return res.json({ success: true, data: responseData });
 
     } catch (error) {
         console.error("Erro MatchCornersAnalysis:", error);
@@ -208,7 +205,8 @@ const handleRequest = async (req, res) => {
     }
 };
 
-module.exports = {
+// --- ROTA ---
+export default {
     path: '/sportmonks/match/:fixtureId/corners-analysis',
     method: 'GET',
     handler: handleRequest

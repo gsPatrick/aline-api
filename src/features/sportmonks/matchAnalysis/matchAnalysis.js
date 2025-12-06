@@ -1,4 +1,6 @@
-const sportMonksProvider = require('../../../sportmonks/provider/SportMonksProvider');
+import sportMonksProvider from '../../../sportmonks/provider/SportMonksProvider.js';
+
+// ... (rest of the file content remains the same, just changing imports/exports)
 
 // --- HELPERS DE CÁLCULO (A Mágica das Estatísticas) ---
 
@@ -232,7 +234,7 @@ const handleRequest = async (req, res) => {
 };
 
 // --- ROTA ---
-module.exports = {
+export default {
     path: '/sportmonks/match/:fixtureId/analysis',
     method: 'GET',
     handler: handleRequest
