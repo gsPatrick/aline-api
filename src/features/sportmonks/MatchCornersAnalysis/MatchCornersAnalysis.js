@@ -1,4 +1,4 @@
-const sportMonksProvider = require('../../provider/SportMonksProvider');
+const sportMonksProvider = require('../../../sportmonks/provider/SportMonksProvider');
 
 const RACE_TARGETS = [3, 5, 7, 9];
 const INTERVALS = [

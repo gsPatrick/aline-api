@@ -1,4 +1,4 @@
-const sportMonksProvider = require('../../provider/SportMonksProvider');
+const sportMonksProvider = require('../../../sportmonks/provider/SportMonksProvider');
 
 // --- HELPER: Calcula V/E/D (Vitória, Empate, Derrota) ---
 // Baseado na estrutura real do JSON que analisamos (scores array + participants)

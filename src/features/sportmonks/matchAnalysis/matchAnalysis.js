@@ -1,4 +1,4 @@
-const sportMonksProvider = require('../../provider/SportMonksProvider');
+const sportMonksProvider = require('../../../sportmonks/provider/SportMonksProvider');
 
 // --- HELPERS DE CÁLCULO (A Mágica das Estatísticas) ---
 

@@ -1,4 +1,4 @@
-const sportMonksProvider = require('../../provider/SportMonksProvider');
+const sportMonksProvider = require('../../../sportmonks/provider/SportMonksProvider');
 
 // --- CONSTANTES ---
 const BET365_NAME = 'Bet365';

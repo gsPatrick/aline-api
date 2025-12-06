@@ -9,7 +9,7 @@ import leagueRoutes from "../features/league/league.routes.js";
 import matchRoutes from "../features/match/match.routes.js";
 import playerRoutes from "../features/player/player.routes.js";
 import teamRoutes from "../features/team/team.routes.js";
-import sportmonksRoutes from "../features/sportmonks/sportmonks.routes.js";
+import sportmonksRoutes from "../sportmonks/sportmonksRoutes.js";
 
 const router = Router();
 
