@@ -7,7 +7,7 @@ import MatchCornersAnalysis from "../features/sportmonks/MatchCornersAnalysis/Ma
 import MatchCardsAnalysis from "../features/sportmonks/MatchCardsAnalysis/MatchCardsAnalysis.js";
 
 // --- IMPORTAÇÃO DOS CONTROLLERS GERAIS (ANTIGOS) ---
-import MatchAnalysis from "../features/sportmonks/matchAnalysis.js";
+import MatchAnalysis from "../features/sportmonks/matchAnalysis/matchAnalysis.js";
 import TeamCompetitions from "../features/sportmonks/teamCompetitions/TeamCompetitions.js";
 import TeamFixtures from "../features/sportmonks/teamFixtures/TeamFixtures.js";
 
