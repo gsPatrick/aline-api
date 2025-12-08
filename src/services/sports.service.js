@@ -31,7 +31,8 @@ export const getAllLeagues = async () => {
         let hasMore = true;
 
         while (hasMore) {
-            const url = `${BASE_URL}/leagues?api_token=${token}&page=${currentPage}`;
+            // Include country data to get flags/logos
+            const url = `${BASE_URL}/leagues?api_token=${token}&include=country&page=${currentPage}`;
             console.log(`Fetching leagues page ${currentPage}...`);
 
             const { data } = await axios.get(url);

@@ -16,12 +16,18 @@ export const index = async (req, res, next) => {
     if (page) {
       res.json(await apiGetLeagues(page));
     } else {
-      // Otherwise, return ALL leagues
+      // Otherwise, return ALL leagues with country data
       const allLeagues = await getAllLeagues();
+
+      // Remove duplicates by league ID
+      const uniqueLeagues = Array.from(
+        new Map(allLeagues.map(league => [league.id, league])).values()
+      );
+
       res.json({
         success: true,
-        total: allLeagues.length,
-        data: allLeagues
+        total: uniqueLeagues.length,
+        data: uniqueLeagues
       });
     }
   } catch (e) { next(e); }
