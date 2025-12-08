@@ -1,7 +1,12 @@
 
-// Note: sports.service.js has been removed. 
-// League functionality should use direct API calls or match.service.js
-// This controller may need refactoring if these functions are still needed
+import {
+  apiGetLeagues,
+  apiGetLeagueById,
+  apiGetStandings,
+  apiGetFixturesBySeason,
+  apiGetLeaguesByDate,
+  normalizeMatchCard
+} from "../../services/sports.service.js";
 
 export const index = async (req, res, next) => {
   try {
