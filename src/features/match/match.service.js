@@ -4,6 +4,13 @@ import { calculateGoalAnalysis } from './goals.service.js';
 import { calculateCardStats } from './cards.service.js';
 import { calculateGeneralStats } from './general.service.js';
 import { generateCharts } from './charts.service.js';
+import {
+    fetchH2HMatches,
+    enrichHistoryWithStats,
+    generateTrends,
+    generateInsights,
+    buildTimeline
+} from './overview.service.js';
 
 export const calculateMatchStats = (data) => {
     // ... existing code ...
@@ -216,7 +223,52 @@ export const calculateMatchStats = (data) => {
     // Generate Charts Analysis (Timeline)
     const chartsAnalysis = generateCharts(data);
 
+    // ===== NEW: OVERVIEW TAB DATA =====
+
+    // Enrich history with stats (corners and cards badges)
+    const enrichedHomeHistory = enrichHistoryWithStats(data.homeTeam?.detailedHistory || []);
+    const enrichedAwayHistory = enrichHistoryWithStats(data.awayTeam?.detailedHistory || []);
+
+    // Generate trends comparison table
+    const trends = generateTrends(goalAnalysis, cornerAnalysis, cardAnalysis);
+
+    // Build combined timeline from events and comments
+    const timeline = buildTimeline(data.events || [], data.comments || []);
+
+    // Generate prediction insights
+    const allStats = {
+        goalAnalysis,
+        cornerAnalysis,
+        cardAnalysis
+    };
+    const insights = generateInsights(allStats);
+
+    // Note: H2H will be fetched separately in getMatchStats since it requires API call
+    // We'll pass team IDs for that
+
     return {
+        // Match Info
+        matchInfo: {
+            id: data.id,
+            state: data.state?.state || 'NS',
+            minute: data.state?.minute,
+            starting_at: data.starting_at,
+            home_team: {
+                id: home.id,
+                name: home.name,
+                logo: home.image_path
+            },
+            away_team: {
+                id: away.id,
+                name: away.name,
+                logo: away.image_path
+            },
+            league: data.league?.name,
+            venue: data.venue?.name,
+            referee: refereeData
+        },
+
+        // Existing Analysis
         basicInfo: {
             ...basicInfo,
             form: {
@@ -233,7 +285,30 @@ export const calculateMatchStats = (data) => {
         offsides,
         otherStats,
         xG,
-        cornerAnalysis
+        cornerAnalysis,
+
+        // NEW: Overview Tab Data
+        history: {
+            home: enrichedHomeHistory,
+            away: enrichedAwayHistory
+        },
+        trends,
+        insights,
+        timeline,
+
+        // Team data for H2H fetch
+        homeTeam: {
+            id: home.id,
+            name: home.name,
+            logo: home.image_path,
+            squad: data.homeTeam?.squad || null
+        },
+        awayTeam: {
+            id: away.id,
+            name: away.name,
+            logo: away.image_path,
+            squad: data.awayTeam?.squad || null
+        }
     };
 };
 
@@ -478,7 +553,30 @@ export const getMatchStats = async (matchId) => {
 
     // Calculate stats with existing data
     try {
-        return calculateMatchStats(match.data);
+        const stats = calculateMatchStats(match.data);
+
+        // Fetch H2H data (head-to-head matches)
+        let h2h = null;
+        if (stats.homeTeam?.id && stats.awayTeam?.id) {
+            try {
+                h2h = await fetchH2HMatches(stats.homeTeam.id, stats.awayTeam.id);
+                console.log(`H2H data fetched: ${h2h.matches.length} matches`);
+            } catch (h2hError) {
+                console.error('Error fetching H2H:', h2hError.message);
+                // Graceful fallback - H2H is optional
+                h2h = {
+                    matches: [],
+                    summary: { total: 0, home_wins: 0, draws: 0, away_wins: 0 },
+                    averages: { goals_per_match: 0, corners_per_match: 0, cards_per_match: 0 }
+                };
+            }
+        }
+
+        // Add H2H to response
+        return {
+            ...stats,
+            h2h
+        };
     } catch (calcError) {
         console.error(`Error calculating stats for match ${matchId}:`, calcError.message);
 
