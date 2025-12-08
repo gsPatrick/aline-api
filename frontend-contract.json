@@ -1,0 +1,378 @@
+{
+  "_meta": {
+    "description": "Frontend Contract - Complete API Response Structure",
+    "generated": "2025-12-08T01:30:03.615Z",
+    "endpoints": {
+      "matchAnalysis": "GET /api/matches/:id/analysis",
+      "teamData": "GET /api/teams/:id"
+    },
+    "notes": [
+      "This JSON represents the EXACT structure returned by the API",
+      "Use this as reference when building React components",
+      "All field types and nesting levels are preserved",
+      "cornerAnalysis.races and intervals may be null if no commentary data available"
+    ]
+  },
+  "matchAnalysis": {
+    "basicInfo": {
+      "teams": {
+        "home": "Arsenal",
+        "away": "Brentford",
+        "homeImg": "https://cdn.sportmonks.com/images/soccer/teams/19/19.png",
+        "awayImg": "https://cdn.sportmonks.com/images/soccer/teams/12/236.png"
+      },
+      "competition": {
+        "league": "Premier League",
+        "round": 0
+      },
+      "form": {
+        "home": "?-?-?-?-?",
+        "away": "?-?-?-?-?"
+      },
+      "conditions": {
+        "temperature": 0,
+        "weather": 0,
+        "venue": "Emirates Stadium"
+      }
+    },
+    "goalAnalysis": {
+      "home": {
+        "btts": "30",
+        "firstToScore": "90",
+        "firstToScoreAndWin": "90",
+        "over05": "100",
+        "over15": "90",
+        "over25": "40"
+      },
+      "away": {
+        "btts": "40",
+        "firstToScore": "50",
+        "firstToScoreAndWin": "30",
+        "over05": "100",
+        "over15": "100",
+        "over25": "50"
+      }
+    },
+    "cardAnalysis": {
+      "home": {
+        "avgTotal": "3.2",
+        "avgFor": "1.0",
+        "avgAgainst": "2.2",
+        "firstHalfAvg": "1.0",
+        "secondHalfAvg": "2.2",
+        "markets": {
+          "over05": "90",
+          "over15": "80",
+          "over25": "50",
+          "over35": "40",
+          "over45": "30"
+        },
+        "intervals": {
+          "0-15": {
+            "total": 0,
+            "frequency": "0"
+          },
+          "16-30": {
+            "total": 2,
+            "frequency": "20"
+          },
+          "31-HT": {
+            "total": 8,
+            "frequency": "50"
+          },
+          "46-60": {
+            "total": 5,
+            "frequency": "40"
+          },
+          "61-75": {
+            "total": 9,
+            "frequency": "80"
+          },
+          "76-FT": {
+            "total": 8,
+            "frequency": "60"
+          }
+        }
+      },
+      "away": {
+        "avgTotal": "4.0",
+        "avgFor": "1.9",
+        "avgAgainst": "2.1",
+        "firstHalfAvg": "0.7",
+        "secondHalfAvg": "3.3",
+        "markets": {
+          "over05": "100",
+          "over15": "90",
+          "over25": "70",
+          "over35": "50",
+          "over45": "50"
+        },
+        "intervals": {
+          "0-15": {
+            "total": 1,
+            "frequency": "10"
+          },
+          "16-30": {
+            "total": 1,
+            "frequency": "10"
+          },
+          "31-HT": {
+            "total": 5,
+            "frequency": "40"
+          },
+          "46-60": {
+            "total": 9,
+            "frequency": "60"
+          },
+          "61-75": {
+            "total": 8,
+            "frequency": "70"
+          },
+          "76-FT": {
+            "total": 16,
+            "frequency": "90"
+          }
+        }
+      },
+      "referee": {
+        "name": "T. Harrington",
+        "avgCards": 0,
+        "over45": 0
+      }
+    },
+    "generalStatsAnalysis": {
+      "home": {
+        "shots": {
+          "total": 15.5,
+          "onGoal": 5.7,
+          "offGoal": 5.4,
+          "blocked": 4.4,
+          "insideBox": 12,
+          "outsideBox": 3.5
+        },
+        "control": {
+          "possession": 57.1,
+          "offsides": 2.2,
+          "fouls": 11,
+          "passes": 485.3
+        }
+      },
+      "away": {
+        "shots": {
+          "total": 9.2,
+          "onGoal": 3.2,
+          "offGoal": 3.8,
+          "blocked": 2.2,
+          "insideBox": 7,
+          "outsideBox": 2.3
+        },
+        "control": {
+          "possession": 47.1,
+          "offsides": 1.7,
+          "fouls": 11.2,
+          "passes": 379.5
+        }
+      }
+    },
+    "chartsAnalysis": {
+      "timeline": [
+        {
+          "minute": 1,
+          "home": {
+            "attacks": 0,
+            "dangerous_attacks": 0,
+            "shots": 0,
+            "corners": 0,
+            "pressure": 0
+          },
+          "away": {
+            "attacks": 0,
+            "dangerous_attacks": 0,
+            "shots": 0,
+            "corners": 0,
+            "pressure": 0
+          }
+        }
+      ],
+      "summary": {
+        "hasPressureGraph": true,
+        "hasAttacksData": false
+      }
+    },
+    "goalMarkets": {
+      "over05": 1.03,
+      "over15": 1.28,
+      "over25": 1.85,
+      "over35": 3.1
+    },
+    "shotStats": {
+      "home": {
+        "total": 15,
+        "onTarget": 7,
+        "offTarget": 4,
+        "blocked": 4
+      },
+      "away": {
+        "total": 6,
+        "onTarget": 1,
+        "offTarget": 2,
+        "blocked": 3
+      }
+    },
+    "offsides": {
+      "home": 0,
+      "away": 0
+    },
+    "otherStats": {
+      "corners": {
+        "home": 4,
+        "away": 8
+      },
+      "fouls": {
+        "home": 7,
+        "away": 9
+      }
+    },
+    "xG": {
+      "home": 0,
+      "away": 0
+    },
+    "cornerAnalysis": {
+      "home": {
+        "avgFor": "5.9",
+        "avgAgainst": "3.1",
+        "avgTotal": "9.0",
+        "races": {
+          "race3": "60",
+          "race5": "60",
+          "race7": "50",
+          "race9": "20"
+        },
+        "trends": {
+          "over85": "50"
+        },
+        "intervals": {
+          "0-10": {
+            "avgFor": "0.4",
+            "avgAgainst": "0.3",
+            "frequency": "60"
+          },
+          "11-20": {
+            "avgFor": "0.1",
+            "avgAgainst": "0.5",
+            "frequency": "40"
+          },
+          "21-30": {
+            "avgFor": "0.9",
+            "avgAgainst": "0.1",
+            "frequency": "60"
+          },
+          "31-40": {
+            "avgFor": "0.8",
+            "avgAgainst": "0.2",
+            "frequency": "50"
+          },
+          "41-50": {
+            "avgFor": "0.8",
+            "avgAgainst": "0.7",
+            "frequency": "90"
+          },
+          "51-60": {
+            "avgFor": "0.9",
+            "avgAgainst": "0.5",
+            "frequency": "60"
+          },
+          "61-70": {
+            "avgFor": "0.5",
+            "avgAgainst": "0.2",
+            "frequency": "50"
+          },
+          "71-80": {
+            "avgFor": "0.7",
+            "avgAgainst": "0.4",
+            "frequency": "60"
+          },
+          "81-90": {
+            "avgFor": "1.0",
+            "avgAgainst": "0.6",
+            "frequency": "70"
+          },
+          "37-HT": {
+            "frequency": "50"
+          },
+          "87-FT": {
+            "frequency": "50"
+          }
+        }
+      },
+      "away": {
+        "avgFor": "5.8",
+        "avgAgainst": "4.6",
+        "avgTotal": "10.4",
+        "races": {
+          "race3": "60",
+          "race5": "20",
+          "race7": "40",
+          "race9": "30"
+        },
+        "trends": {
+          "over85": "70"
+        },
+        "intervals": {
+          "0-10": {
+            "avgFor": "0.1",
+            "avgAgainst": "0.7",
+            "frequency": "60"
+          },
+          "11-20": {
+            "avgFor": "0.8",
+            "avgAgainst": "0.7",
+            "frequency": "80"
+          },
+          "21-30": {
+            "avgFor": "0.9",
+            "avgAgainst": "0.2",
+            "frequency": "50"
+          },
+          "31-40": {
+            "avgFor": "1.2",
+            "avgAgainst": "1.0",
+            "frequency": "90"
+          },
+          "41-50": {
+            "avgFor": "0.8",
+            "avgAgainst": "0.4",
+            "frequency": "70"
+          },
+          "51-60": {
+            "avgFor": "0.6",
+            "avgAgainst": "0.2",
+            "frequency": "50"
+          },
+          "61-70": {
+            "avgFor": "0.3",
+            "avgAgainst": "0.3",
+            "frequency": "50"
+          },
+          "71-80": {
+            "avgFor": "0.9",
+            "avgAgainst": "0.0",
+            "frequency": "50"
+          },
+          "81-90": {
+            "avgFor": "0.5",
+            "avgAgainst": "0.1",
+            "frequency": "50"
+          },
+          "37-HT": {
+            "frequency": "90"
+          },
+          "87-FT": {
+            "frequency": "20"
+          }
+        }
+      }
+    }
+  },
+  "teamData": null
+}

@@ -6,6 +6,8 @@ import { definePlanModel } from "./plan.js";
 import { defineNotificationModel } from "./notification.js";
 import { defineLeagueModel } from "./league.js"; // Novo
 import { defineMatchModel } from "./match.js";   // Novo
+import { defineTeamModel } from "./team.js";   // Novo
+
 const User = defineUserModel(sequelize, DataTypes);
 const Subscription = defineSubscriptionModel(sequelize, DataTypes);
 const Plan = definePlanModel(sequelize, DataTypes);
@@ -22,6 +24,7 @@ Plan.hasMany(Subscription, { foreignKey: "planId" });
 
 const League = defineLeagueModel(sequelize, DataTypes);
 const Match = defineMatchModel(sequelize, DataTypes);
+const Team = defineTeamModel(sequelize, DataTypes);
 
 export {
   sequelize,
@@ -29,8 +32,9 @@ export {
   Subscription,
   Plan,
   Notification,
-    League,
+  League,
   Match,
+  Team,
   hashPassword,
   comparePassword,
 };

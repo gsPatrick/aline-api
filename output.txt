@@ -1,0 +1,115 @@
+Fetching fixture 19568462 using multi-fetch strategy...
+✅ Data fetched and merged successfully!
+Match: Arsenal vs FC Bayern München
+League: Champions League
+Venue: Emirates Stadium
+Test 5: Fetching Odds...
+✅ Odds found: true
+Test 6: Fetching Weather...
+❌ Weather failed: 404
+
+Calculating Stats...
+DEBUG: All Available Stat Types: [
+  "BALL_POSSESSION",
+  "LONG_PASSES",
+  "DUELS_WON",
+  "FOULS",
+  "ACCURATE_CROSSES",
+  "OFFSIDES",
+  "FREE_KICKS",
+  "INTERCEPTIONS",
+  "SUCCESSFUL_LONG_PASSES_PERCENTAGE",
+  "TOTAL_CROSSES",
+  "CORNERS",
+  "SHOTS_ON_TARGET",
+  "SUCCESSFUL_LONG_PASSES",
+  "SHOTS_OFF_TARGET",
+  "GOAL_KICKS",
+  "TACKLES",
+  "SHOTS_TOTAL",
+  "SUCCESSFUL_DRIBBLES_PERCENTAGE",
+  "BIG_CHANCES_CREATED",
+  "YELLOWCARDS",
+  "DRIBBLED_ATTEMPTS",
+  "SUCCESSFUL_PASSES",
+  "GOALS",
+  "SHOTS_INSIDEBOX",
+  "ASSISTS",
+  "SUCCESSFUL_PASSES_PERCENTAGE",
+  "THROWINS",
+  "SUCCESSFUL_DRIBBLES",
+  "SUCCESSFUL_HEADERS",
+  "SAVES",
+  "ATTACKS",
+  "GOAL_ATTEMPTS",
+  "SHOTS_BLOCKED",
+  "INJURIES",
+  "PASSES",
+  "BIG_CHANCES_MISSED",
+  "KEY_PASSES",
+  "SUBSTITUTIONS",
+  "SHOTS_OUTSIDEBOX",
+  "DANGEROUS_ATTACKS",
+  "BALL_SAFE"
+]
+{
+  "basicInfo": {
+    "teams": {
+      "home": "Arsenal",
+      "away": "FC Bayern München",
+      "homeImg": "https://cdn.sportmonks.com/images/soccer/teams/19/19.png",
+      "awayImg": "https://cdn.sportmonks.com/images/soccer/teams/23/503.png"
+    },
+    "competition": {
+      "league": "Champions League",
+      "round": 0
+    },
+    "form": {
+      "home": "?-?-?-?-?",
+      "away": "?-?-?-?-?"
+    },
+    "conditions": {
+      "temperature": 0,
+      "weather": 0,
+      "venue": "Emirates Stadium"
+    }
+  },
+  "goalMarkets": {
+    "over05": 0,
+    "over15": 0,
+    "over25": 0,
+    "over35": 0
+  },
+  "shotStats": {
+    "home": {
+      "total": 13,
+      "onTarget": 8,
+      "offTarget": 5,
+      "blocked": 0
+    },
+    "away": {
+      "total": 8,
+      "onTarget": 2,
+      "offTarget": 3,
+      "blocked": 3
+    }
+  },
+  "offsides": {
+    "home": 2,
+    "away": 0
+  },
+  "otherStats": {
+    "corners": {
+      "home": 6,
+      "away": 1
+    },
+    "fouls": {
+      "home": 16,
+      "away": 13
+    }
+  },
+  "xG": {
+    "home": 0,
+    "away": 0
+  }
+}

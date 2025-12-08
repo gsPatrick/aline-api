@@ -1,0 +1,69 @@
+Fetching fixture 19568462 using integrated service...
+✅ Data fetched successfully!
+Match: Arsenal vs FC Bayern München
+Odds Count: 3475
+Home History: 40
+Away History: 40
+
+Calculating Stats...
+{
+  "basicInfo": {
+    "teams": {
+      "home": "Arsenal",
+      "away": "FC Bayern München",
+      "homeImg": "https://cdn.sportmonks.com/images/soccer/teams/19/19.png",
+      "awayImg": "https://cdn.sportmonks.com/images/soccer/teams/23/503.png"
+    },
+    "competition": {
+      "league": "Champions League",
+      "round": 0
+    },
+    "form": {
+      "home": "L-W-D-W-W",
+      "away": "W-W-W-L-W"
+    },
+    "conditions": {
+      "temperature": 0,
+      "weather": 0,
+      "venue": "Emirates Stadium"
+    }
+  },
+  "goalMarkets": {
+    "over05": 1.02,
+    "over15": 1.26,
+    "over25": 1.82,
+    "over35": 2.65
+  },
+  "shotStats": {
+    "home": {
+      "total": 13,
+      "onTarget": 8,
+      "offTarget": 5,
+      "blocked": 0
+    },
+    "away": {
+      "total": 8,
+      "onTarget": 2,
+      "offTarget": 3,
+      "blocked": 3
+    }
+  },
+  "offsides": {
+    "home": 2,
+    "away": 0
+  },
+  "otherStats": {
+    "corners": {
+      "home": 6,
+      "away": 1
+    },
+    "fouls": {
+      "home": 16,
+      "away": 13
+    }
+  },
+  "xG": {
+    "home": 0,
+    "away": 0
+  }
+}

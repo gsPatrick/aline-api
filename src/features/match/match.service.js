@@ -1,16 +1,411 @@
-import {
-  getLiveMatches,
-  getMatchStats,
-} from "../../services/sports.service.js";
+import axios from 'axios';
+import { calculateCornerStats } from './corners.service.js';
+import { calculateGoalAnalysis } from './goals.service.js';
+import { calculateCardStats } from './cards.service.js';
+import { calculateGeneralStats } from './general.service.js';
+import { generateCharts } from './charts.service.js';
 
-export const listLive = async () => {
-  // Busca os jogos ao vivo e retorna já normalizados
-  const liveMatches = await getLiveMatches();
-  return liveMatches;
+export const calculateMatchStats = (data) => {
+    // ... existing code ...
+    // Helper to safely get nested properties
+    const get = (obj, path, def = 0) => {
+        if (!obj) return def;
+        return path.split('.').reduce((acc, part) => acc && acc[part], obj) || def;
+    };
+
+    // Helper to find specific stat type in array
+    const findStat = (teamStats, typeName, developerName) => {
+        if (!teamStats || !teamStats.length) return 0;
+        // Check if stats are in 'data' array or direct array
+        const statsArray = Array.isArray(teamStats) ? teamStats : (teamStats.data || []);
+
+        // Let's try to find by common names
+        const stat = statsArray.find(s => {
+            const nameMatch = s.type?.name === typeName || s.type === typeName || s.type?.name === typeName.replace(/_/g, ' ');
+            const devMatch = developerName && s.type?.developer_name === developerName;
+            return nameMatch || devMatch;
+        });
+        return stat?.data?.value ?? stat?.value ?? 0;
+    };
+
+    // 1. Dados Básicos e Contexto
+    const participants = get(data, 'participants', []);
+    const home = participants.find(p => p.meta?.location === 'home') || participants[0] || {};
+    const away = participants.find(p => p.meta?.location === 'away') || participants[1] || {};
+
+    const basicInfo = {
+        teams: {
+            home: home.name || 'Home',
+            away: away.name || 'Away',
+            homeImg: home.image_path,
+            awayImg: away.image_path,
+        },
+        competition: {
+            league: get(data, 'league.name'),
+            round: get(data, 'round.name'),
+        },
+        form: {
+            home: get(data, 'form.home', '?????').split('').join('-'), // Adjust path if needed
+            away: get(data, 'form.away', '?????').split('').join('-'),
+        },
+        conditions: {
+            temperature: get(data, 'weather_report.temperature.temp'),
+            weather: get(data, 'weather_report.type'),
+            venue: get(data, 'venue.name'),
+        }
+    };
+
+    // 4. Gols por Intervalo (Stats) & 8. Stats
+    const stats = get(data, 'statistics', []);
+    // Stats might be an array of objects where each object has 'team_id'
+    const homeStats = stats.filter(s => s.participant_id === home.id);
+    const awayStats = stats.filter(s => s.participant_id === away.id);
+
+    const shotStats = {
+        home: {
+            total: findStat(homeStats, 'Shots Total', 'SHOTS_TOTAL'),
+            onTarget: findStat(homeStats, 'Shots On Target', 'SHOTS_ON_TARGET'),
+            offTarget: findStat(homeStats, 'Shots Off Target', 'SHOTS_OFF_TARGET'),
+            blocked: findStat(homeStats, 'Shots Blocked', 'SHOTS_BLOCKED'),
+        },
+        away: {
+            total: findStat(awayStats, 'Shots Total', 'SHOTS_TOTAL'),
+            onTarget: findStat(awayStats, 'Shots On Target', 'SHOTS_ON_TARGET'),
+            offTarget: findStat(awayStats, 'Shots Off Target', 'SHOTS_OFF_TARGET'),
+            blocked: findStat(awayStats, 'Shots Blocked', 'SHOTS_BLOCKED'),
+        }
+    };
+
+    const offsides = {
+        home: findStat(homeStats, 'Offsides', 'OFFSIDES'),
+        away: findStat(awayStats, 'Offsides', 'OFFSIDES'),
+    };
+
+    const otherStats = {
+        corners: {
+            home: findStat(homeStats, 'Corners', 'CORNERS'),
+            away: findStat(awayStats, 'Corners', 'CORNERS'),
+        },
+        fouls: {
+            home: findStat(homeStats, 'Fouls', 'FOULS'),
+            away: findStat(awayStats, 'Fouls', 'FOULS'),
+        }
+    };
+
+    // 3. Mercados de Gols (Over/Under)
+    const odds = get(data, 'odds', []);
+    const findOdd = (marketName, label) => {
+        const market = odds.find(o => o.market_description === marketName && o.label === label);
+        return market ? parseFloat(market.value) : 0;
+    };
+
+    // Helper to find Over/Under odds
+    const findOverUnder = (total) => {
+        const odd = odds.find(o =>
+            o.market_description === "Goals Over/Under" &&
+            o.label === "Over" &&
+            o.total === total
+        );
+        return odd ? parseFloat(odd.value) : 0;
+    };
+
+    const goalMarkets = {
+        over05: findOverUnder("0.5"),
+        over15: findOverUnder("1.5"),
+        over25: findOverUnder("2.5"),
+        over35: findOverUnder("3.5"),
+    };
+
+    // 7. xG Analysis
+    // xG might be in 'probability' or specific stats
+    const xG = {
+        home: get(data, 'probability.xg.home', 0),
+        away: get(data, 'probability.xg.away', 0),
+    };
+
+    // Helper to calculate form (W-D-L) from last 5 matches
+    const calculateForm = (matches, teamId) => {
+        if (!matches || !matches.length) return '?-?-?-?-?';
+
+        // Filter finished matches and sort by date desc
+        const finished = matches
+            .filter(m => m.state_id === 5 || m.result_info) // 5 is usually finished
+            .sort((a, b) => new Date(b.starting_at) - new Date(a.starting_at))
+            .slice(0, 5);
+
+        return finished.map(m => {
+            // meta.location tells us if the requested team was 'home' or 'away'
+            const myLocation = m.meta?.location;
+            if (!myLocation) return '?';
+
+            const result = m.result_info || "";
+
+            // Draw check
+            if (result.includes("draw") || result.includes("Draw")) return 'D';
+
+            // Win check
+            // If "won", we need to know who won.
+            // Usually result_info is like "TeamName won..."
+            // We can check if the result string starts with the team name?
+            // Or simpler: check scores if available.
+            // Without scores, we have to rely on the text.
+
+            // Let's try to infer from the match name "Home vs Away"
+            const [homeName, awayName] = (m.name || "").split(" vs ");
+
+            let winnerLocation = null;
+            if (homeName && result.includes(homeName)) winnerLocation = 'home';
+            else if (awayName && result.includes(awayName)) winnerLocation = 'away';
+
+            if (!winnerLocation) return '?'; // Can't determine winner
+
+            if (winnerLocation === myLocation) return 'W';
+            return 'L';
+        }).join('-');
+    };
+
+    // Calculate Corner Stats
+    // Pass detailed history (heavy fetch data)
+    const cornerAnalysis = calculateCornerStats(
+        data.homeTeam?.detailedHistory,
+        data.awayTeam?.detailedHistory,
+        home.id,
+        away.id
+    );
+
+    // Calculate Goal Analysis
+    const goalAnalysis = calculateGoalAnalysis(
+        data.homeTeam?.detailedHistory,
+        data.awayTeam?.detailedHistory,
+        home.id,
+        away.id
+    );
+
+    // Calculate Card Analysis
+    const cardStats = calculateCardStats(
+        data.homeTeam?.detailedHistory,
+        data.awayTeam?.detailedHistory,
+        home.id,
+        away.id
+    );
+
+    // Process Referee Data
+    const refereeData = data.referee ? {
+        name: data.referee.common_name || data.referee.fullname || "Unknown",
+        avgCards: 0, // Fallback
+        over45: 0 // Fallback
+    } : null;
+
+    // If referee has stats (unlikely in standard include, but let's check if we can extract anything)
+    // Sometimes referee stats come in a separate endpoint or need calculation.
+    // For now, we return what we have.
+
+    const cardAnalysis = {
+        ...cardStats,
+        referee: refereeData
+    };
+
+    // Calculate General Stats Analysis (Shots, Control)
+    const generalStatsAnalysis = calculateGeneralStats(
+        data.homeTeam?.detailedHistory,
+        data.awayTeam?.detailedHistory,
+        home.id,
+        away.id
+    );
+
+    // Generate Charts Analysis (Timeline)
+    const chartsAnalysis = generateCharts(data);
+
+    return {
+        basicInfo: {
+            ...basicInfo,
+            form: {
+                home: calculateForm(data.homeTeam?.detailedHistory, home.id),
+                away: calculateForm(data.awayTeam?.detailedHistory, away.id)
+            }
+        },
+        goalAnalysis,
+        cardAnalysis,
+        generalStatsAnalysis,
+        chartsAnalysis,
+        goalMarkets,
+        shotStats,
+        offsides,
+        otherStats,
+        xG,
+        cornerAnalysis
+    };
 };
 
-export const statsById = async (matchId) => {
-  // Busca os detalhes/estatísticas da partida pelo ID
-  const matchStats = await getMatchStats(matchId);
-  return matchStats;
+export const fetchExternalMatchData = async (matchId, apiToken) => {
+    const BASE_URL = "https://api.sportmonks.com/v3/football";
+    const token = apiToken || process.env.SPORTMONKS_API_TOKEN;
+
+    if (!token) throw new Error("API Token missing");
+
+    try {
+        // Step 1: Fetch Match Details (Participants, Stats, League, Venue, Odds, Referee, Events)
+        const [resParticipants, resStats, resLeague, resVenue, resOdds, resReferee, resEvents] = await Promise.all([
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=participants`),
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=statistics.type`),
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=league`),
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=venue`),
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=odds`),
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=referees.referee`),
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=events.type`)
+        ]);
+
+        const participants = resParticipants.data.data.participants || [];
+        const home = participants.find(p => p.meta?.location === 'home') || participants[0];
+        const away = participants.find(p => p.meta?.location === 'away') || participants[1];
+
+        // Referee Data
+        // referees is an array of pivot objects. The actual referee details are in .referee property of the pivot.
+        const refereePivot = resReferee.data.data.referees ? resReferee.data.data.referees[0] : null;
+        const referee = refereePivot ? refereePivot.referee : null;
+
+        // Step 2: Heavy Fetch - Get IDs for last 10 Home and 10 Away matches
+        // We need to fetch the team's latest matches first to get their IDs
+        // Then we fetch details for those IDs.
+        // Actually, we can just fetch the team's latest matches with the includes we need directly?
+        // The user request says: "Identificar os Ids... Fazer chamadas para recuperar os detalhes completos"
+        // But Sportmonks allows including latest.events on the team endpoint.
+        // However, the user specifically mentioned "Heavy Fetch" and "Promise.all with GET /fixtures/{id}" might be better for control
+        // or if the nested include is too heavy/limited.
+        // Let's try to stick to the plan: Fetch IDs first (via team latest) then fetch details in parallel.
+        // But wait, fetching 20 fixtures individually is 20 calls. + 5 initial = 25 calls.
+        // If we can do it in the team call, it's 2 calls.
+        // The user said: "Atualmente, estamos pegando algo como include=latest.stats. Isso é insuficiente."
+        // And suggested: "GET /fixtures/multi/{ids} ... ou Promise.all com GET /fixtures/{id}"
+        // Let's follow the "Promise.all" approach for maximum detail and reliability as requested.
+
+        const fetchHistoryIds = async (teamId, location) => {
+            if (!teamId) return [];
+            try {
+                // Fetch last 20 matches to ensure we find 10 with correct location
+                const res = await axios.get(`${BASE_URL}/teams/${teamId}?api_token=${token}&include=latest.participants;latest.league&per_page=1`);
+                // Note: 'latest' on team endpoint usually returns last N matches.
+                // We might need to use /fixtures/search or just rely on what 'latest' gives.
+                // Default 'latest' might not be enough.
+                // Let's use the /fixtures/between or just /fixtures/team/{id} sorted by date.
+                // Actually, let's stick to what was working but just get IDs?
+                // The previous code used `include=latest`. Let's see if we can just use that to get IDs.
+                const resLatest = await axios.get(`${BASE_URL}/teams/${teamId}?api_token=${token}&include=latest.participants`);
+                const allLatest = resLatest.data.data.latest || [];
+
+                // Filter by location and take 10
+                return allLatest
+                    .filter(m => {
+                        const p = m.participants.find(p => p.id === teamId);
+                        return p && p.meta?.location === location;
+                    })
+                    .slice(0, 10)
+                    .map(m => m.id);
+            } catch (e) {
+                console.error(`Failed to fetch history IDs for team ${teamId}`, e.message);
+                return [];
+            }
+        };
+
+        const [homeHistoryIds, awayHistoryIds] = await Promise.all([
+            fetchHistoryIds(home?.id, 'home'),
+            fetchHistoryIds(away?.id, 'away')
+        ]);
+
+        // Step 3: Fetch Detailed Data for these IDs
+        // We need events (filtered), stats, participants, and commentaries for corner extraction
+        // Commentaries are needed because corner events are not available in the events array
+        const fetchDetailedMatch = async (id) => {
+            try {
+                const url = `${BASE_URL}/fixtures/${id}?api_token=${token}&include=events.type;statistics.type;participants;comments`;
+                const res = await axios.get(url);
+                return res.data.data;
+            } catch (e) {
+                console.error(`Failed to fetch detailed match ${id}`, e.message);
+                return null;
+            }
+        };
+
+        // Run in parallel (be careful with rate limits - maybe chunk if needed, but 20 should be ok for standard plans)
+        const homeHistoryPromises = homeHistoryIds.map(id => fetchDetailedMatch(id));
+        const awayHistoryPromises = awayHistoryIds.map(id => fetchDetailedMatch(id));
+
+        const [homeHistoryDetailed, awayHistoryDetailed] = await Promise.all([
+            Promise.all(homeHistoryPromises),
+            Promise.all(awayHistoryPromises)
+        ]);
+
+        // Filter out nulls
+        const validHomeHistory = homeHistoryDetailed.filter(m => m);
+        const validAwayHistory = awayHistoryDetailed.filter(m => m);
+
+        // Merge data
+        const mergedData = {
+            ...resParticipants.data.data,
+            statistics: resStats.data.data.statistics,
+            league: resLeague.data.data.league,
+            venue: resVenue.data.data.venue,
+            odds: resOdds.data.data.odds,
+            referee: referee, // Add referee to merged data
+            events: resEvents.data.data.events || [], // Add events for charts
+            homeTeam: {
+                ...home, // keep basic info
+                detailedHistory: validHomeHistory
+            },
+            awayTeam: {
+                ...away,
+                detailedHistory: validAwayHistory
+            }
+        };
+
+        return mergedData;
+    } catch (error) {
+        console.error("Error fetching external match data:", error.message);
+        throw error;
+    }
+};
+
+export const getMatchStats = async (matchId) => {
+    const { Match } = await import("../../models/index.js");
+    const match = await Match.findOne({ where: { id: matchId } });
+
+    if (!match) {
+        throw new Error("Match not found");
+    }
+
+    // Dynamic Cache Strategy
+    const state = match.data?.state?.state;
+    const isLive = state === 'LIVE' || state === 'HT' || state === 'ET' || state === 'PEN_LIVE' || state === 'BREAK';
+    const isFinished = state === 'FT' || state === 'AET' || state === 'FT_PEN' || state === 'CAN' || state === 'POST' || state === 'INT' || state === 'ABAN';
+
+    // TTL in milliseconds
+    // Live: 60 seconds
+    // Finished/Scheduled: 24 hours (or just rely on manual sync/webhook, but for now 24h is safe)
+    const TTL = isLive ? 60 * 1000 : 24 * 60 * 60 * 1000;
+
+    const lastUpdate = new Date(match.updatedAt).getTime();
+    const now = Date.now();
+    const isExpired = (now - lastUpdate) > TTL;
+
+    // If data is missing OR cache is expired
+    if (!match.data || Object.keys(match.data).length === 0 || isExpired) {
+        console.log(`Match ${matchId} data update needed (State: ${state}, Expired: ${isExpired}). Fetching from API...`);
+        try {
+            // We need the API Token. Assuming it's in env or passed somehow.
+            // For this implementation, we rely on process.env.SPORTMONKS_API_TOKEN
+            const newData = await fetchExternalMatchData(match.externalId, process.env.SPORTMONKS_API_TOKEN);
+
+            match.data = newData;
+            // Force update timestamp
+            match.changed('data', true);
+            await match.save();
+            console.log(`Match ${matchId} data updated successfully.`);
+        } catch (error) {
+            console.error(`Failed to sync match ${matchId}:`, error.message);
+            // If fetch fails, we might still want to return what we have or throw
+            if (!match.data) throw error;
+        }
+    }
+
+    return calculateMatchStats(match.data);
 };

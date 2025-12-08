@@ -1,11 +1,8 @@
-import { Router } from "express";
-import { schedule, squad, info, getTeamStats } from "./team.controller.js";
+import { Router } from 'express';
+import * as teamController from './team.controller.js';
 
-const r = Router();
+const router = Router();
 
-r.get("/:id/schedule", schedule);
-r.get("/:id/squad", squad);
-r.get("/:id/info", info);
-r.get("/:id/stats", getTeamStats);
+router.get('/:id', teamController.getTeam);
 
-export default r;
+export default router;

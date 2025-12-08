@@ -1,0 +1,163 @@
+Fetching fixture 19568462 using multi-fetch strategy...
+✅ Data fetched and merged successfully!
+Match: Arsenal vs FC Bayern München
+League: Champions League
+Venue: Emirates Stadium
+Test 5: Fetching Odds...
+✅ Odds found: true
+DEBUG: Odds Sample: {
+  "id": 204681177173,
+  "fixture_id": 19568462,
+  "market_id": 80,
+  "bookmaker_id": 23,
+  "label": "Over",
+  "value": "2.65",
+  "name": "Over",
+  "sort_order": 1,
+  "market_description": "Goals Over/Under",
+  "probability": "37.74%",
+  "dp3": "2.650",
+  "fractional": "53/20",
+  "american": "165",
+  "winning": false,
+  "stopped": false,
+  "total": "3.5",
+  "handicap": null,
+  "participants": null,
+  "created_at": "2025-11-20T08:21:40.000000Z",
+  "original_label": null,
+  "latest_bookmaker_update": "2025-11-26 11:01:04"
+}
+Test 6: Fetching Team Form...
+✅ Team Latest found: 40
+DEBUG: Latest Match Sample: {
+  "id": 19427596,
+  "sport_id": 1,
+  "league_id": 8,
+  "season_id": 25583,
+  "stage_id": 77476879,
+  "group_id": null,
+  "aggregate_id": null,
+  "round_id": 372209,
+  "state_id": 5,
+  "venue_id": 5,
+  "name": "Aston Villa vs Arsenal",
+  "starting_at": "2025-12-06 12:30:00",
+  "result_info": "Aston Villa won after full-time.",
+  "leg": "1/1",
+  "details": null,
+  "length": 90,
+  "placeholder": false,
+  "has_odds": true,
+  "has_premium_odds": true,
+  "starting_at_timestamp": 1765024200,
+  "meta": {
+    "location": "away"
+  }
+}
+
+Calculating Stats...
+DEBUG: All Available Stat Types: [
+  "BALL_POSSESSION",
+  "LONG_PASSES",
+  "DUELS_WON",
+  "FOULS",
+  "ACCURATE_CROSSES",
+  "OFFSIDES",
+  "FREE_KICKS",
+  "INTERCEPTIONS",
+  "SUCCESSFUL_LONG_PASSES_PERCENTAGE",
+  "TOTAL_CROSSES",
+  "CORNERS",
+  "SHOTS_ON_TARGET",
+  "SUCCESSFUL_LONG_PASSES",
+  "SHOTS_OFF_TARGET",
+  "GOAL_KICKS",
+  "TACKLES",
+  "SHOTS_TOTAL",
+  "SUCCESSFUL_DRIBBLES_PERCENTAGE",
+  "BIG_CHANCES_CREATED",
+  "YELLOWCARDS",
+  "DRIBBLED_ATTEMPTS",
+  "SUCCESSFUL_PASSES",
+  "GOALS",
+  "SHOTS_INSIDEBOX",
+  "ASSISTS",
+  "SUCCESSFUL_PASSES_PERCENTAGE",
+  "THROWINS",
+  "SUCCESSFUL_DRIBBLES",
+  "SUCCESSFUL_HEADERS",
+  "SAVES",
+  "ATTACKS",
+  "GOAL_ATTEMPTS",
+  "SHOTS_BLOCKED",
+  "INJURIES",
+  "PASSES",
+  "BIG_CHANCES_MISSED",
+  "KEY_PASSES",
+  "SUBSTITUTIONS",
+  "SHOTS_OUTSIDEBOX",
+  "DANGEROUS_ATTACKS",
+  "BALL_SAFE"
+]
+{
+  "basicInfo": {
+    "teams": {
+      "home": "Arsenal",
+      "away": "FC Bayern München",
+      "homeImg": "https://cdn.sportmonks.com/images/soccer/teams/19/19.png",
+      "awayImg": "https://cdn.sportmonks.com/images/soccer/teams/23/503.png"
+    },
+    "competition": {
+      "league": "Champions League",
+      "round": 0
+    },
+    "form": {
+      "home": "?-?-?-?-?",
+      "away": "?-?-?-?-?"
+    },
+    "conditions": {
+      "temperature": 0,
+      "weather": 0,
+      "venue": "Emirates Stadium"
+    }
+  },
+  "goalMarkets": {
+    "over05": 0,
+    "over15": 0,
+    "over25": 0,
+    "over35": 0
+  },
+  "shotStats": {
+    "home": {
+      "total": 13,
+      "onTarget": 8,
+      "offTarget": 5,
+      "blocked": 0
+    },
+    "away": {
+      "total": 8,
+      "onTarget": 2,
+      "offTarget": 3,
+      "blocked": 3
+    }
+  },
+  "offsides": {
+    "home": 2,
+    "away": 0
+  },
+  "otherStats": {
+    "corners": {
+      "home": 6,
+      "away": 1
+    },
+    "fouls": {
+      "home": 16,
+      "away": 13
+    }
+  },
+  "xG": {
+    "home": 0,
+    "away": 0
+  }
+}

@@ -1,0 +1,11 @@
+Fetching fixture 19568462 using integrated service...
+✅ Data fetched successfully!
+Match: Arsenal vs FC Bayern München
+Home History: 40
+Away History: 40
+
+Calculating Stats...
+Form: {"home":"L-W-D-W-W","away":"W-W-W-L-W"}
+Markets: {"over05":1.02,"over15":1.26,"over25":1.82,"over35":2.65}
+
+❌ Corner Analysis Missing!
