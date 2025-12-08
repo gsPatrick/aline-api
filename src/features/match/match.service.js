@@ -247,25 +247,42 @@ export const calculateMatchStats = (data) => {
     // We'll pass team IDs for that
 
     return {
-        // Match Info
+        // Match Info - ENRICHED with all required fields
         matchInfo: {
             id: data.id,
             state: data.state?.state || 'NS',
-            minute: data.state?.minute,
+            minute: data.state?.minute || null,
             starting_at: data.starting_at,
+            starting_at_timestamp: data.starting_at_timestamp ||
+                Math.floor(new Date(data.starting_at).getTime() / 1000),
+            venue: {
+                name: data.venue?.name || 'TBD',
+                city: data.venue?.city_name,
+                image: data.venue?.image_path
+            },
             home_team: {
                 id: home.id,
                 name: home.name,
-                logo: home.image_path
+                logo: home.image_path, // CORRECT: image_path
+                short_name: home.short_code || home.name
             },
             away_team: {
                 id: away.id,
                 name: away.name,
-                logo: away.image_path
+                logo: away.image_path, // CORRECT: image_path
+                short_name: away.short_code || away.name
             },
-            league: data.league?.name,
-            venue: data.venue?.name,
-            referee: refereeData
+            league: {
+                id: data.league?.id,
+                name: data.league?.name,
+                logo: data.league?.image_path
+            },
+            referee: refereeData,
+            weather: data.weather_report ? {
+                temperature: data.weather_report.temperature?.temp,
+                condition: data.weather_report.type,
+                wind: data.weather_report.wind?.speed
+            } : null
         },
 
         // Existing Analysis
@@ -314,9 +331,25 @@ export const calculateMatchStats = (data) => {
 
 export const fetchExternalMatchData = async (matchId, apiToken) => {
     const BASE_URL = "https://api.sportmonks.com/v3/football";
-    const token = apiToken || process.env.SPORTMONKS_API_TOKEN;
 
-    if (!token) throw new Error("API Token missing");
+    // Token with fallback
+    const token = apiToken ||
+        process.env.SPORTMONKS_API_TOKEN ||
+        "Xql7ZNMOjdE1pxn7FOh4739UX07owQNA2dNDguw0K6p881Q8yhlInKkHgEgh";
+
+    // Debug logging
+    console.log('🔑 Token check:', {
+        hasApiToken: !!apiToken,
+        hasEnvToken: !!process.env.SPORTMONKS_API_TOKEN,
+        hasFallback: true,
+        tokenLength: token?.length || 0
+    });
+
+    if (!token) {
+        const error = new Error("API Token missing - check .env file");
+        console.error('❌ CRITICAL:', error.message);
+        throw error;
+    }
 
     try {
         // Step 1: Fetch Match Details (Participants, Stats, League, Venue, Odds, Referee, Events)
@@ -326,8 +359,8 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=league`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=venue`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=odds`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=referees.referee`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=events.type`)
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=referees`),
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=events`)
         ]);
 
         const participants = resParticipants.data.data.participants || [];
@@ -336,8 +369,13 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
 
         // Referee Data
         // referees is an array of pivot objects. The actual referee details are in .referee property of the pivot.
-        const refereePivot = resReferee.data.data.referees ? resReferee.data.data.referees[0] : null;
-        const referee = refereePivot ? refereePivot.referee : null;
+        const referees = resReferee.data.data.referees || [];
+        const mainReferee = referees.find(r => r.type?.name === 'REFEREE');
+        const referee = mainReferee ? {
+            id: mainReferee.id,
+            name: mainReferee.name || mainReferee.common_name || 'Unknown',
+            image: mainReferee.image_path
+        } : null;
 
         // Step 2: Heavy Fetch - Get IDs for last 10 Home and 10 Away matches
         // We need to fetch the team's latest matches first to get their IDs
@@ -465,15 +503,26 @@ export const getMatchStats = async (matchId) => {
             }
         } catch (apiError) {
             console.error(`Failed to fetch match ${matchId} from API:`, apiError.message);
+            console.error('API Error details:', {
+                status: apiError.response?.status,
+                statusText: apiError.response?.statusText,
+                message: apiError.message
+            });
 
-            // FINAL FALLBACK: Return minimal structure instead of 404
+            // CRITICAL: If it's an auth error, throw immediately
+            if (apiError.response?.status === 401 || apiError.response?.status === 403) {
+                throw new Error(`Authentication failed: ${apiError.message}. Check SPORTMONKS_API_TOKEN in .env`);
+            }
+
+            // For other errors, return minimal structure
             return {
                 error: true,
-                message: "Match data not available",
+                message: "Match data not available from API",
                 matchId: matchId,
+                apiError: apiError.message,
                 matchInfo: {
                     id: matchId,
-                    state: "UNKNOWN"
+                    state: "API_ERROR"
                 },
                 goalAnalysis: null,
                 cornerAnalysis: null,

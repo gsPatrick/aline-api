@@ -7,6 +7,7 @@ import {
   apiGetLeaguesByDate,
   normalizeMatchCard
 } from "../../services/sports.service.js";
+import { getLeagueDetails } from "./league.service.js";
 
 export const index = async (req, res, next) => {
   try {
@@ -16,18 +17,13 @@ export const index = async (req, res, next) => {
     if (page) {
       res.json(await apiGetLeagues(page));
     } else {
-      // Otherwise, return ALL leagues with country data
+      // Return ALL leagues (already deduplicated in service)
       const allLeagues = await getAllLeagues();
-
-      // Remove duplicates by league ID
-      const uniqueLeagues = Array.from(
-        new Map(allLeagues.map(league => [league.id, league])).values()
-      );
 
       res.json({
         success: true,
-        total: uniqueLeagues.length,
-        data: uniqueLeagues
+        total: allLeagues.length,
+        data: allLeagues
       });
     }
   } catch (e) { next(e); }
@@ -82,5 +78,27 @@ export const getMatchesByDate = async (req, res, next) => {
     res.json(matches);
   } catch (e) {
     next(e);
+  }
+};
+
+// NEW: Get complete league details (dashboard data)
+export const getDetails = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    console.log(`Fetching details for league ID: ${id}`);
+
+    const details = await getLeagueDetails(parseInt(id));
+
+    res.json({
+      success: true,
+      data: details
+    });
+  } catch (error) {
+    console.error('Error in getDetails controller:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 };

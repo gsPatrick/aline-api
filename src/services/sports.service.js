@@ -21,12 +21,12 @@ export const apiGetLeagues = async (page = 1) => {
     }
 };
 
-// Get ALL leagues (all pages)
+// Get ALL leagues (all pages) - REFACTORED with deduplication
 export const getAllLeagues = async () => {
     try {
         console.log('Fetching all leagues from SportMonks...');
 
-        let allLeagues = [];
+        const leaguesMap = new Map(); // Use Map for deduplication
         let currentPage = 1;
         let hasMore = true;
 
@@ -37,12 +37,41 @@ export const getAllLeagues = async () => {
 
             const { data } = await axios.get(url);
             const leagues = data.data || [];
-            allLeagues = allLeagues.concat(leagues);
+
+            // Process each league with deduplication
+            for (const league of leagues) {
+                // Skip if no name or already exists
+                if (!league.name || leaguesMap.has(league.id)) {
+                    continue;
+                }
+
+                // Skip test/invalid leagues
+                if (league.name.toLowerCase().includes('test') ||
+                    league.name.toLowerCase().includes('example')) {
+                    continue;
+                }
+
+                // Map with correct image_path fields
+                leaguesMap.set(league.id, {
+                    id: league.id,
+                    name: league.name,
+                    logo: league.image_path, // CORRECT: image_path not logo
+                    country: {
+                        id: league.country?.id,
+                        name: league.country?.name || 'International',
+                        flag: league.country?.image_path // CORRECT: image_path for flag
+                    },
+                    is_cup: league.sub_type?.includes('cup') || false,
+                    active: league.active,
+                    short_code: league.short_code
+                });
+            }
 
             hasMore = data.pagination?.has_more || false;
             currentPage++;
 
-            console.log(`Page ${currentPage - 1}: ${leagues.length} leagues (Total: ${allLeagues.length})`);
+            const totalUnique = leaguesMap.size;
+            console.log(`Page ${currentPage - 1}: ${leagues.length} leagues fetched (${totalUnique} unique total)`);
 
             // Safety limit
             if (currentPage > 100) {
@@ -51,8 +80,10 @@ export const getAllLeagues = async () => {
             }
         }
 
-        console.log(`✅ Total leagues fetched: ${allLeagues.length}`);
-        return allLeagues;
+        const uniqueLeagues = Array.from(leaguesMap.values());
+        console.log(`✅ Total unique leagues fetched: ${uniqueLeagues.length}`);
+
+        return uniqueLeagues;
     } catch (error) {
         console.error('Error fetching all leagues:', error.message);
         throw error;
