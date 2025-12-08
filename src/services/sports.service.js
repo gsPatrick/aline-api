@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const BASE_URL = 'https://api.sportmonks.com/v3/football';
-const token = process.env.SPORTMONKS_API_TOKEN;
+const token = process.env.SPORTMONKS_API_TOKEN || "Xql7ZNMOjdE1pxn7FOh4739UX07owQNA2dNDguw0K6p881Q8yhlInKkHgEgh";
 
 // Get all leagues with pagination
 export const apiGetLeagues = async (page = 1) => {
@@ -17,6 +17,43 @@ export const apiGetLeagues = async (page = 1) => {
         return data;
     } catch (error) {
         console.error('Error fetching leagues:', error.message);
+        throw error;
+    }
+};
+
+// Get ALL leagues (all pages)
+export const getAllLeagues = async () => {
+    try {
+        console.log('Fetching all leagues from SportMonks...');
+
+        let allLeagues = [];
+        let currentPage = 1;
+        let hasMore = true;
+
+        while (hasMore) {
+            const url = `${BASE_URL}/leagues?api_token=${token}&page=${currentPage}`;
+            console.log(`Fetching leagues page ${currentPage}...`);
+
+            const { data } = await axios.get(url);
+            const leagues = data.data || [];
+            allLeagues = allLeagues.concat(leagues);
+
+            hasMore = data.pagination?.has_more || false;
+            currentPage++;
+
+            console.log(`Page ${currentPage - 1}: ${leagues.length} leagues (Total: ${allLeagues.length})`);
+
+            // Safety limit
+            if (currentPage > 100) {
+                console.warn('Reached maximum page limit (100)');
+                break;
+            }
+        }
+
+        console.log(`✅ Total leagues fetched: ${allLeagues.length}`);
+        return allLeagues;
+    } catch (error) {
+        console.error('Error fetching all leagues:', error.message);
         throw error;
     }
 };

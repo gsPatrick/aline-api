@@ -1,6 +1,6 @@
-
 import {
   apiGetLeagues,
+  getAllLeagues,
   apiGetLeagueById,
   apiGetStandings,
   apiGetFixturesBySeason,
@@ -10,8 +10,20 @@ import {
 
 export const index = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    res.json(await apiGetLeagues(page));
+    // If page is requested, use paginated version
+    const page = parseInt(req.query.page);
+
+    if (page) {
+      res.json(await apiGetLeagues(page));
+    } else {
+      // Otherwise, return ALL leagues
+      const allLeagues = await getAllLeagues();
+      res.json({
+        success: true,
+        total: allLeagues.length,
+        data: allLeagues
+      });
+    }
   } catch (e) { next(e); }
 };
 
