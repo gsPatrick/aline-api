@@ -493,13 +493,44 @@ export const getMatchStats = async (matchId) => {
             const externalData = await fetchExternalMatchData(matchId, process.env.SPORTMONKS_API_TOKEN);
 
             if (externalData) {
-                // Create match in database for future use
-                match = await Match.create({
-                    id: matchId,
-                    externalId: matchId,
-                    data: externalData
-                });
-                console.log(`Match ${matchId} fetched from API and saved to database.`);
+                // Extract leagueId safely (V3 API can have it in different places)
+                const leagueId = externalData.league?.id || externalData.league_id;
+
+                if (!leagueId) {
+                    console.warn(`⚠️  Match ${matchId} has no leagueId. Skipping database save.`);
+                } else {
+                    // Try to save to database (non-blocking)
+                    try {
+                        match = await Match.create({
+                            id: matchId,
+                            externalId: matchId,
+                            leagueId: leagueId, // CRITICAL: Ensure leagueId is present
+                            data: externalData
+                        });
+                        console.log(`✅ Match ${matchId} fetched from API and saved to database.`);
+                    } catch (dbError) {
+                        console.error(`❌ Failed to save match ${matchId} to database:`, dbError.message);
+                        console.warn(`⚠️  Continuing without cache. Match data will be returned from API.`);
+
+                        // Create a temporary match object for processing
+                        match = {
+                            id: matchId,
+                            externalId: matchId,
+                            data: externalData,
+                            updatedAt: new Date()
+                        };
+                    }
+                }
+
+                // If we couldn't save to DB, create temp object
+                if (!match) {
+                    match = {
+                        id: matchId,
+                        externalId: matchId,
+                        data: externalData,
+                        updatedAt: new Date()
+                    };
+                }
             }
         } catch (apiError) {
             console.error(`Failed to fetch match ${matchId} from API:`, apiError.message);
@@ -571,10 +602,18 @@ export const getMatchStats = async (matchId) => {
         try {
             const newData = await fetchExternalMatchData(match.externalId, process.env.SPORTMONKS_API_TOKEN);
 
-            match.data = newData;
-            match.changed('data', true);
-            await match.save();
-            console.log(`Match ${matchId} data updated successfully.`);
+            // Try to update database (non-blocking)
+            try {
+                match.data = newData;
+                match.changed('data', true);
+                await match.save();
+                console.log(`✅ Match ${matchId} data updated successfully.`);
+            } catch (dbError) {
+                console.error(`❌ Failed to update match ${matchId} in database:`, dbError.message);
+                console.warn(`⚠️  Continuing without cache update. Using fresh API data.`);
+                // Continue with newData even if save failed
+                match.data = newData;
+            }
         } catch (error) {
             console.error(`Failed to sync match ${matchId}:`, error.message);
 
