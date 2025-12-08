@@ -8,6 +8,7 @@ import adminRoutes from "../features/admin/admin.routes.js";
 import matchRoutes from "../features/match/match.routes.js";
 import teamRoutes from "../features/team/team.routes.js";
 import fixtureRoutes from "../features/fixture/fixture.routes.js";
+import leagueRoutes from "../features/league/league.routes.js";
 
 const router = Router();
 
@@ -23,7 +24,7 @@ router.use("/subscription", subRoutes);
 // Painel Administrativo
 router.use("/admin", adminRoutes);
 
-// Match Stats
+// Match Stats (Heavy Fetch - Detailed Analysis)
 router.use("/matches", matchRoutes);
 
 // Team Stats
@@ -31,5 +32,8 @@ router.use("/teams", teamRoutes);
 
 // Fixtures (Light Fetch - Dashboard Listing)
 router.use("/fixtures", fixtureRoutes);
+
+// Leagues (All 113 leagues)
+router.use("/leagues", leagueRoutes);
 
 export default router;
