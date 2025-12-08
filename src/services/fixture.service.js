@@ -122,34 +122,35 @@ export const getLiveFixtures = async () => {
  * @returns {Array} Fixtures grouped by league with metadata
  */
 const groupFixturesByLeague = (fixtures) => {
-    const leaguesMap = {};
+    const leaguesMap = new Map();
 
-    fixtures.forEach(fixture => {
+    for (const fixture of fixtures) {
         const league = fixture.league;
-        if (!league) return;
+        if (!league) continue;
 
         const leagueId = league.id;
 
         // Initialize league group if not exists
-        if (!leaguesMap[leagueId]) {
-            leaguesMap[leagueId] = {
+        if (!leaguesMap.has(leagueId)) {
+            leaguesMap.set(leagueId, {
                 league_id: leagueId,
                 league_name: league.name,
+                league_logo: league.image_path, // CORRECT: image_path not logo
                 country_name: league.country?.name || 'International',
-                country_flag: league.country?.image_path || null,
+                country_flag: league.country?.image_path || null, // CORRECT: image_path
                 fixtures: []
-            };
+            });
         }
 
         // Normalize fixture data
         const normalizedFixture = normalizeFixture(fixture);
         if (normalizedFixture) {
-            leaguesMap[leagueId].fixtures.push(normalizedFixture);
+            leaguesMap.get(leagueId).fixtures.push(normalizedFixture);
         }
-    });
+    }
 
-    // Convert to array and sort by league importance
-    const groupedLeagues = Object.values(leaguesMap);
+    // Convert Map to array and sort by league importance
+    const groupedLeagues = Array.from(leaguesMap.values());
 
     // Sort leagues: prioritize Brazilian and South American competitions
     groupedLeagues.sort((a, b) => {
@@ -240,10 +241,17 @@ const normalizeFixture = (fixture) => {
         const scores = fixture.scores || [];
         const currentScore = scores.find(s => s.description === 'CURRENT');
 
-        const homeScore = currentScore?.score?.participant === 'home' ?
-            (currentScore.score.goals || 0) : 0;
-        const awayScore = currentScore?.score?.participant === 'away' ?
-            (currentScore.score.goals || 0) : 0;
+        // Extract scores safely
+        let homeScore = 0;
+        let awayScore = 0;
+
+        if (currentScore && currentScore.score) {
+            if (currentScore.score.participant === 'home') {
+                homeScore = currentScore.score.goals || 0;
+            } else if (currentScore.score.participant === 'away') {
+                awayScore = currentScore.score.goals || 0;
+            }
+        }
 
         // Get match state
         const state = fixture.state?.state || 'NS';
@@ -259,14 +267,14 @@ const normalizeFixture = (fixture) => {
                 id: home.id,
                 name: home.name,
                 short_name: home.short_code || home.name,
-                logo: home.image_path,
+                logo: home.image_path, // CORRECT: image_path not logo_path
                 score: homeScore
             },
             away_team: {
                 id: away.id,
                 name: away.name,
                 short_name: away.short_code || away.name,
-                logo: away.image_path,
+                logo: away.image_path, // CORRECT: image_path not logo_path
                 score: awayScore
             }
         };

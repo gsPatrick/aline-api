@@ -367,10 +367,66 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
 
 export const getMatchStats = async (matchId) => {
     const { Match } = await import("../../models/index.js");
-    const match = await Match.findOne({ where: { id: matchId } });
 
+    // Try to find match in database
+    let match = await Match.findOne({ where: { id: matchId } });
+
+    // GRACEFUL FALLBACK: If match not in DB, try to fetch from API directly
     if (!match) {
-        throw new Error("Match not found");
+        console.log(`Match ${matchId} not found in database. Attempting direct API fetch...`);
+
+        try {
+            // Try to fetch directly from SportMonks API
+            const externalData = await fetchExternalMatchData(matchId, process.env.SPORTMONKS_API_TOKEN);
+
+            if (externalData) {
+                // Create match in database for future use
+                match = await Match.create({
+                    id: matchId,
+                    externalId: matchId,
+                    data: externalData
+                });
+                console.log(`Match ${matchId} fetched from API and saved to database.`);
+            }
+        } catch (apiError) {
+            console.error(`Failed to fetch match ${matchId} from API:`, apiError.message);
+
+            // FINAL FALLBACK: Return minimal structure instead of 404
+            return {
+                error: true,
+                message: "Match data not available",
+                matchId: matchId,
+                matchInfo: {
+                    id: matchId,
+                    state: "UNKNOWN"
+                },
+                goalAnalysis: null,
+                cornerAnalysis: null,
+                cardAnalysis: null,
+                chartsAnalysis: null,
+                homeTeam: null,
+                awayTeam: null
+            };
+        }
+    }
+
+    // If still no match after all attempts, return minimal structure
+    if (!match) {
+        return {
+            error: true,
+            message: "Match not found",
+            matchId: matchId,
+            matchInfo: {
+                id: matchId,
+                state: "NOT_FOUND"
+            },
+            goalAnalysis: null,
+            cornerAnalysis: null,
+            cardAnalysis: null,
+            chartsAnalysis: null,
+            homeTeam: null,
+            awayTeam: null
+        };
     }
 
     // Dynamic Cache Strategy
@@ -379,8 +435,6 @@ export const getMatchStats = async (matchId) => {
     const isFinished = state === 'FT' || state === 'AET' || state === 'FT_PEN' || state === 'CAN' || state === 'POST' || state === 'INT' || state === 'ABAN';
 
     // TTL in milliseconds
-    // Live: 60 seconds
-    // Finished/Scheduled: 24 hours (or just rely on manual sync/webhook, but for now 24h is safe)
     const TTL = isLive ? 60 * 1000 : 24 * 60 * 60 * 1000;
 
     const lastUpdate = new Date(match.updatedAt).getTime();
@@ -391,21 +445,66 @@ export const getMatchStats = async (matchId) => {
     if (!match.data || Object.keys(match.data).length === 0 || isExpired) {
         console.log(`Match ${matchId} data update needed (State: ${state}, Expired: ${isExpired}). Fetching from API...`);
         try {
-            // We need the API Token. Assuming it's in env or passed somehow.
-            // For this implementation, we rely on process.env.SPORTMONKS_API_TOKEN
             const newData = await fetchExternalMatchData(match.externalId, process.env.SPORTMONKS_API_TOKEN);
 
             match.data = newData;
-            // Force update timestamp
             match.changed('data', true);
             await match.save();
             console.log(`Match ${matchId} data updated successfully.`);
         } catch (error) {
             console.error(`Failed to sync match ${matchId}:`, error.message);
-            // If fetch fails, we might still want to return what we have or throw
-            if (!match.data) throw error;
+
+            // GRACEFUL FALLBACK: If fetch fails but we have some data, use it
+            if (!match.data || Object.keys(match.data).length === 0) {
+                // Return partial data structure
+                return {
+                    error: true,
+                    message: "Unable to fetch updated match data",
+                    matchId: matchId,
+                    matchInfo: {
+                        id: matchId,
+                        state: state || "UNKNOWN"
+                    },
+                    goalAnalysis: null,
+                    cornerAnalysis: null,
+                    cardAnalysis: null,
+                    chartsAnalysis: null,
+                    homeTeam: null,
+                    awayTeam: null
+                };
+            }
         }
     }
 
-    return calculateMatchStats(match.data);
+    // Calculate stats with existing data
+    try {
+        return calculateMatchStats(match.data);
+    } catch (calcError) {
+        console.error(`Error calculating stats for match ${matchId}:`, calcError.message);
+
+        // GRACEFUL FALLBACK: Return basic match info even if calculation fails
+        const participants = match.data?.participants || [];
+        const home = participants.find(p => p.meta?.location === 'home');
+        const away = participants.find(p => p.meta?.location === 'away');
+
+        return {
+            error: true,
+            message: "Error calculating match statistics",
+            matchId: matchId,
+            matchInfo: {
+                id: matchId,
+                state: match.data?.state?.state || "UNKNOWN",
+                home_team: home?.name || "Home",
+                away_team: away?.name || "Away",
+                home_logo: home?.image_path,
+                away_logo: away?.image_path
+            },
+            goalAnalysis: null,
+            cornerAnalysis: null,
+            cardAnalysis: null,
+            chartsAnalysis: null,
+            homeTeam: null,
+            awayTeam: null
+        };
+    }
 };
