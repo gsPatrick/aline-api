@@ -12,6 +12,106 @@ const findStat = (stats, typeName) => {
     return stat?.data?.value ?? stat?.value ?? 0;
 };
 
+// Constants for Card Types (Validated in Research)
+const TYPE_YELLOW = 84;
+const TYPE_RED = 83;
+
+export const calculateRefereeStats = (refereeHistory, refereeName) => {
+    if (!refereeHistory || !Array.isArray(refereeHistory) || refereeHistory.length === 0) {
+        return null;
+    }
+
+    // Limit to last 20 matches for recent form
+    // Assuming history is passed sorted, but let's sort just in case if we have dates
+    // The history comes from 'fixtures' include which might not be sorted.
+    // However, the pivot object doesn't always have date. The nested fixture does.
+    const matches = refereeHistory
+        .map(item => item.fixture) // Extract fixture from pivot
+        .filter(f => f && f.starting_at) // Ensure fixture exists
+        .sort((a, b) => new Date(b.starting_at) - new Date(a.starting_at))
+        .slice(0, 20);
+
+    let totalCards = 0;
+    let totalYellow = 0;
+    let totalRed = 0;
+    let gamesOver05 = 0;
+    let gamesOver15 = 0;
+    let gamesOver25 = 0;
+    let gamesOver35 = 0;
+    let gamesOver45 = 0;
+    let analyzedGames = 0;
+
+    matches.forEach(match => {
+        // Check if stats exist (property is usually 'statistics' in v3)
+        const stats = match.statistics || match.stats;
+        if (!stats || !Array.isArray(stats) || stats.length === 0) return;
+
+        let matchYellow = 0;
+        let matchRed = 0;
+
+        stats.forEach(statItem => {
+            const typeId = statItem.type_id;
+            const value = statItem.data?.value || statItem.value || 0;
+
+            if (typeId === TYPE_YELLOW) {
+                matchYellow += value;
+            } else if (typeId === TYPE_RED) {
+                matchRed += value;
+            }
+        });
+
+        const matchTotal = matchYellow + matchRed;
+
+        // Only count if we found some cards or if we are confident stats are complete
+        // If matchTotal is 0, it might be a clean game or missing stats.
+        // Given we checked for 'statistics' existence, we assume 0 is valid.
+
+        totalYellow += matchYellow;
+        totalRed += matchRed;
+        totalCards += matchTotal;
+
+        if (matchTotal > 0.5) gamesOver05++;
+        if (matchTotal > 1.5) gamesOver15++;
+        if (matchTotal > 2.5) gamesOver25++;
+        if (matchTotal > 3.5) gamesOver35++;
+        if (matchTotal > 4.5) gamesOver45++;
+
+        analyzedGames++;
+    });
+
+    if (analyzedGames === 0) {
+        return {
+            name: refereeName,
+            avgCards: 0,
+            avgYellow: 0,
+            avgRed: 0,
+            over05: "0%",
+            over15: "0%",
+            over25: "0%",
+            over35: "0%",
+            over45: "0%"
+        };
+    }
+
+    const avgCards = Number((totalCards / analyzedGames).toFixed(1));
+    const avgYellow = Number((totalYellow / analyzedGames).toFixed(1));
+    const avgRed = Number((totalRed / analyzedGames).toFixed(1));
+
+    const toPct = (count) => Math.round((count / analyzedGames) * 100) + "%";
+
+    return {
+        name: refereeName,
+        avgCards,
+        avgYellow,
+        avgRed,
+        over05: toPct(gamesOver05),
+        over15: toPct(gamesOver15),
+        over25: toPct(gamesOver25),
+        over35: toPct(gamesOver35),
+        over45: toPct(gamesOver45)
+    };
+};
+
 export const calculateCardStats = (homeHistory, awayHistory, homeId, awayId) => {
 
     // Filter last 10 matches for each context
@@ -156,6 +256,6 @@ export const calculateCardStats = (homeHistory, awayHistory, homeId, awayId) => 
 
     return {
         home: homeStats,
-        away: awayStats
+        away: awayStats,
     };
 };

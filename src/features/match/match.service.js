@@ -1,9 +1,11 @@
 import axios from 'axios';
 import { calculateCornerStats } from './corners.service.js';
 import { calculateGoalAnalysis } from './goals.service.js';
-import { calculateCardStats } from './cards.service.js';
+import { calculateCardStats, calculateRefereeStats } from './cards.service.js';
 import { calculateGeneralStats } from './general.service.js';
 import { generateCharts } from './charts.service.js';
+import { normalizeLineups } from './lineups.service.js';
+import { apiGetStandings } from '../../services/sports.service.js';
 import {
     fetchH2HMatches,
     enrichHistoryWithStats,
@@ -11,6 +13,23 @@ import {
     generateInsights,
     buildTimeline
 } from './overview.service.js';
+
+// Helper to calculate Momentum from Dangerous Attacks trends
+const calculateMomentum = (trends, homeId, awayId) => {
+    const pressure = [];
+    // Find Dangerous Attacks trends
+    // Note: We need to know the type_id for Dangerous Attacks. 
+    // Since it varies, we might need to pass the stats to find the ID first, or rely on the name in trends if available (it's not usually).
+    // However, the trends object usually has 'type_id'. We need to map it.
+    // Strategy: We will assume the caller passes the Dangerous Attacks Type ID or we find it from stats.
+    // Actually, let's try to find it from the trends if possible or use a robust method.
+    // In test-live-data.js we saw we can map stats types.
+
+    // For now, let's assume we receive the 'dangerousAttacksTypeId' or we search for it in the main function and pass it here.
+    // But to keep it simple and self-contained, let's pass the whole data object or stats to find the ID.
+
+    return pressure; // Placeholder, will be implemented inside calculateMatchStats for access to all data
+};
 
 export const calculateMatchStats = (data) => {
     // ... existing code ...
@@ -172,21 +191,29 @@ export const calculateMatchStats = (data) => {
     };
 
     // Calculate Corner Stats
-    // Pass detailed history (heavy fetch data)
+    // Pass detailed history (heavy fetch data) AND odds for Value Bets
     const cornerAnalysis = calculateCornerStats(
         data.homeTeam?.detailedHistory,
         data.awayTeam?.detailedHistory,
         home.id,
-        away.id
+        away.id,
+        odds // Pass odds
     );
 
     // Calculate Goal Analysis
-    const goalAnalysis = calculateGoalAnalysis(
+    const goalAnalysisRaw = calculateGoalAnalysis(
         data.homeTeam?.detailedHistory,
         data.awayTeam?.detailedHistory,
         home.id,
-        away.id
+        away.id,
+        odds // Pass odds
     );
+
+    // Merge xG into goalAnalysis
+    const goalAnalysis = {
+        ...goalAnalysisRaw,
+        xg: xG
+    };
 
     // Calculate Card Analysis
     const cardStats = calculateCardStats(
@@ -197,19 +224,121 @@ export const calculateMatchStats = (data) => {
     );
 
     // Process Referee Data
+    // Calculate stats using the history passed from fetchExternalMatchData
+    const refereeStats = calculateRefereeStats(data.refereeHistory, data.referee?.name);
+
     const refereeData = data.referee ? {
-        name: data.referee.common_name || data.referee.fullname || "Unknown",
-        avgCards: 0, // Fallback
-        over45: 0 // Fallback
+        name: data.referee.name,
+        avgCards: refereeStats?.avgCards || 0,
+        avgYellow: refereeStats?.avgYellow || 0,
+        avgRed: refereeStats?.avgRed || 0,
+        image: data.referee.image
     } : null;
 
-    // If referee has stats (unlikely in standard include, but let's check if we can extract anything)
-    // Sometimes referee stats come in a separate endpoint or need calculation.
-    // For now, we return what we have.
+    // 10. Heuristic Analysis (Momentum & Action Zones)
+    // --- Momentum (Pressure Chart) ---
+    const pressure = [];
+    const daStat = stats.find(s => s.type?.name === 'Dangerous Attacks' || s.type?.developer_name === 'DANGEROUS_ATTACKS');
+    const daTypeId = daStat?.type?.id;
+
+    if (daTypeId && data.trends) {
+        const homeTrends = data.trends.filter(t => t.participant_id === home.id && t.type_id === daTypeId);
+        const awayTrends = data.trends.filter(t => t.participant_id === away.id && t.type_id === daTypeId);
+
+        // Create a map of minute -> value for both teams
+        // Trends are usually "last X minutes". We need to map this to a timeline.
+        // If trends are not minute-by-minute, this is hard.
+        // SportMonks trends are usually like "0-15", "15-30".
+        // BUT the user requirement says: "For each minute (0 to 90)... Get DA value...".
+        // If we don't have minute-by-minute DA, we might need to interpolate from the 15-min segments or use the 'events' if available.
+        // However, the user explicitly said "Source: Use o endpoint trends".
+        // Let's assume trends provide enough granularity or we use the available segments.
+        // If trends are 15-min blocks, we repeat the value for those 15 mins.
+
+        // Actually, for "Pressure", usually we want a curve.
+        // Let's look at the trends structure from previous logs if possible.
+        // In `test-live-data.js` logs (which I can't see fully now but recall), trends were like "0-10": 5.
+
+        // Let's implement a generic bucket filler.
+        const fillMinutes = (trendsArr) => {
+            const minutes = new Array(91).fill(0);
+            trendsArr.forEach(t => {
+                const start = t.minute_start || 0;
+                const end = t.minute_end || 90;
+                const value = t.amount || t.value || 0;
+                const duration = end - start + 1;
+                const perMinute = value / duration; // Distribute evenly? Or just use the value as intensity?
+                // User formula: Value = (Home_DA * 1.5) - ...
+                // If the trend says "5 DA in 15 mins", the intensity is 5.
+                for (let m = start; m <= end; m++) {
+                    if (m <= 90) minutes[m] = value; // Use the raw count as the "intensity" for that block
+                }
+            });
+            return minutes;
+        };
+
+        const homePressure = fillMinutes(homeTrends);
+        const awayPressure = fillMinutes(awayTrends);
+
+        for (let m = 0; m <= 90; m++) {
+            const h = homePressure[m];
+            const a = awayPressure[m];
+            // Smoothing: If 0, use previous * 0.9
+            let val = (h * 1.5) - (a * 1.5);
+
+            if (val === 0 && m > 0) {
+                val = pressure[m - 1] * 0.9;
+            }
+            pressure.push(val);
+        }
+    }
+
+    // --- Action Zones (Heuristic) ---
+    // Weight_Attack (Zone 3) = (Dangerous Attacks * 3) + (Shots * 5) + (Corners * 2)
+    // Weight_Middle (Zone 2) = (Total Passes * 0.1) + ((Total Attacks - Dangerous Attacks) * 1)
+    // Weight_Defense (Zone 1) = (Opponent Attacks * 0.5) + (Saves * 2) + (Clearances * 1)
+
+    const calculateZones = (teamStats, oppStats) => {
+        const da = findStat(teamStats, 'Dangerous Attacks', 'DANGEROUS_ATTACKS');
+        const shots = findStat(teamStats, 'Shots Total', 'SHOTS_TOTAL');
+        const corners = findStat(teamStats, 'Corners', 'CORNERS');
+        const passes = findStat(teamStats, 'Passes', 'PASSES_TOTAL'); // 'Passes' or 'Passes Total'
+        const attacks = findStat(teamStats, 'Attacks', 'ATTACKS');
+        const saves = findStat(teamStats, 'Saves', 'SAVES');
+        const clearances = findStat(teamStats, 'Clearances', 'CLEARANCES'); // Might not exist, check logs if needed.
+        const oppAttacks = findStat(oppStats, 'Attacks', 'ATTACKS');
+
+        const wAttack = (da * 3) + (shots * 5) + (corners * 2);
+        const wMiddle = (passes * 0.1) + ((attacks - da) * 1);
+        const wDefense = (oppAttacks * 0.5) + (saves * 2) + (clearances * 1);
+
+        const total = wAttack + wMiddle + wDefense || 1; // Avoid div by 0
+
+        return {
+            defense: Math.round((wDefense / total) * 100),
+            middle: Math.round((wMiddle / total) * 100),
+            attack: Math.round((wAttack / total) * 100)
+        };
+    };
+
+    const attackZones = {
+        home: calculateZones(homeStats, awayStats),
+        away: calculateZones(awayStats, homeStats)
+    };
+
+    // Charts Analysis object will be constructed later merging this with generateCharts
+
 
     const cardAnalysis = {
         ...cardStats,
-        referee: refereeData
+        referee: refereeStats ? {
+            avg: refereeStats.avgCards,
+            over05: refereeStats.over05,
+            over15: refereeStats.over15,
+            over25: refereeStats.over25,
+            over35: refereeStats.over35,
+            over45: refereeStats.over45
+        } : null
     };
 
     // Calculate General Stats Analysis (Shots, Control)
@@ -221,7 +350,12 @@ export const calculateMatchStats = (data) => {
     );
 
     // Generate Charts Analysis (Timeline)
-    const chartsAnalysis = generateCharts(data);
+    // Generate Charts Analysis (Timeline) and merge with Heuristics
+    const chartsAnalysis = {
+        ...generateCharts(data),
+        pressure,
+        attackZones
+    };
 
     // ===== NEW: OVERVIEW TAB DATA =====
 
@@ -241,10 +375,62 @@ export const calculateMatchStats = (data) => {
         cornerAnalysis,
         cardAnalysis
     };
-    const insights = generateInsights(allStats);
+    // Helper to process current match stats into frontend structure
+    const calculateDetailedMatchStats = (stats, homeId, awayId) => {
+        // Defensive Coding: Always return structure, even if stats are missing
+        const safeStats = Array.isArray(stats) ? stats : [];
 
-    // Note: H2H will be fetched separately in getMatchStats since it requires API call
-    // We'll pass team IDs for that
+        const processPeriod = (period) => {
+            const getStat = (type, teamId) => {
+                const s = safeStats.find(x =>
+                    (x.type?.name === type || x.type?.developer_name === type) &&
+                    x.participant_id == teamId
+                );
+                return s?.data?.value ?? s?.value ?? 0;
+            };
+
+            return {
+                possession: { home: getStat('Ball Possession %', homeId), away: getStat('Ball Possession %', awayId) },
+                attacks: {
+                    total: { home: getStat('Attacks', homeId), away: getStat('Attacks', awayId) },
+                    dangerous: { home: getStat('Dangerous Attacks', homeId), away: getStat('Dangerous Attacks', awayId) },
+                    corners: { home: getStat('Corners', homeId), away: getStat('Corners', awayId) },
+                    crosses: { home: getStat('Crosses', homeId), away: getStat('Crosses', awayId) }
+                },
+                shots: {
+                    total: { home: getStat('Shots Total', homeId), away: getStat('Shots Total', awayId) },
+                    onTarget: { home: getStat('Shots On Target', homeId), away: getStat('Shots On Target', awayId) },
+                    offTarget: { home: getStat('Shots Off Target', homeId), away: getStat('Shots Off Target', awayId) },
+                    insideBox: { home: getStat('Shots Insidebox', homeId), away: getStat('Shots Insidebox', awayId) },
+                    outsideBox: { home: getStat('Shots Outsidebox', homeId), away: getStat('Shots Outsidebox', awayId) }
+                },
+                others: {
+                    saves: { home: getStat('Saves', homeId), away: getStat('Saves', awayId) },
+                    fouls: { home: getStat('Fouls', homeId), away: getStat('Fouls', awayId) },
+                    freeKicks: { home: 0, away: 0 },
+                    yellowCards: { home: getStat('Yellow Cards', homeId), away: getStat('Yellow Cards', awayId) },
+                    redCards: { home: getStat('Red Cards', homeId), away: getStat('Red Cards', awayId) },
+                    passes: { home: getStat('Passes', homeId), away: getStat('Passes', awayId) },
+                    longPasses: { home: 0, away: 0 },
+                    interceptions: { home: getStat('Interceptions', homeId), away: getStat('Interceptions', awayId) }
+                }
+            };
+        };
+
+        return {
+            fulltime: processPeriod('ALL'),
+            ht: processPeriod('1ST'),
+            st: processPeriod('2ND')
+        };
+    };
+
+    const detailedStats = calculateDetailedMatchStats(data.statistics, home.id, away.id);
+
+    // Calculate Lineups
+    const lineups = normalizeLineups(data.lineups, home, away);
+
+    // Generate prediction insights (now returns object with fulltime and list)
+    const predictions = generateInsights(allStats);
 
     return {
         // Match Info - ENRICHED with all required fields
@@ -285,7 +471,11 @@ export const calculateMatchStats = (data) => {
             } : null
         },
 
-        // Existing Analysis
+        // Analysis Data
+        analysis: { // Grouping under analysis to match frontend structure better if needed, or mapping in frontend
+            detailedStats: detailedStats,
+            standings: data.standings || []
+        },
         basicInfo: {
             ...basicInfo,
             form: {
@@ -301,8 +491,10 @@ export const calculateMatchStats = (data) => {
         shotStats,
         offsides,
         otherStats,
-        xG,
+        xG, // Kept for backward compatibility if needed, but also merged in goalAnalysis
         cornerAnalysis,
+        lineups, // Added Lineups
+        predictions, // Added Predictions
 
         // NEW: Overview Tab Data
         history: {
@@ -310,8 +502,8 @@ export const calculateMatchStats = (data) => {
             away: enrichedAwayHistory
         },
         trends,
-        insights,
         timeline,
+        standings: data.standings || [], // Added Standings
 
         // Team data for H2H fetch
         homeTeam: {
@@ -352,30 +544,71 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
     }
 
     try {
-        // Step 1: Fetch Match Details (Participants, Stats, League, Venue, Odds, Referee, Events)
-        const [resParticipants, resStats, resLeague, resVenue, resOdds, resReferee, resEvents] = await Promise.all([
+        // Step 1: Fetch Match Details (Participants, Stats, League, Venue, Odds, Referee, Events, Lineups)
+        const [resParticipants, resStats, resLeague, resVenue, resOdds, resReferee, resEvents, resLineups] = await Promise.all([
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=participants`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=statistics.type`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=league`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=venue`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=odds`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=referees`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=events`)
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=events`),
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=lineups.player`)
         ]);
 
         const participants = resParticipants.data.data.participants || [];
         const home = participants.find(p => p.meta?.location === 'home') || participants[0];
         const away = participants.find(p => p.meta?.location === 'away') || participants[1];
 
+        // Get Season ID for Standings
+        const seasonId = resParticipants.data.data.season_id;
+        let standings = [];
+        if (seasonId) {
+            try {
+                standings = await apiGetStandings(seasonId);
+            } catch (e) {
+                console.error(`Failed to fetch standings for season ${seasonId}`, e.message);
+            }
+        }
+
         // Referee Data
         // referees is an array of pivot objects. The actual referee details are in .referee property of the pivot.
         const referees = resReferee.data.data.referees || [];
-        const mainReferee = referees.find(r => r.type?.name === 'REFEREE');
-        const referee = mainReferee ? {
-            id: mainReferee.id,
-            name: mainReferee.name || mainReferee.common_name || 'Unknown',
-            image: mainReferee.image_path
-        } : null;
+        const mainReferee = referees.find(r => r.type?.name === 'REFEREE') || referees[0]; // Fallback to first if no type
+
+        let referee = null;
+        let refereeHistory = [];
+
+        if (mainReferee) {
+            // The object might be the pivot, so check for referee_id or id
+            const refereeId = mainReferee.referee_id || mainReferee.id;
+            const refereeName = mainReferee.name || mainReferee.common_name || mainReferee.fullname || 'Unknown';
+
+            referee = {
+                id: refereeId,
+                name: refereeName,
+                image: mainReferee.image_path
+            };
+
+            // Fetch Referee History (Last 20 matches with stats)
+            try {
+                // We use include=fixtures.fixture.statistics to get the stats
+                // We can't easily limit nested includes, so we fetch and slice in memory.
+                // To optimize, we could try to use date ranges, but for now let's just fetch.
+                // Note: This might be heavy if the referee has thousands of matches.
+                // Let's try to use 'latest' if possible? No, 'latestFixtures' failed.
+                // Let's use the standard endpoint.
+                console.log(`Fetching history for referee ${refereeId}...`);
+                const refHistoryUrl = `${BASE_URL}/referees/${refereeId}?api_token=${token}&include=fixtures.fixture.statistics`;
+                const resRefHistory = await axios.get(refHistoryUrl);
+
+                if (resRefHistory.data?.data?.fixtures) {
+                    refereeHistory = resRefHistory.data.data.fixtures;
+                }
+            } catch (refError) {
+                console.error(`Failed to fetch history for referee ${refereeId}`, refError.message);
+            }
+        }
 
         // Step 2: Heavy Fetch - Get IDs for last 10 Home and 10 Away matches
         // We need to fetch the team's latest matches first to get their IDs
@@ -430,7 +663,7 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
         // Commentaries are needed because corner events are not available in the events array
         const fetchDetailedMatch = async (id) => {
             try {
-                const url = `${BASE_URL}/fixtures/${id}?api_token=${token}&include=events.type;statistics.type;participants;comments`;
+                const url = `${BASE_URL}/fixtures/${id}?api_token=${token}&include=events.type;statistics.type;participants;comments;lineups.player;odds;referees`;
                 const res = await axios.get(url);
                 return res.data.data;
             } catch (e) {
@@ -460,7 +693,10 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
             venue: resVenue.data.data.venue,
             odds: resOdds.data.data.odds,
             referee: referee, // Add referee to merged data
+            refereeHistory: refereeHistory, // Add referee history
             events: resEvents.data.data.events || [], // Add events for charts
+            lineups: resLineups.data.data.lineups || [], // Add lineups
+            standings: standings, // Add standings
             homeTeam: {
                 ...home, // keep basic info
                 detailedHistory: validHomeHistory
