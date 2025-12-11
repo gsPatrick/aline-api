@@ -77,6 +77,22 @@ export const calculateCornerStats = (homeHistory, awayHistory, homeId, awayId, m
         let corners87FT = 0;
         let over85Count = 0;
 
+        // HT/2HT Accumulators
+        let totalHtCorners = 0;
+        let totalShCorners = 0;
+
+        let htOver05Count = 0;
+        let htOver15Count = 0;
+        let htOver25Count = 0;
+        let htOver35Count = 0;
+        let htOver45Count = 0;
+
+        let shOver05Count = 0;
+        let shOver15Count = 0;
+        let shOver25Count = 0;
+        let shOver35Count = 0;
+        let shOver45Count = 0;
+
         matches.forEach(match => {
             const stats = match.statistics || [];
             const myStatsArr = stats.filter(s => s.participant_id == teamId);
@@ -122,6 +138,9 @@ export const calculateCornerStats = (homeHistory, awayHistory, homeId, awayId, m
             let has37HT = false;
             let has87FT = false;
 
+            let htCorners = 0;
+            let shCorners = 0;
+
             cornerEvents.forEach(e => {
                 const isMine = e.participant_id == teamId;
                 const minute = e.minute;
@@ -159,10 +178,48 @@ export const calculateCornerStats = (homeHistory, awayHistory, homeId, awayId, m
 
                 if (minute >= 37 && minute <= 45) has37HT = true;
                 if (minute >= 87) has87FT = true;
+
+                // HT/2HT Logic (Total corners in match for this team + opponent? Or just team?)
+                // Usually predictions are for the MATCH (Total).
+                // But here we are iterating per TEAM history.
+                // Wait, `cornerEvents` here contains ALL corners in that match?
+                // No, `cornerEvents` is filtered from `match.events`.
+                // `match.events` has ALL events.
+                // So `cornerEvents` has ALL corners.
+                // BUT `isMine` checks `participant_id`.
+                // So we can count total match corners in HT/2HT.
+
+                if (minute <= 45) htCorners++;
+                else shCorners++;
             });
 
             if (has37HT) corners37HT++;
             if (has87FT) corners87FT++;
+
+            // Accumulate HT/2HT totals for averages
+            // We need to store these to calculate averages later?
+            // The current function structure accumulates `totalCornersFor` etc.
+            // Let's add accumulators for HT/2HT.
+            // But wait, `htCorners` here is for the specific match.
+            // We need to return stats for the TEAM's history.
+            // So we need `htOver05`, `htOver15` etc. counts.
+
+            // HT Markets
+            if (htCorners > 0.5) htOver05Count++;
+            if (htCorners > 1.5) htOver15Count++;
+            if (htCorners > 2.5) htOver25Count++;
+            if (htCorners > 3.5) htOver35Count++;
+            if (htCorners > 4.5) htOver45Count++;
+
+            // 2HT Markets
+            if (shCorners > 0.5) shOver05Count++;
+            if (shCorners > 1.5) shOver15Count++;
+            if (shCorners > 2.5) shOver25Count++;
+            if (shCorners > 3.5) shOver35Count++;
+            if (shCorners > 4.5) shOver45Count++;
+
+            totalHtCorners += htCorners;
+            totalShCorners += shCorners;
         });
 
         const avgFor = gamesCount ? (totalCornersFor / gamesCount).toFixed(1) : 0;
@@ -195,7 +252,25 @@ export const calculateCornerStats = (homeHistory, awayHistory, homeId, awayId, m
             trends: {
                 over85: gamesCount ? ((over85Count / gamesCount) * 100).toFixed(0) : 0,
             },
-            intervals: formattedIntervals
+            intervals: formattedIntervals,
+            // HT Stats
+            avgHt: gamesCount ? (totalHtCorners / gamesCount).toFixed(1) : 0,
+            htMarkets: {
+                over05: gamesCount ? ((htOver05Count / gamesCount) * 100).toFixed(0) : 0,
+                over15: gamesCount ? ((htOver15Count / gamesCount) * 100).toFixed(0) : 0,
+                over25: gamesCount ? ((htOver25Count / gamesCount) * 100).toFixed(0) : 0,
+                over35: gamesCount ? ((htOver35Count / gamesCount) * 100).toFixed(0) : 0,
+                over45: gamesCount ? ((htOver45Count / gamesCount) * 100).toFixed(0) : 0,
+            },
+            // 2HT Stats
+            avgSh: gamesCount ? (totalShCorners / gamesCount).toFixed(1) : 0,
+            shMarkets: {
+                over05: gamesCount ? ((shOver05Count / gamesCount) * 100).toFixed(0) : 0,
+                over15: gamesCount ? ((shOver15Count / gamesCount) * 100).toFixed(0) : 0,
+                over25: gamesCount ? ((shOver25Count / gamesCount) * 100).toFixed(0) : 0,
+                over35: gamesCount ? ((shOver35Count / gamesCount) * 100).toFixed(0) : 0,
+                over45: gamesCount ? ((shOver45Count / gamesCount) * 100).toFixed(0) : 0,
+            }
         };
     };
 

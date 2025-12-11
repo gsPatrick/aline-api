@@ -20,7 +20,8 @@ export const fetchH2HMatches = async (homeTeamId, awayTeamId) => {
         console.log(`Fetching H2H for teams ${homeTeamId} vs ${awayTeamId}...`);
 
         // Query for finished matches between these two teams
-        const url = `${BASE_URL}/fixtures/head-to-head/${homeTeamId}/${awayTeamId}?api_token=${token}&include=participants;scores;statistics&limit=10`;
+        // Include league for frontend H2HTab display
+        const url = `${BASE_URL}/fixtures/head-to-head/${homeTeamId}/${awayTeamId}?api_token=${token}&include=participants;scores;statistics.type;league&limit=10`;
 
         const { data } = await axios.get(url);
         const matches = data.data || [];
@@ -43,9 +44,12 @@ export const fetchH2HMatches = async (homeTeamId, awayTeamId) => {
 
             const scores = match.scores || [];
             const currentScore = scores.find(s => s.description === 'CURRENT');
+            const htScore = scores.find(s => s.description === '1ST_HALF');
 
             let homeScore = 0;
             let awayScore = 0;
+            let homeScoreHT = 0;
+            let awayScoreHT = 0;
 
             if (currentScore && currentScore.score) {
                 if (currentScore.score.participant === 'home') {
@@ -54,19 +58,79 @@ export const fetchH2HMatches = async (homeTeamId, awayTeamId) => {
                     awayScore = currentScore.score.goals || 0;
                 }
             }
+            // Handle standard score format if participant isn't explicit in single object
+            if (currentScore && !currentScore.score?.participant) {
+                // SportMonks v3 often gives array of scores. 
+                // If description is CURRENT, it might be the final score.
+                // Let's rely on the fact that usually we have separate score objects for home/away or we parse the string if needed.
+                // Actually, simpler:
+                const hS = scores.find(s => s.description === 'CURRENT' && s.score?.participant === 'home');
+                const aS = scores.find(s => s.description === 'CURRENT' && s.score?.participant === 'away');
+                if (hS) homeScore = hS.score.goals;
+                if (aS) awayScore = aS.score.goals;
+            }
+
+            if (htScore) {
+                const hS = scores.find(s => s.description === '1ST_HALF' && s.score?.participant === 'home');
+                const aS = scores.find(s => s.description === '1ST_HALF' && s.score?.participant === 'away');
+                if (hS) homeScoreHT = hS.score.goals;
+                if (aS) awayScoreHT = aS.score.goals;
+            }
 
             // Extract stats
             const stats = match.statistics || [];
-            const totalCorners = stats.reduce((sum, s) => {
-                if (s.type?.name === 'Corners') {
-                    return sum + (s.data?.value || 0);
+
+            // Helper para comparar IDs com segurança (String vs Number)
+            const isTeam = (statId, teamId) => String(statId) === String(teamId);
+
+            // 1. CANTOS
+            const homeCorners = stats.reduce((sum, s) => {
+                const name = s.type?.name || s.type?.developer_name || '';
+                // Verifica se é o time E se o nome parece com Canto
+                if (isTeam(s.participant_id, home?.id) && (name === 'Corners' || name.includes('Corner'))) {
+                    return sum + (s.data?.value || s.value || 0);
                 }
                 return sum;
             }, 0);
 
-            const totalCards = stats.reduce((sum, s) => {
-                if (s.type?.name === 'Yellow Cards' || s.type?.name === 'Red Cards') {
-                    return sum + (s.data?.value || 0);
+            const awayCorners = stats.reduce((sum, s) => {
+                const name = s.type?.name || s.type?.developer_name || '';
+                if (isTeam(s.participant_id, away?.id) && (name === 'Corners' || name.includes('Corner'))) {
+                    return sum + (s.data?.value || s.value || 0);
+                }
+                return sum;
+            }, 0);
+
+            // 2. CARTÕES (Amarelos - ID 84 geralmente, ou busca por nome)
+            const homeYellow = stats.reduce((sum, s) => {
+                const name = s.type?.name || '';
+                if (isTeam(s.participant_id, home?.id) && (name === 'Yellowcards' || name.includes('Yellow'))) {
+                    return sum + (s.data?.value || s.value || 0);
+                }
+                return sum;
+            }, 0);
+
+            const awayYellow = stats.reduce((sum, s) => {
+                const name = s.type?.name || '';
+                if (isTeam(s.participant_id, away?.id) && (name === 'Yellowcards' || name.includes('Yellow'))) {
+                    return sum + (s.data?.value || s.value || 0);
+                }
+                return sum;
+            }, 0);
+
+            // 3. CARTÕES VERMELHOS
+            const homeRed = stats.reduce((sum, s) => {
+                const name = s.type?.name || '';
+                if (isTeam(s.participant_id, home?.id) && (name === 'Redcards' || name.includes('Red'))) {
+                    return sum + (s.data?.value || s.value || 0);
+                }
+                return sum;
+            }, 0);
+
+            const awayRed = stats.reduce((sum, s) => {
+                const name = s.type?.name || '';
+                if (isTeam(s.participant_id, away?.id) && (name === 'Redcards' || name.includes('Red'))) {
+                    return sum + (s.data?.value || s.value || 0);
                 }
                 return sum;
             }, 0);
@@ -78,17 +142,20 @@ export const fetchH2HMatches = async (homeTeamId, awayTeamId) => {
             } else if (awayScore > homeScore) {
                 winner = away?.id === homeTeamId ? 'away' : 'home';
             }
-
             return {
                 id: match.id,
                 date: match.starting_at?.split('T')[0] || match.starting_at,
                 home_team: home?.name || 'Home',
                 away_team: away?.name || 'Away',
                 score: `${homeScore}-${awayScore}`,
+                ht_score: `${homeScoreHT}-${awayScoreHT}`,
+                homeScore, awayScore,
+                homeScoreHT, awayScoreHT,
                 winner: winner,
                 stats: {
-                    corners: totalCorners,
-                    cards: totalCards
+                    corners: { home: homeCorners, away: awayCorners },
+                    yellowCards: { home: homeYellow, away: awayYellow },
+                    redCards: { home: homeRed, away: awayRed }
                 }
             };
         });
@@ -102,13 +169,9 @@ export const fetchH2HMatches = async (homeTeamId, awayTeamId) => {
         };
 
         // Calculate averages
-        const totalGoals = processedMatches.reduce((sum, m) => {
-            const [home, away] = m.score.split('-').map(Number);
-            return sum + home + away;
-        }, 0);
-
-        const totalCorners = processedMatches.reduce((sum, m) => sum + m.stats.corners, 0);
-        const totalCards = processedMatches.reduce((sum, m) => sum + m.stats.cards, 0);
+        const totalGoals = processedMatches.reduce((sum, m) => sum + m.homeScore + m.awayScore, 0);
+        const totalCorners = processedMatches.reduce((sum, m) => sum + m.stats.corners.home + m.stats.corners.away, 0);
+        const totalCards = processedMatches.reduce((sum, m) => sum + m.stats.yellowCards.home + m.stats.yellowCards.away + m.stats.redCards.home + m.stats.redCards.away, 0);
 
         const averages = {
             goals_per_match: processedMatches.length > 0 ? (totalGoals / processedMatches.length).toFixed(2) : 0,
@@ -116,10 +179,64 @@ export const fetchH2HMatches = async (homeTeamId, awayTeamId) => {
             cards_per_match: processedMatches.length > 0 ? (totalCards / processedMatches.length).toFixed(1) : 0
         };
 
+        // Calculate aggregates for frontend H2HStats
+        const aggregates = {
+            goals: {
+                home: processedMatches.reduce((sum, m) => sum + m.homeScore, 0),
+                away: processedMatches.reduce((sum, m) => sum + m.awayScore, 0)
+            },
+            corners: {
+                home: processedMatches.reduce((sum, m) => sum + m.stats.corners.home, 0),
+                away: processedMatches.reduce((sum, m) => sum + m.stats.corners.away, 0)
+            },
+            yellowCards: {
+                home: processedMatches.reduce((sum, m) => sum + m.stats.yellowCards.home, 0),
+                away: processedMatches.reduce((sum, m) => sum + m.stats.yellowCards.away, 0)
+            },
+            redCards: {
+                home: processedMatches.reduce((sum, m) => sum + m.stats.redCards.home, 0),
+                away: processedMatches.reduce((sum, m) => sum + m.stats.redCards.away, 0)
+            }
+        };
+
+        // Calculate Trends (Green Cards)
+        const total = processedMatches.length;
+        const trends = [];
+        if (total > 0) {
+            const btts = processedMatches.filter(m => m.homeScore > 0 && m.awayScore > 0).length;
+            const over05HT = processedMatches.filter(m => (m.homeScoreHT + m.awayScoreHT) > 0.5).length;
+            const over15FT = processedMatches.filter(m => (m.homeScore + m.awayScore) > 1.5).length;
+            const over25FT = processedMatches.filter(m => (m.homeScore + m.awayScore) > 2.5).length;
+            // Use total corners for trends
+            const over85Corners = processedMatches.filter(m => (m.stats.corners.home + m.stats.corners.away) > 8.5).length;
+            const over95Corners = processedMatches.filter(m => (m.stats.corners.home + m.stats.corners.away) > 9.5).length;
+
+            const addTrend = (label, count) => {
+                const pct = Math.round((count / total) * 100);
+                if (pct >= 50) { // Only show relevant trends
+                    trends.push({
+                        label: `${pct}% ${label}`,
+                        sub: `${count}/${total} Jogos`,
+                        type: pct >= 70 ? 'high' : 'warn'
+                    });
+                }
+            };
+
+            addTrend('Over 0.5HT', over05HT);
+            addTrend('BTTS', btts);
+            addTrend('Over 1.5FT', over15FT);
+            addTrend('Over 2.5FT', over25FT);
+            addTrend('Over 8.5 Cantos', over85Corners);
+            addTrend('Over 9.5 Cantos', over95Corners);
+        }
+
         return {
-            matches: processedMatches,
+            matches: matches, // Return RAW matches with participants, scores, league for frontend
+            processedMatches, // Keep processed matches for stats analysis
             summary,
-            averages
+            averages,
+            aggregates, // Return aggregates
+            trends
         };
 
     } catch (error) {
@@ -141,18 +258,72 @@ export const enrichHistoryWithStats = (history) => {
     if (!history || !Array.isArray(history)) return [];
 
     return history.map(match => {
-        // If stats already exist, return as is
-        if (match.stats) return match;
+        // Extract participants
+        const participants = match.participants || [];
+        const home = participants.find(p => p.meta?.location === 'home');
+        const away = participants.find(p => p.meta?.location === 'away');
 
-        // Try to extract from raw data if available
-        const corners = match.corners || 0;
-        const cards = match.cards || 0;
+        // Extract scores
+        const scores = match.scores || [];
+        const currentScore = scores.find(s => s.description === 'CURRENT');
+
+        let homeScore = 0;
+        let awayScore = 0;
+
+        if (currentScore && currentScore.score) {
+            if (currentScore.score.participant === 'home') {
+                homeScore = currentScore.score.goals || 0;
+            } else if (currentScore.score.participant === 'away') {
+                awayScore = currentScore.score.goals || 0;
+            }
+        }
+        // Handle standard score format if participant isn't explicit in single object
+        if (currentScore && !currentScore.score?.participant) {
+            const hS = scores.find(s => s.description === 'CURRENT' && s.score?.participant === 'home');
+            const aS = scores.find(s => s.description === 'CURRENT' && s.score?.participant === 'away');
+            if (hS) homeScore = hS.score.goals;
+            if (aS) awayScore = aS.score.goals;
+        }
+
+        // Determine winner
+        let winner = 'draw';
+        if (homeScore > awayScore) winner = 'home';
+        else if (awayScore > homeScore) winner = 'away';
+
+        // Extract stats
+        const stats = match.statistics || [];
+        const isTeam = (statId, teamId) => String(statId) === String(teamId);
+
+        const getStat = (namePart, teamId) => {
+            return stats.reduce((sum, s) => {
+                const name = s.type?.name || s.type?.developer_name || '';
+                if (isTeam(s.participant_id, teamId) && (name === namePart || name.includes(namePart))) {
+                    return sum + (s.data?.value || s.value || 0);
+                }
+                return sum;
+            }, 0);
+        };
+
+        const homeCorners = getStat('Corner', home?.id);
+        const awayCorners = getStat('Corner', away?.id);
+        const homeCards = getStat('Yellow', home?.id) + getStat('Red', home?.id); // Simplified total cards
+        const awayCards = getStat('Yellow', away?.id) + getStat('Red', away?.id);
 
         return {
-            ...match,
+            id: match.id,
+            date: match.starting_at,
+            home_team: home?.name || 'Home',
+            away_team: away?.name || 'Away',
+            home_logo: home?.image_path,
+            away_logo: away?.image_path,
+            home_id: home?.id,
+            away_id: away?.id,
+            score: `${homeScore}-${awayScore}`,
+            winner: winner,
+            league: match.league?.name || 'League', // Add league name
             stats: {
-                corners: corners,
-                cards: cards
+                corners: { home: homeCorners, away: awayCorners },
+                cards: { home: homeCards, away: awayCards }
             }
         };
     });

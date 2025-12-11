@@ -1,0 +1,619 @@
+{
+  "match": {
+    "id": 19568474,
+    "sport_id": 1,
+    "league_id": 2,
+    "season_id": 25580,
+    "stage_id": 77478049,
+    "group_id": null,
+    "aggregate_id": null,
+    "round_id": 388954,
+    "state_id": 1,
+    "venue_id": 9162,
+    "name": "Athletic Club vs Paris Saint Germain",
+    "starting_at": "2025-12-10 20:00:00",
+    "result_info": null,
+    "leg": "1/1",
+    "details": null,
+    "length": 90,
+    "placeholder": false,
+    "has_odds": true,
+    "has_premium_odds": true,
+    "starting_at_timestamp": 1765396800,
+    "participants": [
+      {
+        "id": 13258,
+        "sport_id": 1,
+        "country_id": 32,
+        "venue_id": 9162,
+        "gender": "male",
+        "name": "Athletic Club",
+        "short_code": "ATH",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/10/13258.png",
+        "founded": 1898,
+        "type": "domestic",
+        "placeholder": false,
+        "last_played_at": "2025-12-06 20:00:00",
+        "meta": {
+          "location": "home",
+          "winner": null,
+          "position": 28
+        }
+      },
+      {
+        "id": 591,
+        "sport_id": 1,
+        "country_id": 17,
+        "venue_id": 131,
+        "gender": "male",
+        "name": "Paris Saint Germain",
+        "short_code": "PSG",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/591.png",
+        "founded": 1970,
+        "type": "domestic",
+        "placeholder": false,
+        "last_played_at": "2025-12-06 20:05:00",
+        "meta": {
+          "location": "away",
+          "winner": null,
+          "position": 4
+        }
+      }
+    ],
+    "scores": [],
+    "statistics": [],
+    "events": [],
+    "lineups": [
+      {
+        "id": 14671704992,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 96208,
+        "team_id": 591,
+        "position_id": 25,
+        "formation_field": "2:3",
+        "type_id": 11,
+        "formation_position": 3,
+        "player_name": "Marquinhos ",
+        "jersey_number": 5
+      },
+      {
+        "id": 14671712020,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 24065255,
+        "team_id": 591,
+        "position_id": 25,
+        "formation_field": "2:2",
+        "type_id": 11,
+        "formation_position": 4,
+        "player_name": "Ilya Zabarnyi",
+        "jersey_number": 6
+      },
+      {
+        "id": 14671704993,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 1479337,
+        "team_id": 591,
+        "position_id": 27,
+        "formation_field": "4:3",
+        "type_id": 11,
+        "formation_position": 9,
+        "player_name": "Khvicha Kvaratskhelia",
+        "jersey_number": 7
+      },
+      {
+        "id": 14671704994,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 186735,
+        "team_id": 591,
+        "position_id": 26,
+        "formation_field": "3:1",
+        "type_id": 11,
+        "formation_position": 8,
+        "player_name": "Fabián Ruiz ",
+        "jersey_number": 8
+      },
+      {
+        "id": 14671704995,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 4545430,
+        "team_id": 591,
+        "position_id": 26,
+        "formation_field": "3:2",
+        "type_id": 11,
+        "formation_position": 7,
+        "player_name": "Vitinha",
+        "jersey_number": 17
+      },
+      {
+        "id": 14671712021,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 37656838,
+        "team_id": 591,
+        "position_id": 27,
+        "formation_field": "4:2",
+        "type_id": 11,
+        "formation_position": 10,
+        "player_name": "Senny Mayulu",
+        "jersey_number": 24
+      },
+      {
+        "id": 14671704996,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 37317369,
+        "team_id": 591,
+        "position_id": 27,
+        "formation_field": "4:1",
+        "type_id": 11,
+        "formation_position": 11,
+        "player_name": "Bradley Barcola",
+        "jersey_number": 29
+      },
+      {
+        "id": 14671704997,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 37593237,
+        "team_id": 591,
+        "position_id": 25,
+        "formation_field": "2:4",
+        "type_id": 11,
+        "formation_position": 2,
+        "player_name": "Warren Zaïre-Emery",
+        "jersey_number": 33
+      },
+      {
+        "id": 14671704998,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 171922,
+        "team_id": 591,
+        "position_id": 24,
+        "formation_field": "1:1",
+        "type_id": 11,
+        "formation_position": 1,
+        "player_name": "Matvey Safonov",
+        "jersey_number": 39
+      },
+      {
+        "id": 14671705000,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 12393419,
+        "team_id": 591,
+        "position_id": 25,
+        "formation_field": "2:1",
+        "type_id": 11,
+        "formation_position": 5,
+        "player_name": "Willian Pacho",
+        "jersey_number": 51
+      },
+      {
+        "id": 14671705001,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 37592729,
+        "team_id": 591,
+        "position_id": 26,
+        "formation_field": "3:3",
+        "type_id": 11,
+        "formation_position": 6,
+        "player_name": "João Neves",
+        "jersey_number": 87
+      },
+      {
+        "id": 14671705002,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 187215,
+        "team_id": 13258,
+        "position_id": 24,
+        "formation_field": "1:1",
+        "type_id": 11,
+        "formation_position": 1,
+        "player_name": "Unai Simón",
+        "jersey_number": 1
+      },
+      {
+        "id": 14671705003,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 3510288,
+        "team_id": 13258,
+        "position_id": 25,
+        "formation_field": "2:3",
+        "type_id": 11,
+        "formation_position": 4,
+        "player_name": "Dani Vivian",
+        "jersey_number": 3
+      },
+      {
+        "id": 14671705004,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 24081488,
+        "team_id": 13258,
+        "position_id": 25,
+        "formation_field": "2:2",
+        "type_id": 11,
+        "formation_position": 3,
+        "player_name": "Aitor Paredes",
+        "jersey_number": 4
+      },
+      {
+        "id": 14671705005,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 187032,
+        "team_id": 13258,
+        "position_id": 27,
+        "formation_field": "4:1",
+        "type_id": 11,
+        "formation_position": 8,
+        "player_name": "Álex Berenguer",
+        "jersey_number": 7
+      },
+      {
+        "id": 14671705006,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 22158925,
+        "team_id": 13258,
+        "position_id": 26,
+        "formation_field": "4:2",
+        "type_id": 11,
+        "formation_position": 9,
+        "player_name": "Oihan Sancet",
+        "jersey_number": 8
+      },
+      {
+        "id": 14671705007,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 37297544,
+        "team_id": 13258,
+        "position_id": 27,
+        "formation_field": "4:3",
+        "type_id": 11,
+        "formation_position": 10,
+        "player_name": "Nico Williams",
+        "jersey_number": 10
+      },
+      {
+        "id": 14671705008,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 190168,
+        "team_id": 13258,
+        "position_id": 27,
+        "formation_field": "5:1",
+        "type_id": 11,
+        "formation_position": 11,
+        "player_name": "Gorka Guruzeta",
+        "jersey_number": 11
+      },
+      {
+        "id": 14671705009,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 2510665,
+        "team_id": 13258,
+        "position_id": 25,
+        "formation_field": "2:1",
+        "type_id": 11,
+        "formation_position": 2,
+        "player_name": "Jesús Areso",
+        "jersey_number": 12
+      },
+      {
+        "id": 14671712022,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 34422783,
+        "team_id": 13258,
+        "position_id": 26,
+        "formation_field": "3:1",
+        "type_id": 11,
+        "formation_position": 6,
+        "player_name": "Mikel Jauregizar",
+        "jersey_number": 18
+      },
+      {
+        "id": 14671705011,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 37592130,
+        "team_id": 13258,
+        "position_id": 25,
+        "formation_field": "2:4",
+        "type_id": 11,
+        "formation_position": 5,
+        "player_name": "Adama Boiro",
+        "jersey_number": 19
+      },
+      {
+        "id": 14671705012,
+        "sport_id": 1,
+        "fixture_id": 19568474,
+        "player_id": 37590340,
+        "team_id": 13258,
+        "position_id": 26,
+        "formation_field": "3:2",
+        "type_id": 11,
+        "formation_position": 7,
+        "player_name": "Alejandro Rego",
+        "jersey_number": 30
+      }
+    ]
+  },
+  "h2h": [
+    {
+      "id": 1064600,
+      "sport_id": 1,
+      "league_id": 5,
+      "season_id": 5332,
+      "stage_id": 10102,
+      "group_id": 226760,
+      "aggregate_id": null,
+      "round_id": 124272,
+      "state_id": 5,
+      "venue_id": 131,
+      "name": "Paris Saint Germain vs Athletic Club",
+      "starting_at": "2011-12-14 18:00:00",
+      "result_info": "Paris Saint Germain won after full-time.",
+      "leg": "1/1",
+      "details": null,
+      "length": 90,
+      "placeholder": false,
+      "has_odds": false,
+      "has_premium_odds": false,
+      "starting_at_timestamp": 1323885600,
+      "participants": [
+        {
+          "id": 591,
+          "sport_id": 1,
+          "country_id": 17,
+          "venue_id": 131,
+          "gender": "male",
+          "name": "Paris Saint Germain",
+          "short_code": "PSG",
+          "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/591.png",
+          "founded": 1970,
+          "type": "domestic",
+          "placeholder": false,
+          "last_played_at": "2025-12-06 20:05:00",
+          "meta": {
+            "location": "home",
+            "winner": true,
+            "position": null
+          }
+        },
+        {
+          "id": 13258,
+          "sport_id": 1,
+          "country_id": 32,
+          "venue_id": 9162,
+          "gender": "male",
+          "name": "Athletic Club",
+          "short_code": "ATH",
+          "image_path": "https://cdn.sportmonks.com/images/soccer/teams/10/13258.png",
+          "founded": 1898,
+          "type": "domestic",
+          "placeholder": false,
+          "last_played_at": "2025-12-06 20:00:00",
+          "meta": {
+            "location": "away",
+            "winner": false,
+            "position": null
+          }
+        }
+      ],
+      "scores": [
+        {
+          "id": 5689348,
+          "fixture_id": 1064600,
+          "type_id": 1,
+          "participant_id": 591,
+          "score": {
+            "goals": 2,
+            "participant": "home"
+          },
+          "description": "1ST_HALF"
+        },
+        {
+          "id": 5689349,
+          "fixture_id": 1064600,
+          "type_id": 1,
+          "participant_id": 13258,
+          "score": {
+            "goals": 1,
+            "participant": "away"
+          },
+          "description": "1ST_HALF"
+        },
+        {
+          "id": 5689350,
+          "fixture_id": 1064600,
+          "type_id": 2,
+          "participant_id": 591,
+          "score": {
+            "goals": 4,
+            "participant": "home"
+          },
+          "description": "2ND_HALF"
+        },
+        {
+          "id": 5689352,
+          "fixture_id": 1064600,
+          "type_id": 1525,
+          "participant_id": 591,
+          "score": {
+            "goals": 4,
+            "participant": "home"
+          },
+          "description": "CURRENT"
+        },
+        {
+          "id": 5689353,
+          "fixture_id": 1064600,
+          "type_id": 1525,
+          "participant_id": 13258,
+          "score": {
+            "goals": 2,
+            "participant": "away"
+          },
+          "description": "CURRENT"
+        },
+        {
+          "id": 5689351,
+          "fixture_id": 1064600,
+          "type_id": 2,
+          "participant_id": 13258,
+          "score": {
+            "goals": 2,
+            "participant": "away"
+          },
+          "description": "2ND_HALF"
+        }
+      ],
+      "statistics": []
+    },
+    {
+      "id": 1063449,
+      "sport_id": 1,
+      "league_id": 5,
+      "season_id": 5332,
+      "stage_id": 10102,
+      "group_id": 226760,
+      "aggregate_id": null,
+      "round_id": 124242,
+      "state_id": 5,
+      "venue_id": 9170,
+      "name": "Athletic Club vs Paris Saint Germain",
+      "starting_at": "2011-09-29 19:05:00",
+      "result_info": "Athletic Club won after full-time.",
+      "leg": "1/1",
+      "details": null,
+      "length": 90,
+      "placeholder": false,
+      "has_odds": false,
+      "has_premium_odds": false,
+      "starting_at_timestamp": 1317323100,
+      "participants": [
+        {
+          "id": 13258,
+          "sport_id": 1,
+          "country_id": 32,
+          "venue_id": 9162,
+          "gender": "male",
+          "name": "Athletic Club",
+          "short_code": "ATH",
+          "image_path": "https://cdn.sportmonks.com/images/soccer/teams/10/13258.png",
+          "founded": 1898,
+          "type": "domestic",
+          "placeholder": false,
+          "last_played_at": "2025-12-06 20:00:00",
+          "meta": {
+            "location": "home",
+            "winner": true,
+            "position": null
+          }
+        },
+        {
+          "id": 591,
+          "sport_id": 1,
+          "country_id": 17,
+          "venue_id": 131,
+          "gender": "male",
+          "name": "Paris Saint Germain",
+          "short_code": "PSG",
+          "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/591.png",
+          "founded": 1970,
+          "type": "domestic",
+          "placeholder": false,
+          "last_played_at": "2025-12-06 20:05:00",
+          "meta": {
+            "location": "away",
+            "winner": false,
+            "position": null
+          }
+        }
+      ],
+      "scores": [
+        {
+          "id": 5682396,
+          "fixture_id": 1063449,
+          "type_id": 2,
+          "participant_id": 13258,
+          "score": {
+            "goals": 2,
+            "participant": "home"
+          },
+          "description": "2ND_HALF"
+        },
+        {
+          "id": 5682397,
+          "fixture_id": 1063449,
+          "type_id": 2,
+          "participant_id": 591,
+          "score": {
+            "goals": 0,
+            "participant": "away"
+          },
+          "description": "2ND_HALF"
+        },
+        {
+          "id": 5682398,
+          "fixture_id": 1063449,
+          "type_id": 1,
+          "participant_id": 13258,
+          "score": {
+            "goals": 2,
+            "participant": "home"
+          },
+          "description": "1ST_HALF"
+        },
+        {
+          "id": 5682399,
+          "fixture_id": 1063449,
+          "type_id": 1,
+          "participant_id": 591,
+          "score": {
+            "goals": 0,
+            "participant": "away"
+          },
+          "description": "1ST_HALF"
+        },
+        {
+          "id": 5682400,
+          "fixture_id": 1063449,
+          "type_id": 1525,
+          "participant_id": 13258,
+          "score": {
+            "goals": 2,
+            "participant": "home"
+          },
+          "description": "CURRENT"
+        },
+        {
+          "id": 5682401,
+          "fixture_id": 1063449,
+          "type_id": 1525,
+          "participant_id": 591,
+          "score": {
+            "goals": 0,
+            "participant": "away"
+          },
+          "description": "CURRENT"
+        }
+      ],
+      "statistics": []
+    }
+  ]
+}

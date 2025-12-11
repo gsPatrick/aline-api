@@ -105,9 +105,58 @@ export const apiGetLeagueById = async (id) => {
 // Get standings for a season
 export const apiGetStandings = async (seasonId) => {
     try {
-        const url = `${BASE_URL}/standings/seasons/${seasonId}?api_token=${token}`;
+        const url = `${BASE_URL}/standings/seasons/${seasonId}?api_token=${token}&include=participant;form;details`;
         const { data } = await axios.get(url);
-        return data.data || [];
+
+        const rawStandings = data.data || [];
+
+        // Type IDs from SportMonks:
+        // Overall: 129=Played, 130=Wins, 131=Draws, 132=Losses, 133=GoalsFor, 134=GoalsAgainst
+        // Home: 136=HomeWins, 138=HomeDraws, 140=HomeLosses, 139=HomeGoalsFor, 141=HomeGoalsAgainst, 143=HomePlayed
+        // Away: 137=AwayWins, 142=AwayDraws, 144=AwayLosses, 145=AwayGoalsFor, 146=AwayGoalsAgainst, 179=AwayPlayed
+
+        return rawStandings.map(s => {
+            const team = s.participant || {};
+            const getDetail = (typeId) => s.details?.find(d => d.type_id === typeId)?.value || 0;
+
+            // Form is array of objects: [{form: 'W'}, {form: 'L'}, ...]
+            const formArray = s.form || [];
+            const formString = formArray.slice(-5).map(f => f.form || f).join('');
+
+            return {
+                id: s.participant_id,
+                pos: s.position,
+                team_name: team.name || 'Unknown',
+                team_logo: team.image_path,
+                // Overall stats
+                p: s.points || 0,
+                j: getDetail(129),
+                v: getDetail(130),
+                e: getDetail(131),
+                d: getDetail(132),
+                gf: getDetail(133),
+                ga: getDetail(134),
+                goals: `${getDetail(133)}-${getDetail(134)}`,
+                // Home stats
+                home_j: getDetail(143),
+                home_v: getDetail(136),
+                home_e: getDetail(138),
+                home_d: getDetail(140),
+                home_gf: getDetail(139),
+                home_ga: getDetail(141),
+                home_goals: `${getDetail(139)}-${getDetail(141)}`,
+                // Away stats
+                away_j: getDetail(179),
+                away_v: getDetail(137),
+                away_e: getDetail(142),
+                away_d: getDetail(144),
+                away_gf: getDetail(145),
+                away_ga: getDetail(146),
+                away_goals: `${getDetail(145)}-${getDetail(146)}`,
+                // Form
+                form: formString || '?????'
+            };
+        });
     } catch (error) {
         console.error(`Error fetching standings for season ${seasonId}:`, error.message);
         return [];

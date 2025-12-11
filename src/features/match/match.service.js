@@ -326,20 +326,197 @@ export const calculateMatchStats = (data) => {
         away: calculateZones(awayStats, homeStats)
     };
 
-    // Charts Analysis object will be constructed later merging this with generateCharts
+    // --- DATA TRANSFORMATION FOR FRONTEND ---
 
+    // 1. Goals Analysis Transformation
+    const transformGoalAnalysis = () => {
+        const periods = ['0-15', '16-30', '31-HT', '46-60', '61-75', '76-FT'];
 
-    const cardAnalysis = {
-        ...cardStats,
-        referee: refereeStats ? {
-            avg: refereeStats.avgCards,
-            over05: refereeStats.over05,
-            over15: refereeStats.over15,
-            over25: refereeStats.over25,
-            over35: refereeStats.over35,
-            over45: refereeStats.over45
-        } : null
+        // Intervals Array
+        const goalsIntervals = periods.map(period => {
+            const h = goalAnalysisRaw.home.intervals[period] || { scored: 0, conceded: 0, frequency: 0 };
+            const a = goalAnalysisRaw.away.intervals[period] || { scored: 0, conceded: 0, frequency: 0 };
+            return {
+                period: period.replace('0-15', "0-15'").replace('16-30', "16-30'").replace('46-60', "46-60'").replace('61-75', "61-75'").replace('76-FT', "76-FT'"),
+                periodPct: Math.round((parseFloat(h.frequency) + parseFloat(a.frequency)) / 2), // Avg frequency
+                home: { scored: h.scored, conceded: h.conceded, total: h.scored + h.conceded, pct: h.frequency },
+                away: { scored: a.scored, conceded: a.conceded, total: a.scored + a.conceded, pct: a.frequency }
+            };
+        });
+
+        // Pill Stats (Shots, Offsides, etc.)
+        const pillStats = [
+            { label: "Média Remates", home: shotStats.home.total, away: shotStats.away.total },
+            { label: "Média Remates à Baliza", home: shotStats.home.onTarget, away: shotStats.away.onTarget },
+            { label: "Média Remates Fora", home: shotStats.home.offTarget, away: shotStats.away.offTarget },
+            { label: "Média Fora-de-jogo", home: offsides.home, away: offsides.away },
+            { label: "Média Cantos", home: otherStats.corners.home, away: otherStats.corners.away }, // Added corners here too
+            { label: "Média Faltas", home: otherStats.fouls.home, away: otherStats.fouls.away },
+        ];
+
+        // First To Score Array
+        const firstToScore = [
+            { label: "Primeiro a Marcar", home: goalAnalysisRaw.home.firstToScore + "%", away: goalAnalysisRaw.away.firstToScore + "%" },
+            { label: "Primeiro a Marcar e Vencer", home: goalAnalysisRaw.home.firstToScoreAndWin + "%", away: goalAnalysisRaw.away.firstToScoreAndWin + "%" },
+            { label: "Ambas Marcam (BTTS)", home: goalAnalysisRaw.home.btts + "%", away: goalAnalysisRaw.away.btts + "%" },
+            { label: "Clean Sheets", home: goalAnalysisRaw.home.cleanSheets + "%", away: goalAnalysisRaw.away.cleanSheets + "%" },
+            { label: "Over 0.5 Gols", home: goalAnalysisRaw.home.over05 + "%", away: goalAnalysisRaw.away.over05 + "%" },
+            { label: "Over 1.5 Gols", home: goalAnalysisRaw.home.over15 + "%", away: goalAnalysisRaw.away.over15 + "%" },
+            { label: "Over 2.5 Gols", home: goalAnalysisRaw.home.over25 + "%", away: goalAnalysisRaw.away.over25 + "%" },
+        ];
+
+        return {
+            general: {
+                scored: { home: goalAnalysisRaw.home.scored, away: goalAnalysisRaw.away.scored },
+                conceded: { home: goalAnalysisRaw.home.conceded, away: goalAnalysisRaw.away.conceded },
+                avgTotal: {
+                    home: (parseFloat(goalAnalysisRaw.home.scored) + parseFloat(goalAnalysisRaw.home.conceded)).toFixed(2),
+                    away: (parseFloat(goalAnalysisRaw.away.scored) + parseFloat(goalAnalysisRaw.away.conceded)).toFixed(2)
+                },
+                btts: { home: goalAnalysisRaw.home.btts, away: goalAnalysisRaw.away.btts }
+            },
+            xg: {
+                favor: { home: xG.home, away: xG.away },
+                against: { home: 1.2, away: 1.3 }, // Placeholder if not available
+                totalFavor: (parseFloat(xG.home) + parseFloat(xG.away)).toFixed(2),
+                trend: parseFloat(xG.home) > parseFloat(xG.away) ? "Home" : "Away"
+            },
+            scorePredictions: goalAnalysisRaw.scorePredictions, // Already structured
+            firstToScore,
+            pillStats,
+            intervals: {
+                goals: goalsIntervals,
+                shotsTotal: [] // Placeholder, requires shot intervals logic
+            },
+            home: goalAnalysisRaw.home,
+            away: goalAnalysisRaw.away
+        };
     };
+
+    const finalGoalAnalysis = transformGoalAnalysis();
+
+    // 2. Corners Analysis Transformation
+    const transformCornerAnalysis = () => {
+        const periods = ['0-10', '11-20', '21-30', '31-40', '41-50', '51-60', '61-70', '71-80', '81-90'];
+
+        const intervals = periods.map(period => {
+            const h = cornerAnalysis.home.intervals[period] || { avgFor: 0, avgAgainst: 0, frequency: 0 };
+            const a = cornerAnalysis.away.intervals[period] || { avgFor: 0, avgAgainst: 0, frequency: 0 };
+            return {
+                period: period.replace('0-10', "0-10'").replace('81-90', "81-90'"),
+                pctH: h.frequency,
+                pctA: a.frequency,
+                hM: h.avgFor,
+                hS: h.avgAgainst,
+                aM: a.avgFor,
+                aS: a.avgAgainst,
+                fav: ((parseFloat(h.avgFor) + parseFloat(a.avgFor)) / 2).toFixed(1),
+                cont: ((parseFloat(h.avgAgainst) + parseFloat(a.avgAgainst)) / 2).toFixed(1),
+                med: Math.round((parseFloat(h.frequency) + parseFloat(a.frequency)) / 2)
+            };
+        });
+
+        // Add 37-HT and 87-FT special intervals
+        const h37 = cornerAnalysis.home.intervals['37-HT'] || { frequency: 0 };
+        const a37 = cornerAnalysis.away.intervals['37-HT'] || { frequency: 0 };
+        intervals.push({ period: "37-HT", pctH: h37.frequency, pctA: a37.frequency, hM: '-', hS: '-', aM: '-', aS: '-', fav: '-', cont: '-', med: '-' });
+
+        const h87 = cornerAnalysis.home.intervals['87-FT'] || { frequency: 0 };
+        const a87 = cornerAnalysis.away.intervals['87-FT'] || { frequency: 0 };
+        intervals.push({ period: "87-FT", pctH: h87.frequency, pctA: a87.frequency, hM: '-', hS: '-', aM: '-', aS: '-', fav: '-', cont: '-', med: '-' });
+
+
+        const races = [
+            { label: 'Race 3', homeW: cornerAnalysis.home.races.race3 + '%', homeL: (100 - cornerAnalysis.home.races.race3) + '%', awayW: cornerAnalysis.away.races.race3 + '%', awayL: (100 - cornerAnalysis.away.races.race3) + '%' },
+            { label: 'Race 5', homeW: cornerAnalysis.home.races.race5 + '%', homeL: (100 - cornerAnalysis.home.races.race5) + '%', awayW: cornerAnalysis.away.races.race5 + '%', awayL: (100 - cornerAnalysis.away.races.race5) + '%' },
+            { label: 'Race 7', homeW: cornerAnalysis.home.races.race7 + '%', homeL: (100 - cornerAnalysis.home.races.race7) + '%', awayW: cornerAnalysis.away.races.race7 + '%', awayL: (100 - cornerAnalysis.away.races.race7) + '%' },
+            { label: 'Race 9', homeW: cornerAnalysis.home.races.race9 + '%', homeL: (100 - cornerAnalysis.home.races.race9) + '%', awayW: cornerAnalysis.away.races.race9 + '%', awayL: (100 - cornerAnalysis.away.races.race9) + '%' },
+        ];
+
+        // Total Corners (FT)
+        const totalCorners = [
+            { label: 'Over 8.5', homeM: cornerAnalysis.home.trends.over85 + '%', homeS: '-', awayM: cornerAnalysis.away.trends.over85 + '%', awayS: '-' },
+        ];
+
+        // HT Corners
+        const htCorners = [
+            { label: 'Over 0.5', homeM: cornerAnalysis.home.htMarkets.over05 + '%', awayM: cornerAnalysis.away.htMarkets.over05 + '%' },
+            { label: 'Over 1.5', homeM: cornerAnalysis.home.htMarkets.over15 + '%', awayM: cornerAnalysis.away.htMarkets.over15 + '%' },
+            { label: 'Over 2.5', homeM: cornerAnalysis.home.htMarkets.over25 + '%', awayM: cornerAnalysis.away.htMarkets.over25 + '%' },
+            { label: 'Over 3.5', homeM: cornerAnalysis.home.htMarkets.over35 + '%', awayM: cornerAnalysis.away.htMarkets.over35 + '%' },
+            { label: 'Over 4.5', homeM: cornerAnalysis.home.htMarkets.over45 + '%', awayM: cornerAnalysis.away.htMarkets.over45 + '%' },
+        ];
+
+        // 2HT Corners
+        const shCorners = [ // 'sh' stands for Second Half (2HT)
+            { label: 'Over 0.5', homeM: cornerAnalysis.home.shMarkets.over05 + '%', awayM: cornerAnalysis.away.shMarkets.over05 + '%' },
+            { label: 'Over 1.5', homeM: cornerAnalysis.home.shMarkets.over15 + '%', awayM: cornerAnalysis.away.shMarkets.over15 + '%' },
+            { label: 'Over 2.5', homeM: cornerAnalysis.home.shMarkets.over25 + '%', awayM: cornerAnalysis.away.shMarkets.over25 + '%' },
+            { label: 'Over 3.5', homeM: cornerAnalysis.home.shMarkets.over35 + '%', awayM: cornerAnalysis.away.shMarkets.over35 + '%' },
+            { label: 'Over 4.5', homeM: cornerAnalysis.home.shMarkets.over45 + '%', awayM: cornerAnalysis.away.shMarkets.over45 + '%' },
+        ];
+
+        return {
+            home: cornerAnalysis.home, // Keep original for sidebar
+            away: cornerAnalysis.away, // Keep original for sidebar
+            totalCorners,
+            htCorners,
+            shCorners, // 2HT
+            intervals,
+            races,
+            calculator: cornerAnalysis.calculator
+        };
+    };
+
+    const finalCornerAnalysis = transformCornerAnalysis();
+
+    // 3. Cards Analysis Transformation
+    const transformCardAnalysis = () => {
+        const periods = ['0-15', '16-30', '31-HT', '46-60', '61-75', '76-FT'];
+
+        const intervals = periods.map(period => {
+            const h = cardStats.home.intervals[period] || { total: 0, frequency: 0 };
+            const a = cardStats.away.intervals[period] || { total: 0, frequency: 0 };
+            return {
+                period: period.replace('0-15', "0-15'").replace('76-FT', "76-FT'"),
+                pct: h.frequency + '%',
+                avgFavor: h.total, // Using total as proxy for avg in this view
+                avgContra: 0,
+                total: h.total,
+                pctOverall: a.frequency + '%',
+                avgFavorA: a.total,
+                avgContraA: 0,
+                totalA: a.total
+            };
+        });
+
+        const totalCards = [
+            { label: 'Over 0.5', homeM: cardStats.home.markets.over05 + '%', homeS: '-', awayM: cardStats.away.markets.over05 + '%', awayS: '-' },
+            { label: 'Over 1.5', homeM: cardStats.home.markets.over15 + '%', homeS: '-', awayM: cardStats.away.markets.over15 + '%', awayS: '-' },
+            { label: 'Over 2.5', homeM: cardStats.home.markets.over25 + '%', homeS: '-', awayM: cardStats.away.markets.over25 + '%', awayS: '-' },
+            { label: 'Over 3.5', homeM: cardStats.home.markets.over35 + '%', homeS: '-', awayM: cardStats.away.markets.over35 + '%', awayS: '-' },
+        ];
+
+        return {
+            averages: {
+                favor: { home: cardStats.home.avgFor, away: cardStats.away.avgFor },
+                against: { home: cardStats.home.avgAgainst, away: cardStats.away.avgAgainst },
+                total: { home: cardStats.home.avgTotal, away: cardStats.away.avgTotal }
+            },
+            totalCards,
+            intervals,
+            referee: refereeData ? {
+                avg: refereeData.avgCards,
+                over05: refereeData.over05,
+                over15: refereeData.over15,
+                over25: refereeData.over25,
+                over35: refereeData.over35,
+                over45: refereeData.over45
+            } : null
+        };
+    };
+
+    const finalCardAnalysis = transformCardAnalysis();
 
     // Calculate General Stats Analysis (Shots, Control)
     const generalStatsAnalysis = calculateGeneralStats(
@@ -349,7 +526,6 @@ export const calculateMatchStats = (data) => {
         away.id
     );
 
-    // Generate Charts Analysis (Timeline)
     // Generate Charts Analysis (Timeline) and merge with Heuristics
     const chartsAnalysis = {
         ...generateCharts(data),
@@ -364,16 +540,16 @@ export const calculateMatchStats = (data) => {
     const enrichedAwayHistory = enrichHistoryWithStats(data.awayTeam?.detailedHistory || []);
 
     // Generate trends comparison table
-    const trends = generateTrends(goalAnalysis, cornerAnalysis, cardAnalysis);
+    const trends = generateTrends(finalGoalAnalysis, finalCornerAnalysis, finalCardAnalysis);
 
     // Build combined timeline from events and comments
     const timeline = buildTimeline(data.events || [], data.comments || []);
 
     // Generate prediction insights
     const allStats = {
-        goalAnalysis,
-        cornerAnalysis,
-        cardAnalysis
+        goalAnalysis: finalGoalAnalysis,
+        cornerAnalysis: finalCornerAnalysis,
+        cardAnalysis: finalCardAnalysis
     };
     // Helper to process current match stats into frontend structure
     const calculateDetailedMatchStats = (stats, homeId, awayId) => {
@@ -426,17 +602,117 @@ export const calculateMatchStats = (data) => {
 
     const detailedStats = calculateDetailedMatchStats(data.statistics, home.id, away.id);
 
+    // Helper to normalize lineups from flat array to nested object
+    const normalizeLineups = (lineups, home, away) => {
+        if (!lineups || !Array.isArray(lineups)) {
+            return {
+                home: { formation: '', starters: [], subs: [] },
+                away: { formation: '', starters: [], subs: [] }
+            };
+        }
+
+        const processTeamLineup = (teamId) => {
+            const teamLineups = lineups.filter(l => String(l.team_id) === String(teamId));
+
+            // Map players
+            const mapPlayer = (p) => ({
+                id: p.player_id,
+                name: p.player_name || p.player?.display_name || 'Unknown',
+                number: p.jersey_number,
+                pos: p.position?.code || (p.position_id === 24 ? 'GK' : p.position_id === 25 ? 'DF' : p.position_id === 26 ? 'MF' : 'FW'), // Fallback mapping
+                grid: p.formation_field,
+                rating: p.rating || null, // If available
+                image: p.player?.image_path, // Add image path
+                events: [] // Can be enriched later
+            });
+
+            const starters = teamLineups
+                .filter(l => l.type_id === 11)
+                .map(mapPlayer)
+                .sort((a, b) => {
+                    // Sort by position roughly: GK, DF, MF, FW
+                    const posOrder = { 'GK': 1, 'DF': 2, 'MF': 3, 'FW': 4 };
+                    return (posOrder[a.pos] || 5) - (posOrder[b.pos] || 5);
+                });
+
+            const subs = teamLineups
+                .filter(l => l.type_id !== 11)
+                .map(mapPlayer);
+
+            // Infer formation from starters (e.g., count defenders, midfielders, forwards)
+            // Or use formation field if available on team stats (not passed here currently)
+            // For now, leave empty or try to guess.
+            // SportMonks sometimes provides formation in `formations` include, but we don't have it here.
+
+            return {
+                formation: '', // Placeholder, would need extra data
+                starters,
+                subs
+            };
+        };
+
+        return {
+            home: processTeamLineup(home.id),
+            away: processTeamLineup(away.id)
+        };
+    };
+
     // Calculate Lineups
     const lineups = normalizeLineups(data.lineups, home, away);
 
     // Generate prediction insights (now returns object with fulltime and list)
     const predictions = generateInsights(allStats);
 
+    // Helper to map SportMonks status to Frontend status
+    // Helper to map SportMonks status to Frontend status
+    const mapMatchStatus = (stateObj) => {
+        if (!stateObj) return 'NS';
+        const s = stateObj.short_name || stateObj.state;
+        // Map common variations
+        if (s === 'NS' || s === 'TBD' || s === 'Not Started') return 'NS';
+        if (s === 'LIVE' || s === 'In Play') return 'LIVE';
+        if (s === 'HT' || s === 'Half Time') return 'HT';
+        if (s === 'FT' || s === 'Ended' || s === 'Finished') return 'FT';
+        if (s === 'ET') return 'ET';
+        if (s === 'PEN_LIVE') return 'PEN_LIVE';
+        if (s === 'AET') return 'AET';
+        if (s === 'FT_PEN') return 'FT_PEN';
+        if (s === 'CAN' || s === 'POSTP' || s === 'INT' || s === 'ABAN' || s === 'SUSP' || s === 'DELAYED' || s === 'TBA' || s === 'WO' || s === 'AU' || s === 'Deleted') return 'POSTP'; // Treat all abnormal as postponed/cancelled for now or handle specific
+        return s;
+    };
+
+    // Calculate Score
+    let homeScore = 0;
+    let awayScore = 0;
+    const scores = data.scores || [];
+    if (scores.length > 0) {
+        // Try to find 'CURRENT' score
+        const currentHome = scores.find(s => s.description === 'CURRENT' && s.participant_id === home.id);
+        const currentAway = scores.find(s => s.description === 'CURRENT' && s.participant_id === away.id);
+
+        if (currentHome && currentAway) {
+            homeScore = currentHome.score?.goals;
+            awayScore = currentAway.score?.goals;
+        } else {
+            // Fallback: Sum up regular time? usually CURRENT is enough.
+            // Sometimes '2ND_HALF' is the latest if finished.
+            // But SportMonks V3 usually keeps CURRENT.
+            // If not found, check 2ND_HALF or FT?
+            const ftHome = scores.find(s => (s.description === '2ND_HALF' || s.description === 'FT') && s.participant_id === home.id);
+            const ftAway = scores.find(s => (s.description === '2ND_HALF' || s.description === 'FT') && s.participant_id === away.id);
+            if (ftHome) homeScore = ftHome.score?.goals;
+            if (ftAway) awayScore = ftAway.score?.goals;
+        }
+    }
+
+
     return {
         // Match Info - ENRICHED with all required fields
         matchInfo: {
             id: data.id,
-            state: data.state?.state || 'NS',
+            state: mapMatchStatus(data.state),
+            status: mapMatchStatus(data.state), // Alias for backward compatibility
+            score: `${homeScore}-${awayScore}`,
             minute: data.state?.minute || null,
             starting_at: data.starting_at,
             starting_at_timestamp: data.starting_at_timestamp ||
@@ -483,8 +759,8 @@ export const calculateMatchStats = (data) => {
                 away: calculateForm(data.awayTeam?.detailedHistory, away.id)
             }
         },
-        goalAnalysis,
-        cardAnalysis,
+        goalAnalysis: finalGoalAnalysis,
+        cardAnalysis: finalCardAnalysis,
         generalStatsAnalysis,
         chartsAnalysis,
         goalMarkets,
@@ -492,9 +768,10 @@ export const calculateMatchStats = (data) => {
         offsides,
         otherStats,
         xG, // Kept for backward compatibility if needed, but also merged in goalAnalysis
-        cornerAnalysis,
+        cornerAnalysis: finalCornerAnalysis,
         lineups, // Added Lineups
         predictions, // Added Predictions
+        h2h: data.h2h, // Added H2H Data with Trends
 
         // NEW: Overview Tab Data
         history: {
@@ -503,20 +780,25 @@ export const calculateMatchStats = (data) => {
         },
         trends,
         timeline,
+        events: data.events || [], // CRITICAL: Expose events for EventsTab
         standings: data.standings || [], // Added Standings
 
-        // Team data for H2H fetch
+        // Team data for H2H fetch - CRITICAL: include detailedHistory for H2HTab
         homeTeam: {
             id: home.id,
             name: home.name,
             logo: home.image_path,
-            squad: data.homeTeam?.squad || null
+            image_path: home.image_path,
+            squad: data.homeTeam?.squad || null,
+            detailedHistory: data.homeTeam?.detailedHistory || [] // For H2H tab team history
         },
         awayTeam: {
             id: away.id,
             name: away.name,
             logo: away.image_path,
-            squad: data.awayTeam?.squad || null
+            image_path: away.image_path,
+            squad: data.awayTeam?.squad || null,
+            detailedHistory: data.awayTeam?.detailedHistory || [] // For H2H tab team history
         }
     };
 };
@@ -545,14 +827,15 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
 
     try {
         // Step 1: Fetch Match Details (Participants, Stats, League, Venue, Odds, Referee, Events, Lineups)
-        const [resParticipants, resStats, resLeague, resVenue, resOdds, resReferee, resEvents, resLineups] = await Promise.all([
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=participants`),
+        const [resParticipants, resStats, resLeague, resVenue, resOdds, resReferee, resEvents, resComments, resLineups] = await Promise.all([
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=participants;state;scores`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=statistics.type`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=league`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=venue`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=odds`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=referees`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=events`),
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=events.type`),
+            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=comments`),
             axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=lineups.player`)
         ]);
 
@@ -560,15 +843,46 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
         const home = participants.find(p => p.meta?.location === 'home') || participants[0];
         const away = participants.find(p => p.meta?.location === 'away') || participants[1];
 
+        // Process Comments for Corners (if events are missing corners)
+        const comments = resComments.data.data.comments || [];
+        const existingEvents = resEvents.data.data.events || [];
+
+        const cornerEvents = comments
+            .filter(c => c.comment && c.comment.toLowerCase().includes('corner'))
+            .map(c => {
+                // Determine team from comment text or extra_minute if implied? 
+                // Unfortunately comments often lack participant_id directly usually.
+                // But sometimes we can infer or just list them.
+                // However, without participant_id, we can't assign Home/Away easily unless we parse "Corner for [TeamName]".
+                // For now, let's try to pass them and let Frontend decide or just show generic.
+                return {
+                    id: `comment-${c.id}`,
+                    minute: c.minute,
+                    type: { name: 'Corner' },
+                    comment: c.comment,
+                    // Attempt to guess team if possible, or leave null
+                    participant_id: null
+                };
+            });
+
+        // Merge real events + corner comments
+        // Avoid duplicates if corners ARE in events (check by minute?)
+        // Simple merge for now as specific match lacked corner events totally.
+        const allEvents = [...existingEvents, ...cornerEvents];
+
         // Get Season ID for Standings
         const seasonId = resParticipants.data.data.season_id;
         let standings = [];
         if (seasonId) {
             try {
+                console.log(`🏆 Fetching standings for season ${seasonId}...`);
                 standings = await apiGetStandings(seasonId);
+                console.log(`✅ Standings fetched: ${standings.length} teams`);
             } catch (e) {
                 console.error(`Failed to fetch standings for season ${seasonId}`, e.message);
             }
+        } else {
+            console.log('⚠️ No season_id found, skipping standings fetch');
         }
 
         // Referee Data
@@ -658,12 +972,16 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
             fetchHistoryIds(away?.id, 'away')
         ]);
 
+        // Step 2.5: Fetch H2H Data (NEW)
+        const h2hData = await fetchH2HMatches(home.id, away.id);
+
         // Step 3: Fetch Detailed Data for these IDs
         // We need events (filtered), stats, participants, and commentaries for corner extraction
         // Commentaries are needed because corner events are not available in the events array
         const fetchDetailedMatch = async (id) => {
             try {
-                const url = `${BASE_URL}/fixtures/${id}?api_token=${token}&include=events.type;statistics.type;participants;comments;lineups.player;odds;referees`;
+                // Include scores and league for H2HTab display
+                const url = `${BASE_URL}/fixtures/${id}?api_token=${token}&include=events.type;statistics.type;participants;comments;lineups.player;odds;referees;scores;league`;
                 const res = await axios.get(url);
                 return res.data.data;
             } catch (e) {
@@ -685,18 +1003,29 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
         const validHomeHistory = homeHistoryDetailed.filter(m => m);
         const validAwayHistory = awayHistoryDetailed.filter(m => m);
 
+        // DEBUG: Log history counts
+        console.log(`📊 Home team history: ${validHomeHistory.length} matches`);
+        console.log(`📊 Away team history: ${validAwayHistory.length} matches`);
+        console.log(`📊 H2H matches: ${h2hData?.matches?.length || 0} matches`);
+
         // Merge data
         const mergedData = {
             ...resParticipants.data.data,
+            // Ensure state and scores are top-level
+            state: resParticipants.data.data.state,
+            scores: resParticipants.data.data.scores,
+
             statistics: resStats.data.data.statistics,
             league: resLeague.data.data.league,
             venue: resVenue.data.data.venue,
             odds: resOdds.data.data.odds,
             referee: referee, // Add referee to merged data
             refereeHistory: refereeHistory, // Add referee history
-            events: resEvents.data.data.events || [], // Add events for charts
+            events: allEvents, // Use merged events
+            comments: comments, // Expose raw comments too
             lineups: resLineups.data.data.lineups || [], // Add lineups
             standings: standings, // Add standings
+            h2h: h2hData, // Add H2H Data
             homeTeam: {
                 ...home, // keep basic info
                 detailedHistory: validHomeHistory
@@ -830,7 +1159,7 @@ export const getMatchStats = async (matchId) => {
 
     const lastUpdate = new Date(match.updatedAt).getTime();
     const now = Date.now();
-    const isExpired = (now - lastUpdate) > TTL;
+    const isExpired = true; // (now - lastUpdate) > TTL; // CACHE DISABLED TEMPORARILY
 
     // If data is missing OR cache is expired
     if (!match.data || Object.keys(match.data).length === 0 || isExpired) {

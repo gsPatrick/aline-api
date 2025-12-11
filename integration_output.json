@@ -1,0 +1,1334 @@
+{
+  "matchInfo": {
+    "id": 12345,
+    "state": "NS",
+    "minute": null,
+    "starting_at": "2025-12-10 15:00:00",
+    "starting_at_timestamp": 1765378800,
+    "venue": {
+      "name": "Estádio Municipal",
+      "city": "Mirassol"
+    },
+    "home_team": {
+      "id": 1,
+      "name": "Mirassol",
+      "logo": "home.png",
+      "short_name": "Mirassol"
+    },
+    "away_team": {
+      "id": 2,
+      "name": "Flamengo",
+      "logo": "away.png",
+      "short_name": "Flamengo"
+    },
+    "league": {
+      "id": 1,
+      "name": "Serie A",
+      "logo": "league.png"
+    },
+    "referee": {
+      "name": "Wilton Pereira",
+      "avgCards": 0,
+      "avgYellow": 0,
+      "avgRed": 0
+    },
+    "weather": {
+      "temperature": 25,
+      "condition": "Sunny"
+    }
+  },
+  "analysis": {
+    "detailedStats": {
+      "fulltime": {
+        "possession": {
+          "home": 0,
+          "away": 0
+        },
+        "attacks": {
+          "total": {
+            "home": 100,
+            "away": 60
+          },
+          "dangerous": {
+            "home": 50,
+            "away": 30
+          },
+          "corners": {
+            "home": 6,
+            "away": 4
+          },
+          "crosses": {
+            "home": 0,
+            "away": 0
+          }
+        },
+        "shots": {
+          "total": {
+            "home": 15,
+            "away": 10
+          },
+          "onTarget": {
+            "home": 5,
+            "away": 3
+          },
+          "offTarget": {
+            "home": 0,
+            "away": 0
+          },
+          "insideBox": {
+            "home": 0,
+            "away": 0
+          },
+          "outsideBox": {
+            "home": 0,
+            "away": 0
+          }
+        },
+        "others": {
+          "saves": {
+            "home": 0,
+            "away": 0
+          },
+          "fouls": {
+            "home": 10,
+            "away": 12
+          },
+          "freeKicks": {
+            "home": 0,
+            "away": 0
+          },
+          "yellowCards": {
+            "home": 2,
+            "away": 3
+          },
+          "redCards": {
+            "home": 0,
+            "away": 0
+          },
+          "passes": {
+            "home": 400,
+            "away": 200
+          },
+          "longPasses": {
+            "home": 0,
+            "away": 0
+          },
+          "interceptions": {
+            "home": 0,
+            "away": 0
+          }
+        }
+      },
+      "ht": {
+        "possession": {
+          "home": 0,
+          "away": 0
+        },
+        "attacks": {
+          "total": {
+            "home": 100,
+            "away": 60
+          },
+          "dangerous": {
+            "home": 50,
+            "away": 30
+          },
+          "corners": {
+            "home": 6,
+            "away": 4
+          },
+          "crosses": {
+            "home": 0,
+            "away": 0
+          }
+        },
+        "shots": {
+          "total": {
+            "home": 15,
+            "away": 10
+          },
+          "onTarget": {
+            "home": 5,
+            "away": 3
+          },
+          "offTarget": {
+            "home": 0,
+            "away": 0
+          },
+          "insideBox": {
+            "home": 0,
+            "away": 0
+          },
+          "outsideBox": {
+            "home": 0,
+            "away": 0
+          }
+        },
+        "others": {
+          "saves": {
+            "home": 0,
+            "away": 0
+          },
+          "fouls": {
+            "home": 10,
+            "away": 12
+          },
+          "freeKicks": {
+            "home": 0,
+            "away": 0
+          },
+          "yellowCards": {
+            "home": 2,
+            "away": 3
+          },
+          "redCards": {
+            "home": 0,
+            "away": 0
+          },
+          "passes": {
+            "home": 400,
+            "away": 200
+          },
+          "longPasses": {
+            "home": 0,
+            "away": 0
+          },
+          "interceptions": {
+            "home": 0,
+            "away": 0
+          }
+        }
+      },
+      "st": {
+        "possession": {
+          "home": 0,
+          "away": 0
+        },
+        "attacks": {
+          "total": {
+            "home": 100,
+            "away": 60
+          },
+          "dangerous": {
+            "home": 50,
+            "away": 30
+          },
+          "corners": {
+            "home": 6,
+            "away": 4
+          },
+          "crosses": {
+            "home": 0,
+            "away": 0
+          }
+        },
+        "shots": {
+          "total": {
+            "home": 15,
+            "away": 10
+          },
+          "onTarget": {
+            "home": 5,
+            "away": 3
+          },
+          "offTarget": {
+            "home": 0,
+            "away": 0
+          },
+          "insideBox": {
+            "home": 0,
+            "away": 0
+          },
+          "outsideBox": {
+            "home": 0,
+            "away": 0
+          }
+        },
+        "others": {
+          "saves": {
+            "home": 0,
+            "away": 0
+          },
+          "fouls": {
+            "home": 10,
+            "away": 12
+          },
+          "freeKicks": {
+            "home": 0,
+            "away": 0
+          },
+          "yellowCards": {
+            "home": 2,
+            "away": 3
+          },
+          "redCards": {
+            "home": 0,
+            "away": 0
+          },
+          "passes": {
+            "home": 400,
+            "away": 200
+          },
+          "longPasses": {
+            "home": 0,
+            "away": 0
+          },
+          "interceptions": {
+            "home": 0,
+            "away": 0
+          }
+        }
+      }
+    },
+    "standings": []
+  },
+  "basicInfo": {
+    "teams": {
+      "home": "Mirassol",
+      "away": "Flamengo",
+      "homeImg": "home.png",
+      "awayImg": "away.png"
+    },
+    "competition": {
+      "league": "Serie A",
+      "round": "Round 38"
+    },
+    "form": {
+      "home": "?-?-?-?-?",
+      "away": "?-?-?-?-?"
+    },
+    "conditions": {
+      "temperature": 25,
+      "weather": "Sunny",
+      "venue": "Estádio Municipal"
+    }
+  },
+  "goalAnalysis": {
+    "general": {
+      "scored": {
+        "home": 0,
+        "away": 0
+      },
+      "conceded": {
+        "home": 0,
+        "away": 0
+      },
+      "avgTotal": {
+        "home": "0.00",
+        "away": "0.00"
+      },
+      "btts": {
+        "home": 0,
+        "away": 0
+      }
+    },
+    "xg": {
+      "favor": {
+        "home": 0,
+        "away": 0
+      },
+      "against": {
+        "home": 1.2,
+        "away": 1.3
+      },
+      "totalFavor": "0.00",
+      "trend": "Away"
+    },
+    "scorePredictions": {
+      "probable": [
+        {
+          "score": "1-0",
+          "prob": "20"
+        },
+        {
+          "score": "0-1",
+          "prob": "20"
+        },
+        {
+          "score": "1-1",
+          "prob": "10"
+        }
+      ]
+    },
+    "firstToScore": [
+      {
+        "label": "Primeiro a Marcar",
+        "home": "0%",
+        "away": "0%"
+      },
+      {
+        "label": "Primeiro a Marcar e Vencer",
+        "home": "0%",
+        "away": "0%"
+      },
+      {
+        "label": "Ambas Marcam (BTTS)",
+        "home": "0%",
+        "away": "0%"
+      },
+      {
+        "label": "Clean Sheets",
+        "home": "0%",
+        "away": "0%"
+      },
+      {
+        "label": "Over 0.5 Gols",
+        "home": "0%",
+        "away": "0%"
+      },
+      {
+        "label": "Over 1.5 Gols",
+        "home": "0%",
+        "away": "0%"
+      },
+      {
+        "label": "Over 2.5 Gols",
+        "home": "0%",
+        "away": "0%"
+      }
+    ],
+    "pillStats": [
+      {
+        "label": "Média Remates",
+        "home": 15,
+        "away": 10
+      },
+      {
+        "label": "Média Remates à Baliza",
+        "home": 5,
+        "away": 3
+      },
+      {
+        "label": "Média Remates Fora",
+        "home": 0,
+        "away": 0
+      },
+      {
+        "label": "Média Fora-de-jogo",
+        "home": 0,
+        "away": 0
+      },
+      {
+        "label": "Média Cantos",
+        "home": 6,
+        "away": 4
+      },
+      {
+        "label": "Média Faltas",
+        "home": 10,
+        "away": 12
+      }
+    ],
+    "intervals": {
+      "goals": [
+        {
+          "period": "0-15'",
+          "periodPct": 0,
+          "home": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          },
+          "away": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          }
+        },
+        {
+          "period": "16-30'",
+          "periodPct": 0,
+          "home": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          },
+          "away": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          }
+        },
+        {
+          "period": "31-HT",
+          "periodPct": 0,
+          "home": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          },
+          "away": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          }
+        },
+        {
+          "period": "46-60'",
+          "periodPct": 0,
+          "home": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          },
+          "away": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          }
+        },
+        {
+          "period": "61-75'",
+          "periodPct": 0,
+          "home": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          },
+          "away": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          }
+        },
+        {
+          "period": "76-FT'",
+          "periodPct": 0,
+          "home": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          },
+          "away": {
+            "scored": 0,
+            "conceded": 0,
+            "total": 0,
+            "pct": 0
+          }
+        }
+      ],
+      "shotsTotal": []
+    }
+  },
+  "cardAnalysis": {
+    "averages": {
+      "favor": {
+        "home": 0,
+        "away": 0
+      },
+      "against": {
+        "home": 0,
+        "away": 0
+      },
+      "total": {
+        "home": 0,
+        "away": 0
+      }
+    },
+    "totalCards": [
+      {
+        "label": "Over 0.5",
+        "homeM": "0%",
+        "homeS": "-",
+        "awayM": "0%",
+        "awayS": "-"
+      },
+      {
+        "label": "Over 1.5",
+        "homeM": "0%",
+        "homeS": "-",
+        "awayM": "0%",
+        "awayS": "-"
+      },
+      {
+        "label": "Over 2.5",
+        "homeM": "0%",
+        "homeS": "-",
+        "awayM": "0%",
+        "awayS": "-"
+      },
+      {
+        "label": "Over 3.5",
+        "homeM": "0%",
+        "homeS": "-",
+        "awayM": "0%",
+        "awayS": "-"
+      }
+    ],
+    "intervals": [
+      {
+        "period": "0-15'",
+        "pct": "0%",
+        "avgFavor": 0,
+        "avgContra": 0,
+        "total": 0,
+        "pctOverall": "0%",
+        "avgFavorA": 0,
+        "avgContraA": 0,
+        "totalA": 0
+      },
+      {
+        "period": "16-30",
+        "pct": "0%",
+        "avgFavor": 0,
+        "avgContra": 0,
+        "total": 0,
+        "pctOverall": "0%",
+        "avgFavorA": 0,
+        "avgContraA": 0,
+        "totalA": 0
+      },
+      {
+        "period": "31-HT",
+        "pct": "0%",
+        "avgFavor": 0,
+        "avgContra": 0,
+        "total": 0,
+        "pctOverall": "0%",
+        "avgFavorA": 0,
+        "avgContraA": 0,
+        "totalA": 0
+      },
+      {
+        "period": "46-60",
+        "pct": "0%",
+        "avgFavor": 0,
+        "avgContra": 0,
+        "total": 0,
+        "pctOverall": "0%",
+        "avgFavorA": 0,
+        "avgContraA": 0,
+        "totalA": 0
+      },
+      {
+        "period": "61-75",
+        "pct": "0%",
+        "avgFavor": 0,
+        "avgContra": 0,
+        "total": 0,
+        "pctOverall": "0%",
+        "avgFavorA": 0,
+        "avgContraA": 0,
+        "totalA": 0
+      },
+      {
+        "period": "76-FT'",
+        "pct": "0%",
+        "avgFavor": 0,
+        "avgContra": 0,
+        "total": 0,
+        "pctOverall": "0%",
+        "avgFavorA": 0,
+        "avgContraA": 0,
+        "totalA": 0
+      }
+    ],
+    "referee": {
+      "avg": 0
+    }
+  },
+  "generalStatsAnalysis": {
+    "home": {
+      "shots": {
+        "total": 0,
+        "onGoal": 0,
+        "offGoal": 0,
+        "blocked": 0,
+        "insideBox": 0,
+        "outsideBox": 0
+      },
+      "control": {
+        "possession": 0,
+        "offsides": 0,
+        "fouls": 0,
+        "passes": 0
+      }
+    },
+    "away": {
+      "shots": {
+        "total": 0,
+        "onGoal": 0,
+        "offGoal": 0,
+        "blocked": 0,
+        "insideBox": 0,
+        "outsideBox": 0
+      },
+      "control": {
+        "possession": 0,
+        "offsides": 0,
+        "fouls": 0,
+        "passes": 0
+      }
+    }
+  },
+  "chartsAnalysis": {
+    "timeline": [
+      {
+        "minute": 1,
+        "home": {
+          "attacks": 0,
+          "dangerous_attacks": 0,
+          "shots": 0,
+          "corners": 0,
+          "pressure": 0
+        },
+        "away": {
+          "attacks": 0,
+          "dangerous_attacks": 0,
+          "shots": 0,
+          "corners": 0,
+          "pressure": 0
+        }
+      }
+    ],
+    "summary": {
+      "hasPressureGraph": true,
+      "hasAttacksData": false
+    },
+    "pressure": [
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      7.5,
+      6.75,
+      6.075,
+      5.4675,
+      4.92075,
+      4.428675,
+      3.9858075000000004,
+      3.5872267500000006,
+      3.2285040750000005,
+      2.9056536675000006,
+      2.6150883007500005,
+      2.3535794706750006,
+      2.1182215236075006,
+      1.9063993712467506,
+      1.7157594341220757,
+      1.5441834907098682,
+      1.3897651416388814,
+      1.2507886274749933,
+      1.125709764727494,
+      1.0131387882547447,
+      0.9118249094292702,
+      0.8206424184863432,
+      0.738578176637709,
+      0.6647203589739381,
+      0.5982483230765443,
+      0.5384234907688898,
+      0.4845811416920009,
+      0.4361230275228008,
+      0.39251072477052074,
+      0.3532596522934687,
+      0.31793368706412184,
+      0.28614031835770964,
+      0.2575262865219387,
+      0.23177365786974485,
+      0.20859629208277036,
+      0.18773666287449334,
+      0.168962996587044,
+      0.1520666969283396,
+      0.13686002723550564,
+      0.12317402451195508,
+      0.11085662206075958,
+      0.09977095985468362,
+      0.08979386386921526,
+      0.08081447748229373,
+      0.07273302973406436,
+      0.06545972676065792,
+      0.05891375408459213,
+      0.053022378676132915,
+      0.04772014080851963,
+      0.042948126727667665,
+      0.0386533140549009,
+      0.03478798264941081,
+      0.03130918438446973,
+      0.028178265946022758,
+      0.02536043935142048,
+      0.022824395416278433,
+      0.02054195587465059,
+      0.01848776028718553,
+      0.01663898425846698,
+      0.014975085832620283,
+      0.013477577249358254,
+      0.012129819524422429,
+      0.010916837571980186,
+      0.009825153814782167,
+      0.00884263843330395,
+      0.007958374589973555,
+      0.0071625371309762,
+      0.0064462834178785795,
+      0.005801655076090722,
+      0.00522148956848165,
+      0.004699340611633485,
+      0.004229406550470136,
+      0.0038064658954231226,
+      0.0034258193058808104,
+      0.0030832373752927296,
+      0.0027749136377634566
+    ],
+    "attackZones": {
+      "home": {
+        "defense": 8,
+        "middle": 25,
+        "attack": 66
+      },
+      "away": {
+        "defense": 20,
+        "middle": 20,
+        "attack": 60
+      }
+    }
+  },
+  "goalMarkets": {
+    "over05": 0,
+    "over15": 0,
+    "over25": 1.8,
+    "over35": 0
+  },
+  "shotStats": {
+    "home": {
+      "total": 15,
+      "onTarget": 5,
+      "offTarget": 0,
+      "blocked": 0
+    },
+    "away": {
+      "total": 10,
+      "onTarget": 3,
+      "offTarget": 0,
+      "blocked": 0
+    }
+  },
+  "offsides": {
+    "home": 0,
+    "away": 0
+  },
+  "otherStats": {
+    "corners": {
+      "home": 6,
+      "away": 4
+    },
+    "fouls": {
+      "home": 10,
+      "away": 12
+    }
+  },
+  "xG": {
+    "home": 0,
+    "away": 0
+  },
+  "cornerAnalysis": {
+    "home": {
+      "avgFor": 0,
+      "avgAgainst": 0,
+      "avgTotal": 0,
+      "races": {
+        "race3": 0,
+        "race5": 0,
+        "race7": 0,
+        "race9": 0
+      },
+      "trends": {
+        "over85": 0
+      },
+      "intervals": {
+        "0-10": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "11-20": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "21-30": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "31-40": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "41-50": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "51-60": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "61-70": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "71-80": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "81-90": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "37-HT": {
+          "frequency": 0
+        },
+        "87-FT": {
+          "frequency": 0
+        }
+      }
+    },
+    "away": {
+      "avgFor": 0,
+      "avgAgainst": 0,
+      "avgTotal": 0,
+      "races": {
+        "race3": 0,
+        "race5": 0,
+        "race7": 0,
+        "race9": 0
+      },
+      "trends": {
+        "over85": 0
+      },
+      "intervals": {
+        "0-10": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "11-20": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "21-30": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "31-40": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "41-50": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "51-60": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "61-70": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "71-80": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "81-90": {
+          "avgFor": 0,
+          "avgAgainst": 0,
+          "frequency": 0
+        },
+        "37-HT": {
+          "frequency": 0
+        },
+        "87-FT": {
+          "frequency": 0
+        }
+      }
+    },
+    "totalCorners": [
+      {
+        "label": "Over 8.5",
+        "homeM": "0%",
+        "homeS": "-",
+        "awayM": "0%",
+        "awayS": "-"
+      }
+    ],
+    "intervals": [
+      {
+        "period": "0-10'",
+        "pctH": 0,
+        "pctA": 0,
+        "hM": 0,
+        "hS": 0,
+        "aM": 0,
+        "aS": 0,
+        "fav": "0.0",
+        "cont": "0.0",
+        "med": 0
+      },
+      {
+        "period": "11-20",
+        "pctH": 0,
+        "pctA": 0,
+        "hM": 0,
+        "hS": 0,
+        "aM": 0,
+        "aS": 0,
+        "fav": "0.0",
+        "cont": "0.0",
+        "med": 0
+      },
+      {
+        "period": "21-30",
+        "pctH": 0,
+        "pctA": 0,
+        "hM": 0,
+        "hS": 0,
+        "aM": 0,
+        "aS": 0,
+        "fav": "0.0",
+        "cont": "0.0",
+        "med": 0
+      },
+      {
+        "period": "31-40",
+        "pctH": 0,
+        "pctA": 0,
+        "hM": 0,
+        "hS": 0,
+        "aM": 0,
+        "aS": 0,
+        "fav": "0.0",
+        "cont": "0.0",
+        "med": 0
+      },
+      {
+        "period": "41-50",
+        "pctH": 0,
+        "pctA": 0,
+        "hM": 0,
+        "hS": 0,
+        "aM": 0,
+        "aS": 0,
+        "fav": "0.0",
+        "cont": "0.0",
+        "med": 0
+      },
+      {
+        "period": "51-60",
+        "pctH": 0,
+        "pctA": 0,
+        "hM": 0,
+        "hS": 0,
+        "aM": 0,
+        "aS": 0,
+        "fav": "0.0",
+        "cont": "0.0",
+        "med": 0
+      },
+      {
+        "period": "61-70",
+        "pctH": 0,
+        "pctA": 0,
+        "hM": 0,
+        "hS": 0,
+        "aM": 0,
+        "aS": 0,
+        "fav": "0.0",
+        "cont": "0.0",
+        "med": 0
+      },
+      {
+        "period": "71-80",
+        "pctH": 0,
+        "pctA": 0,
+        "hM": 0,
+        "hS": 0,
+        "aM": 0,
+        "aS": 0,
+        "fav": "0.0",
+        "cont": "0.0",
+        "med": 0
+      },
+      {
+        "period": "81-90'",
+        "pctH": 0,
+        "pctA": 0,
+        "hM": 0,
+        "hS": 0,
+        "aM": 0,
+        "aS": 0,
+        "fav": "0.0",
+        "cont": "0.0",
+        "med": 0
+      },
+      {
+        "period": "37-HT",
+        "pctH": 0,
+        "pctA": 0,
+        "hM": "-",
+        "hS": "-",
+        "aM": "-",
+        "aS": "-",
+        "fav": "-",
+        "cont": "-",
+        "med": "-"
+      },
+      {
+        "period": "87-FT",
+        "pctH": 0,
+        "pctA": 0,
+        "hM": "-",
+        "hS": "-",
+        "aM": "-",
+        "aS": "-",
+        "fav": "-",
+        "cont": "-",
+        "med": "-"
+      }
+    ],
+    "races": [
+      {
+        "label": "Race 3",
+        "homeW": "0%",
+        "homeL": "100%",
+        "awayW": "0%",
+        "awayL": "100%"
+      },
+      {
+        "label": "Race 5",
+        "homeW": "0%",
+        "homeL": "100%",
+        "awayW": "0%",
+        "awayL": "100%"
+      },
+      {
+        "label": "Race 7",
+        "homeW": "0%",
+        "homeL": "100%",
+        "awayW": "0%",
+        "awayL": "100%"
+      },
+      {
+        "label": "Race 9",
+        "homeW": "0%",
+        "homeL": "100%",
+        "awayW": "0%",
+        "awayL": "100%"
+      }
+    ],
+    "calculator": {
+      "expectedTotal": "0.0",
+      "lines": [
+        {
+          "line": 8.5,
+          "prob": "5",
+          "odd": null,
+          "value": false,
+          "edge": "0.0"
+        },
+        {
+          "line": 9.5,
+          "prob": "5",
+          "odd": null,
+          "value": false,
+          "edge": "0.0"
+        },
+        {
+          "line": 10.5,
+          "prob": "5",
+          "odd": null,
+          "value": false,
+          "edge": "0.0"
+        },
+        {
+          "line": 11.5,
+          "prob": "5",
+          "odd": null,
+          "value": false,
+          "edge": "0.0"
+        }
+      ]
+    }
+  },
+  "lineups": {
+    "home": {
+      "formation": "",
+      "starters": [
+        {
+          "id": 101,
+          "name": "Home GK",
+          "number": 1,
+          "pos": "GK",
+          "grid": "1:1",
+          "rating": null,
+          "events": []
+        },
+        {
+          "id": 102,
+          "name": "Home Def",
+          "number": 4,
+          "pos": "DF",
+          "grid": "2:2",
+          "rating": null,
+          "events": []
+        }
+      ],
+      "subs": [
+        {
+          "id": 103,
+          "name": "Home Sub",
+          "number": 12,
+          "pos": "MF",
+          "grid": null,
+          "rating": null,
+          "events": []
+        }
+      ]
+    },
+    "away": {
+      "formation": "",
+      "starters": [
+        {
+          "id": 201,
+          "name": "Away GK",
+          "number": 1,
+          "pos": "GK",
+          "grid": "1:1",
+          "rating": null,
+          "events": []
+        },
+        {
+          "id": 202,
+          "name": "Away Fwd",
+          "number": 9,
+          "pos": "FW",
+          "grid": "4:3",
+          "rating": null,
+          "events": []
+        }
+      ],
+      "subs": []
+    }
+  },
+  "predictions": {
+    "fulltime": {
+      "home": 45,
+      "draw": 25,
+      "away": 30
+    },
+    "list": []
+  },
+  "h2h": {
+    "matches": [],
+    "summary": {
+      "total": 0,
+      "home_wins": 0,
+      "draws": 0,
+      "away_wins": 0
+    },
+    "averages": {
+      "goals_per_match": 0,
+      "corners_per_match": 0,
+      "cards_per_match": 0
+    },
+    "aggregates": {
+      "goals": {
+        "home": 0,
+        "away": 0
+      },
+      "corners": {
+        "home": 0,
+        "away": 0
+      },
+      "yellowCards": {
+        "home": 0,
+        "away": 0
+      },
+      "redCards": {
+        "home": 0,
+        "away": 0
+      }
+    },
+    "trends": []
+  },
+  "history": {
+    "home": [],
+    "away": []
+  },
+  "trends": {
+    "goals_scored": {
+      "home": 0,
+      "away": 0
+    },
+    "goals_conceded": {
+      "home": 0,
+      "away": 0
+    },
+    "corners_for": {
+      "home": 0,
+      "away": 0
+    },
+    "corners_against": {
+      "home": 0,
+      "away": 0
+    },
+    "corners_over_85_pct": {
+      "home": 0,
+      "away": 0
+    },
+    "cards_total": {
+      "home": 0,
+      "away": 0
+    },
+    "cards_first_half": {
+      "home": 0,
+      "away": 0
+    }
+  },
+  "timeline": [],
+  "standings": [],
+  "homeTeam": {
+    "id": 1,
+    "name": "Mirassol",
+    "logo": "home.png",
+    "squad": null
+  },
+  "awayTeam": {
+    "id": 2,
+    "name": "Flamengo",
+    "logo": "away.png",
+    "squad": null
+  }
+}

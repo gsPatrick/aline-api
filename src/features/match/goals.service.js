@@ -31,6 +31,17 @@ export const calculateGoalAnalysis = (homeHistory, awayHistory, homeId, awayId, 
         let over05Count = 0;
         let over15Count = 0;
         let over25Count = 0;
+        let over35Count = 0;
+
+        // HT Accumulators
+        let htOver05Count = 0;
+        let htOver15Count = 0;
+        let htOver25Count = 0;
+
+        // 2HT Accumulators
+        let shOver05Count = 0;
+        let shOver15Count = 0;
+        let shOver25Count = 0;
 
         let totalScored = 0;
         let totalConceded = 0;
@@ -45,6 +56,10 @@ export const calculateGoalAnalysis = (homeHistory, awayHistory, homeId, awayId, 
             '61-75': { scored: 0, conceded: 0, count: 0 },
             '76-FT': { scored: 0, conceded: 0, count: 0 }
         };
+
+        let wins = 0;
+        let draws = 0;
+        let losses = 0;
 
         matches.forEach(match => {
             // 1. Stats (Total Goals)
@@ -67,17 +82,41 @@ export const calculateGoalAnalysis = (homeHistory, awayHistory, homeId, awayId, 
             totalScored += myGoals;
             totalConceded += oppGoals;
 
+            if (myGoals > oppGoals) wins++;
+            else if (myGoals === oppGoals) draws++;
+            else losses++;
+
             if (oppGoals === 0) cleanSheetsCount++;
             if (myGoals > 0 && oppGoals > 0) bttsCount++;
             if (totalGoals > 0.5) over05Count++;
             if (totalGoals > 1.5) over15Count++;
             if (totalGoals > 2.5) over25Count++;
+            if (totalGoals > 3.5) over35Count++;
 
-            // 2. Events (First to Score & Intervals)
+            // 2. Events (First to Score & Intervals & HT/2HT)
             const events = match.events || [];
             const goalEvents = events
                 .filter(e => e.type?.name === 'Goal')
                 .sort((a, b) => a.minute - b.minute);
+
+            // Calculate HT and 2HT goals from events
+            let htGoals = 0;
+            let shGoals = 0;
+
+            goalEvents.forEach(e => {
+                if (e.minute <= 45) htGoals++;
+                else shGoals++;
+            });
+
+            // HT Logic
+            if (htGoals > 0.5) htOver05Count++;
+            if (htGoals > 1.5) htOver15Count++;
+            if (htGoals > 2.5) htOver25Count++;
+
+            // 2HT Logic
+            if (shGoals > 0.5) shOver05Count++;
+            if (shGoals > 1.5) shOver15Count++;
+            if (shGoals > 2.5) shOver25Count++;
 
             if (goalEvents.length > 0) {
                 const firstGoal = goalEvents[0];
@@ -132,13 +171,35 @@ export const calculateGoalAnalysis = (homeHistory, awayHistory, homeId, awayId, 
         return {
             scored: avgScored,
             conceded: avgConceded,
+            avgTotal: gamesCount ? ((totalScored + totalConceded) / gamesCount).toFixed(2) : 0,
+            wins: gamesCount ? ((wins / gamesCount) * 100).toFixed(0) : 0,
+            draws: gamesCount ? ((draws / gamesCount) * 100).toFixed(0) : 0,
+            losses: gamesCount ? ((losses / gamesCount) * 100).toFixed(0) : 0,
             cleanSheets: gamesCount ? ((cleanSheetsCount / gamesCount) * 100).toFixed(0) : 0,
             btts: gamesCount ? ((bttsCount / gamesCount) * 100).toFixed(0) : 0,
             firstToScore: gamesCount ? ((firstToScoreCount / gamesCount) * 100).toFixed(0) : 0,
             firstToScoreAndWin: gamesCount ? ((firstToScoreAndWinCount / gamesCount) * 100).toFixed(0) : 0,
+
+            // FT Stats
             over05: gamesCount ? ((over05Count / gamesCount) * 100).toFixed(0) : 0,
             over15: gamesCount ? ((over15Count / gamesCount) * 100).toFixed(0) : 0,
             over25: gamesCount ? ((over25Count / gamesCount) * 100).toFixed(0) : 0,
+            over35: gamesCount ? ((over35Count / gamesCount) * 100).toFixed(0) : 0,
+
+            // HT Stats
+            ht: {
+                over05: gamesCount ? ((htOver05Count / gamesCount) * 100).toFixed(0) : 0,
+                over15: gamesCount ? ((htOver15Count / gamesCount) * 100).toFixed(0) : 0,
+                over25: gamesCount ? ((htOver25Count / gamesCount) * 100).toFixed(0) : 0,
+            },
+
+            // 2HT Stats
+            sh: {
+                over05: gamesCount ? ((shOver05Count / gamesCount) * 100).toFixed(0) : 0,
+                over15: gamesCount ? ((shOver15Count / gamesCount) * 100).toFixed(0) : 0,
+                over25: gamesCount ? ((shOver25Count / gamesCount) * 100).toFixed(0) : 0,
+            },
+
             intervals: formattedIntervals
         };
     };
@@ -225,7 +286,8 @@ export const calculateGoalAnalysis = (homeHistory, awayHistory, homeId, awayId, 
         home: homeStats,
         away: awayStats,
         scorePredictions: {
-            probable: probableScores.slice(0, 3)
+            probable: probableScores.slice(0, 3),
+            possible: probableScores.slice(3, 6)
         },
         calculator // Added calculator
     };
