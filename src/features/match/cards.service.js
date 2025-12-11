@@ -131,12 +131,22 @@ export const calculateCardStats = (homeHistory, awayHistory, homeId, awayId) => 
         let totalCardsFor = 0;
         let totalCardsAgainst = 0;
 
-        // Markets Counters
+        // Markets Counters (Full Time)
         let over05Count = 0;
         let over15Count = 0;
         let over25Count = 0;
         let over35Count = 0;
         let over45Count = 0;
+
+        // Half-Time Markets Counters (1st Half)
+        let htOver05Count = 0;
+        let htOver15Count = 0;
+        let htOver25Count = 0;
+
+        // Second Half Markets Counters
+        let shOver05Count = 0;
+        let shOver15Count = 0;
+        let shOver25Count = 0;
 
         // Halves
         let firstHalfCards = 0;
@@ -156,14 +166,14 @@ export const calculateCardStats = (homeHistory, awayHistory, homeId, awayId) => 
             const events = match.events || [];
 
             // Filter card events
-            // Types: Yellowcard, Redcard. 
-            // Note: YellowRed card might be a separate type or just a Redcard.
-            // Let's look for "card" in type name or specific IDs if known.
-            // Based on debug script, we saw "Yellowcard".
             const cardEvents = events.filter(e => {
                 const name = e.type?.name || "";
                 return name.includes("Card") || name.includes("card");
             });
+
+            // Count cards by half for this match
+            let firstHalfCount = 0;
+            let secondHalfCount = 0;
 
             // Filter by team
             const myCards = cardEvents.filter(e => e.participant_id == teamId);
@@ -176,7 +186,7 @@ export const calculateCardStats = (homeHistory, awayHistory, homeId, awayId) => 
             totalCardsFor += myCount;
             totalCardsAgainst += oppCount;
 
-            // Markets
+            // Full Time Markets
             if (totalCount > 0.5) over05Count++;
             if (totalCount > 1.5) over15Count++;
             if (totalCount > 2.5) over25Count++;
@@ -184,15 +194,19 @@ export const calculateCardStats = (homeHistory, awayHistory, homeId, awayId) => 
             if (totalCount > 4.5) over45Count++;
 
             // Halves & Intervals
-            // Interval Flags for frequency
             const intervalFlags = {};
 
             cardEvents.forEach(e => {
                 const minute = e.minute;
 
                 // Halves
-                if (minute <= 45) firstHalfCards++;
-                else secondHalfCards++;
+                if (minute <= 45) {
+                    firstHalfCards++;
+                    firstHalfCount++;
+                } else {
+                    secondHalfCards++;
+                    secondHalfCount++;
+                }
 
                 // Intervals
                 let bucket = '';
@@ -206,11 +220,21 @@ export const calculateCardStats = (homeHistory, awayHistory, homeId, awayId) => 
                 if (intervals[bucket]) {
                     intervals[bucket].total++;
                     if (!intervalFlags[bucket]) {
-                        intervals[bucket].count++; // Frequency
+                        intervals[bucket].count++;
                         intervalFlags[bucket] = true;
                     }
                 }
             });
+
+            // Half-Time Markets (1st Half only)
+            if (firstHalfCount > 0.5) htOver05Count++;
+            if (firstHalfCount > 1.5) htOver15Count++;
+            if (firstHalfCount > 2.5) htOver25Count++;
+
+            // Second Half Markets
+            if (secondHalfCount > 0.5) shOver05Count++;
+            if (secondHalfCount > 1.5) shOver15Count++;
+            if (secondHalfCount > 2.5) shOver25Count++;
         });
 
         const avgFor = gamesCount ? (totalCardsFor / gamesCount).toFixed(1) : 0;
@@ -225,14 +249,12 @@ export const calculateCardStats = (homeHistory, awayHistory, homeId, awayId) => 
         Object.keys(intervals).forEach(key => {
             const data = intervals[key];
             formattedIntervals[key] = {
-                total: data.total, // Total cards in this bucket across all games? Or Avg? User asked for "Quantidade (Soma)" and "%".
-                // "0-15": { "total": 2, "frequency": 20 } -> Example shows total 2 (maybe avg is better? or total sum?)
-                // "Soma de cartões nesse tempo" implies total sum.
-                // But usually for analysis you want avg.
-                // Let's stick to the requested "Soma" (total) and "Frequency" (%).
+                total: data.total,
                 frequency: gamesCount ? ((data.count / gamesCount) * 100).toFixed(0) : 0
             };
         });
+
+        const toPct = (count) => gamesCount ? ((count / gamesCount) * 100).toFixed(0) : 0;
 
         return {
             avgTotal,
@@ -241,11 +263,21 @@ export const calculateCardStats = (homeHistory, awayHistory, homeId, awayId) => 
             firstHalfAvg,
             secondHalfAvg,
             markets: {
-                over05: gamesCount ? ((over05Count / gamesCount) * 100).toFixed(0) : 0,
-                over15: gamesCount ? ((over15Count / gamesCount) * 100).toFixed(0) : 0,
-                over25: gamesCount ? ((over25Count / gamesCount) * 100).toFixed(0) : 0,
-                over35: gamesCount ? ((over35Count / gamesCount) * 100).toFixed(0) : 0,
-                over45: gamesCount ? ((over45Count / gamesCount) * 100).toFixed(0) : 0,
+                over05: toPct(over05Count),
+                over15: toPct(over15Count),
+                over25: toPct(over25Count),
+                over35: toPct(over35Count),
+                over45: toPct(over45Count),
+            },
+            htMarkets: {
+                over05: toPct(htOver05Count),
+                over15: toPct(htOver15Count),
+                over25: toPct(htOver25Count),
+            },
+            shMarkets: {
+                over05: toPct(shOver05Count),
+                over15: toPct(shOver15Count),
+                over25: toPct(shOver25Count),
             },
             intervals: formattedIntervals
         };

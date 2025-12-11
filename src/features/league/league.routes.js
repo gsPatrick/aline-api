@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { index, show, getMatchesByDate, getDetails } from "./league.controller.js";
+import { index, show, getMatchesByDate, getDetails, getFixturesByRound } from "./league.controller.js";
 
 const r = Router();
 
@@ -10,5 +10,7 @@ r.get("/:id", show);
 r.get("/:id/matches", getMatchesByDate);
 // NEW: Complete league details (dashboard)
 r.get("/:id/details", getDetails);
+// NEW: Get fixtures for a specific round (for filter)
+r.get("/:id/rounds/:roundId/fixtures", getFixturesByRound);
 
 export default r;

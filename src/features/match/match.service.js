@@ -490,11 +490,30 @@ export const calculateMatchStats = (data) => {
             };
         });
 
+        // Full Time Markets
         const totalCards = [
-            { label: 'Over 0.5', homeM: cardStats.home.markets.over05 + '%', homeS: '-', awayM: cardStats.away.markets.over05 + '%', awayS: '-' },
-            { label: 'Over 1.5', homeM: cardStats.home.markets.over15 + '%', homeS: '-', awayM: cardStats.away.markets.over15 + '%', awayS: '-' },
-            { label: 'Over 2.5', homeM: cardStats.home.markets.over25 + '%', homeS: '-', awayM: cardStats.away.markets.over25 + '%', awayS: '-' },
-            { label: 'Over 3.5', homeM: cardStats.home.markets.over35 + '%', homeS: '-', awayM: cardStats.away.markets.over35 + '%', awayS: '-' },
+            { label: 'Over 0.5', homeM: cardStats.home.markets.over05, homeS: '-', awayM: cardStats.away.markets.over05, awayS: '-' },
+            { label: 'Over 1.5', homeM: cardStats.home.markets.over15, homeS: '-', awayM: cardStats.away.markets.over15, awayS: '-' },
+            { label: 'Over 2.5', homeM: cardStats.home.markets.over25, homeS: '-', awayM: cardStats.away.markets.over25, awayS: '-' },
+            { label: 'Over 3.5', homeM: cardStats.home.markets.over35, homeS: '-', awayM: cardStats.away.markets.over35, awayS: '-' },
+        ];
+
+        // First Half Markets (htCards)
+        const htH = cardStats.home.htMarkets || {};
+        const htA = cardStats.away.htMarkets || {};
+        const htCards = [
+            { label: 'Over 0.5', homeM: htH.over05 || '0', homeS: '-', awayM: htA.over05 || '0', awayS: '-' },
+            { label: 'Over 1.5', homeM: htH.over15 || '0', homeS: '-', awayM: htA.over15 || '0', awayS: '-' },
+            { label: 'Over 2.5', homeM: htH.over25 || '0', homeS: '-', awayM: htA.over25 || '0', awayS: '-' },
+        ];
+
+        // Second Half Markets (shCards)
+        const shH = cardStats.home.shMarkets || {};
+        const shA = cardStats.away.shMarkets || {};
+        const shCards = [
+            { label: 'Over 0.5', homeM: shH.over05 || '0', homeS: '-', awayM: shA.over05 || '0', awayS: '-' },
+            { label: 'Over 1.5', homeM: shH.over15 || '0', homeS: '-', awayM: shA.over15 || '0', awayS: '-' },
+            { label: 'Over 2.5', homeM: shH.over25 || '0', homeS: '-', awayM: shA.over25 || '0', awayS: '-' },
         ];
 
         return {
@@ -504,6 +523,8 @@ export const calculateMatchStats = (data) => {
                 total: { home: cardStats.home.avgTotal, away: cardStats.away.avgTotal }
             },
             totalCards,
+            htCards,
+            shCards,
             intervals,
             referee: refereeData ? {
                 avg: refereeData.avgCards,
@@ -552,55 +573,149 @@ export const calculateMatchStats = (data) => {
         cardAnalysis: finalCardAnalysis
     };
     // Helper to process current match stats into frontend structure
-    const calculateDetailedMatchStats = (stats, homeId, awayId) => {
-        // Defensive Coding: Always return structure, even if stats are missing
+    // Now calculates period-specific stats from events (with minute data)
+    const calculateDetailedMatchStats = (stats, homeId, awayId, events) => {
         const safeStats = Array.isArray(stats) ? stats : [];
+        const safeEvents = Array.isArray(events) ? events : [];
 
-        const processPeriod = (period) => {
-            const getStat = (type, teamId) => {
-                const s = safeStats.find(x =>
-                    (x.type?.name === type || x.type?.developer_name === type) &&
-                    x.participant_id == teamId
+        // Get fulltime stat from API
+        const getStat = (type, teamId) => {
+            const s = safeStats.find(x =>
+                (x.type?.name === type || x.type?.developer_name === type) &&
+                x.participant_id == teamId
+            );
+            return s?.data?.value ?? s?.value ?? 0;
+        };
+
+        // Count events by type, team, and period
+        const countEvents = (eventTypes, teamId, minMinute, maxMinute) => {
+            return safeEvents.filter(e => {
+                const minute = e.minute || 0;
+                const typeMatch = eventTypes.some(t =>
+                    e.type?.name?.toLowerCase().includes(t) ||
+                    e.type?.developer_name?.toLowerCase().includes(t)
                 );
-                return s?.data?.value ?? s?.value ?? 0;
-            };
+                const teamMatch = e.participant_id == teamId;
+                const periodMatch = minute >= minMinute && minute <= maxMinute;
+                return typeMatch && teamMatch && periodMatch;
+            }).length;
+        };
+
+        // Count events for fulltime (0-90+ minutes)
+        const ftHomeYellowCards = countEvents(['yellowcard', 'yellow'], homeId, 0, 120);
+        const ftAwayYellowCards = countEvents(['yellowcard', 'yellow'], awayId, 0, 120);
+        const ftHomeRedCards = countEvents(['redcard', 'red'], homeId, 0, 120);
+        const ftAwayRedCards = countEvents(['redcard', 'red'], awayId, 0, 120);
+        const ftHomeFouls = countEvents(['foul'], homeId, 0, 120);
+        const ftAwayFouls = countEvents(['foul'], awayId, 0, 120);
+
+        // Get API stats with fallback to event counting
+        const apiYellowHome = getStat('Yellow Cards', homeId) || getStat('Yellowcards', homeId);
+        const apiYellowAway = getStat('Yellow Cards', awayId) || getStat('Yellowcards', awayId);
+        const apiRedHome = getStat('Red Cards', homeId) || getStat('Redcards', homeId);
+        const apiRedAway = getStat('Red Cards', awayId) || getStat('Redcards', awayId);
+        const apiFoulsHome = getStat('Fouls', homeId);
+        const apiFoulsAway = getStat('Fouls', awayId);
+
+        // Build stats for fulltime (from API with event fallback)
+        const fulltime = {
+            possession: { home: getStat('Ball Possession %', homeId), away: getStat('Ball Possession %', awayId) },
+            attacks: {
+                total: { home: getStat('Attacks', homeId), away: getStat('Attacks', awayId) },
+                dangerous: { home: getStat('Dangerous Attacks', homeId), away: getStat('Dangerous Attacks', awayId) },
+                corners: { home: getStat('Corners', homeId), away: getStat('Corners', awayId) },
+                crosses: { home: getStat('Crosses', homeId), away: getStat('Crosses', awayId) }
+            },
+            shots: {
+                total: { home: getStat('Shots Total', homeId), away: getStat('Shots Total', awayId) },
+                onTarget: { home: getStat('Shots On Target', homeId), away: getStat('Shots On Target', awayId) },
+                offTarget: { home: getStat('Shots Off Target', homeId), away: getStat('Shots Off Target', awayId) },
+                insideBox: { home: getStat('Shots Insidebox', homeId), away: getStat('Shots Insidebox', awayId) },
+                outsideBox: { home: getStat('Shots Outsidebox', homeId), away: getStat('Shots Outsidebox', awayId) }
+            },
+            others: {
+                saves: { home: getStat('Saves', homeId), away: getStat('Saves', awayId) },
+                fouls: { home: apiFoulsHome || ftHomeFouls, away: apiFoulsAway || ftAwayFouls },
+                // Free kicks estimated as ~70-80% of opponent's fouls (most fouls result in free kicks)
+                freeKicks: {
+                    home: Math.round((apiFoulsAway || ftAwayFouls) * 0.75),
+                    away: Math.round((apiFoulsHome || ftHomeFouls) * 0.75)
+                },
+                yellowCards: { home: apiYellowHome || ftHomeYellowCards, away: apiYellowAway || ftAwayYellowCards },
+                redCards: { home: apiRedHome || ftHomeRedCards, away: apiRedAway || ftAwayRedCards },
+                passes: { home: getStat('Passes', homeId), away: getStat('Passes', awayId) },
+                longPasses: { home: 0, away: 0 },
+                interceptions: { home: getStat('Interceptions', homeId), away: getStat('Interceptions', awayId) }
+            }
+        };
+
+        // Build period stats from events (calculated by minute)
+        const buildPeriodStats = (minMinute, maxMinute) => {
+            // For stats we can count from events (corners, cards, goals)
+            const homeCorners = countEvents(['corner'], homeId, minMinute, maxMinute);
+            const awayCorners = countEvents(['corner'], awayId, minMinute, maxMinute);
+            const homeYellowCards = countEvents(['yellowcard', 'yellow'], homeId, minMinute, maxMinute);
+            const awayYellowCards = countEvents(['yellowcard', 'yellow'], awayId, minMinute, maxMinute);
+            const homeRedCards = countEvents(['redcard', 'red'], homeId, minMinute, maxMinute);
+            const awayRedCards = countEvents(['redcard', 'red'], awayId, minMinute, maxMinute);
+            const homeGoals = countEvents(['goal'], homeId, minMinute, maxMinute);
+            const awayGoals = countEvents(['goal'], awayId, minMinute, maxMinute);
+            const homeFouls = countEvents(['foul'], homeId, minMinute, maxMinute);
+            const awayFouls = countEvents(['foul'], awayId, minMinute, maxMinute);
+
+            // Calculate percentage of the period vs fulltime
+            const periodRatio = (maxMinute - minMinute) / 90;
+
+            // Estimate other stats proportionally (not ideal but better than nothing)
+            const estimateStat = (fulltimeValue) => Math.round(fulltimeValue * periodRatio);
+
+            // Get fouls (prefer counted, fallback to estimated)
+            const periodHomeFouls = homeFouls || estimateStat(fulltime.others.fouls.home);
+            const periodAwayFouls = awayFouls || estimateStat(fulltime.others.fouls.away);
 
             return {
-                possession: { home: getStat('Ball Possession %', homeId), away: getStat('Ball Possession %', awayId) },
+                possession: {
+                    home: fulltime.possession.home, // Possession is typically similar across periods
+                    away: fulltime.possession.away
+                },
                 attacks: {
-                    total: { home: getStat('Attacks', homeId), away: getStat('Attacks', awayId) },
-                    dangerous: { home: getStat('Dangerous Attacks', homeId), away: getStat('Dangerous Attacks', awayId) },
-                    corners: { home: getStat('Corners', homeId), away: getStat('Corners', awayId) },
-                    crosses: { home: getStat('Crosses', homeId), away: getStat('Crosses', awayId) }
+                    total: { home: estimateStat(fulltime.attacks.total.home), away: estimateStat(fulltime.attacks.total.away) },
+                    dangerous: { home: estimateStat(fulltime.attacks.dangerous.home), away: estimateStat(fulltime.attacks.dangerous.away) },
+                    corners: { home: homeCorners, away: awayCorners }, // From events!
+                    crosses: { home: estimateStat(fulltime.attacks.crosses.home), away: estimateStat(fulltime.attacks.crosses.away) }
                 },
                 shots: {
-                    total: { home: getStat('Shots Total', homeId), away: getStat('Shots Total', awayId) },
-                    onTarget: { home: getStat('Shots On Target', homeId), away: getStat('Shots On Target', awayId) },
-                    offTarget: { home: getStat('Shots Off Target', homeId), away: getStat('Shots Off Target', awayId) },
-                    insideBox: { home: getStat('Shots Insidebox', homeId), away: getStat('Shots Insidebox', awayId) },
-                    outsideBox: { home: getStat('Shots Outsidebox', homeId), away: getStat('Shots Outsidebox', awayId) }
+                    total: { home: estimateStat(fulltime.shots.total.home), away: estimateStat(fulltime.shots.total.away) },
+                    onTarget: { home: estimateStat(fulltime.shots.onTarget.home), away: estimateStat(fulltime.shots.onTarget.away) },
+                    offTarget: { home: estimateStat(fulltime.shots.offTarget.home), away: estimateStat(fulltime.shots.offTarget.away) },
+                    insideBox: { home: estimateStat(fulltime.shots.insideBox.home), away: estimateStat(fulltime.shots.insideBox.away) },
+                    outsideBox: { home: estimateStat(fulltime.shots.outsideBox.home), away: estimateStat(fulltime.shots.outsideBox.away) }
                 },
                 others: {
-                    saves: { home: getStat('Saves', homeId), away: getStat('Saves', awayId) },
-                    fouls: { home: getStat('Fouls', homeId), away: getStat('Fouls', awayId) },
-                    freeKicks: { home: 0, away: 0 },
-                    yellowCards: { home: getStat('Yellow Cards', homeId), away: getStat('Yellow Cards', awayId) },
-                    redCards: { home: getStat('Red Cards', homeId), away: getStat('Red Cards', awayId) },
-                    passes: { home: getStat('Passes', homeId), away: getStat('Passes', awayId) },
+                    saves: { home: estimateStat(fulltime.others.saves.home), away: estimateStat(fulltime.others.saves.away) },
+                    fouls: { home: periodHomeFouls, away: periodAwayFouls },
+                    // Free kicks estimated as ~75% of opponent's fouls
+                    freeKicks: {
+                        home: Math.round(periodAwayFouls * 0.75),
+                        away: Math.round(periodHomeFouls * 0.75)
+                    },
+                    yellowCards: { home: homeYellowCards, away: awayYellowCards }, // From events!
+                    redCards: { home: homeRedCards, away: awayRedCards }, // From events!
+                    passes: { home: estimateStat(fulltime.others.passes.home), away: estimateStat(fulltime.others.passes.away) },
                     longPasses: { home: 0, away: 0 },
-                    interceptions: { home: getStat('Interceptions', homeId), away: getStat('Interceptions', awayId) }
+                    interceptions: { home: estimateStat(fulltime.others.interceptions.home), away: estimateStat(fulltime.others.interceptions.away) }
                 }
             };
         };
 
         return {
-            fulltime: processPeriod('ALL'),
-            ht: processPeriod('1ST'),
-            st: processPeriod('2ND')
+            fulltime,
+            ht: buildPeriodStats(0, 45),    // 1st half: 0-45 min
+            st: buildPeriodStats(46, 90)    // 2nd half: 46-90 min
         };
     };
 
-    const detailedStats = calculateDetailedMatchStats(data.statistics, home.id, away.id);
+    const detailedStats = calculateDetailedMatchStats(data.statistics, home.id, away.id, data.events);
 
     // Helper to normalize lineups from flat array to nested object
     const normalizeLineups = (lineups, home, away) => {
@@ -972,7 +1087,72 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
             fetchHistoryIds(away?.id, 'away')
         ]);
 
-        // Step 2.5: Fetch H2H Data (NEW)
+        // Step 2.5: Fetch Squad Data for both teams
+        const fetchTeamSquad = async (teamId) => {
+            if (!teamId) return { hasData: false, players: [] };
+            try {
+                console.log(`👥 Fetching squad for team ${teamId}...`);
+                const squadUrl = `${BASE_URL}/squads/teams/${teamId}?api_token=${token}&include=player.statistics.details.type;player.position`;
+                const resSquad = await axios.get(squadUrl);
+                const squad = resSquad.data.data || [];
+
+                const players = squad.map(playerItem => {
+                    const player = playerItem.player;
+                    if (!player) return null;
+
+                    const stats = player.statistics || [];
+                    // Take most recent stats (first entry) or aggregate if needed
+                    const stat = stats.length > 0 ? stats[0] : null;
+                    const details = stat?.details || [];
+
+                    // Helper to find stat by type name
+                    const findDetailStat = (typeName, developerName) => {
+                        const detail = details.find(d =>
+                            d.type?.name === typeName ||
+                            d.type?.developer_name === developerName ||
+                            d.type?.code === typeName
+                        );
+                        return detail?.value?.total ?? detail?.value?.average ?? 0;
+                    };
+
+                    return {
+                        id: player.id,
+                        name: player.common_name || player.display_name || player.name,
+                        photo: player.image_path,
+                        position: player.position?.name || playerItem.position?.name || 'Jogador',
+                        positionId: player.position_id || playerItem.position_id,
+                        jerseyNumber: playerItem.jersey_number,
+                        rating: findDetailStat('Rating', 'RATING'),
+                        goals: findDetailStat('Goals', 'GOALS'),
+                        assists: findDetailStat('Assists', 'ASSISTS'),
+                        yellowCards: findDetailStat('Yellow Cards', 'YELLOWCARDS'),
+                        redCards: findDetailStat('Red Cards', 'REDCARDS'),
+                        appearances: findDetailStat('Appearances', 'APPEARANCES'),
+                        minutes: findDetailStat('Minutes Played', 'MINUTES'),
+                        cleanSheets: findDetailStat('Clean Sheets', 'CLEANSHEETS'),
+                        saves: findDetailStat('Saves', 'SAVES'),
+                        passes: findDetailStat('Passes', 'PASSES'),
+                        keyPasses: findDetailStat('Key Passes', 'KEYPASSES'),
+                        shots: findDetailStat('Shots Total', 'SHOTS'),
+                        tackles: findDetailStat('Tackles', 'TACKLES'),
+                        interceptions: findDetailStat('Interceptions', 'INTERCEPTIONS')
+                    };
+                }).filter(p => p);
+
+                console.log(`✅ Squad fetched: ${players.length} players`);
+                return { hasData: players.length > 0, players };
+            } catch (e) {
+                console.error(`❌ Failed to fetch squad for team ${teamId}:`, e.message);
+                return { hasData: false, players: [] };
+            }
+        };
+
+        const [homeSquad, awaySquad] = await Promise.all([
+            fetchTeamSquad(home?.id),
+            fetchTeamSquad(away?.id)
+        ]);
+
+        // Step 2.6: Fetch H2H Data (NEW)
         const h2hData = await fetchH2HMatches(home.id, away.id);
 
         // Step 3: Fetch Detailed Data for these IDs
@@ -1028,11 +1208,13 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
             h2h: h2hData, // Add H2H Data
             homeTeam: {
                 ...home, // keep basic info
-                detailedHistory: validHomeHistory
+                detailedHistory: validHomeHistory,
+                squad: homeSquad
             },
             awayTeam: {
                 ...away,
-                detailedHistory: validAwayHistory
+                detailedHistory: validAwayHistory,
+                squad: awaySquad
             }
         };
 

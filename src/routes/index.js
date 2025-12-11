@@ -9,6 +9,7 @@ import matchRoutes from "../features/match/match.routes.js";
 import teamRoutes from "../features/team/team.routes.js";
 import fixtureRoutes from "../features/fixture/fixture.routes.js";
 import leagueRoutes from "../features/league/league.routes.js";
+import searchRoutes from "../features/search/search.routes.js";
 
 const router = Router();
 
@@ -35,5 +36,8 @@ router.use("/fixtures", fixtureRoutes);
 
 // Leagues (All 113 leagues)
 router.use("/leagues", leagueRoutes);
+
+// Search (Teams, Leagues, Players)
+router.use("/search", searchRoutes);
 
 export default router;

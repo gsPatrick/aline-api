@@ -7,7 +7,7 @@ import {
   apiGetLeaguesByDate,
   normalizeMatchCard
 } from "../../services/sports.service.js";
-import { getLeagueDetails } from "./league.service.js";
+import { getLeagueDetails, getRoundFixtures } from "./league.service.js";
 
 export const index = async (req, res, next) => {
   try {
@@ -32,26 +32,18 @@ export const index = async (req, res, next) => {
 export const show = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const league = await apiGetLeagueById(id);
-    if (!league) return res.status(404).json({ error: "Liga não encontrada" });
+    console.log(`Fetching league details (show) for ID: ${id}`);
 
-    let standings = [];
-    let upcoming = [];
+    // Use the comprehensive getLeagueDetails service
+    const details = await getLeagueDetails(parseInt(id));
 
-    if (league.current_season_id) {
-      const [std, fix] = await Promise.all([
-        apiGetStandings(league.current_season_id),
-        apiGetFixturesBySeason(league.current_season_id)
-      ]);
-      standings = std || [];
-
-      // Filtra jogos futuros para a feature de 48h na home da liga
-      const now = Date.now() / 1000;
-      upcoming = (fix || []).filter(f => f.timestamp >= now).sort((a, b) => a.timestamp - b.timestamp);
-    }
-
-    res.json({ info: league, standings, upcoming_matches: upcoming });
-  } catch (e) { next(e); }
+    // Map response to match expected frontend structure if needed, 
+    // but getLeagueDetails already returns a compatible structure.
+    res.json(details);
+  } catch (e) {
+    console.error('Error in league show controller:', e.message);
+    next(e);
+  }
 };
 
 // NOVA FUNÇÃO: Busca jogos de uma liga específica numa data específica
@@ -100,5 +92,16 @@ export const getDetails = async (req, res, next) => {
       success: false,
       error: error.message
     });
+  }
+};
+
+export const getFixturesByRound = async (req, res) => {
+  try {
+    const { id, roundId } = req.params;
+    const fixtures = await getRoundFixtures(parseInt(roundId));
+    res.json({ success: true, data: fixtures });
+  } catch (error) {
+    console.error('Error getting round fixtures:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };

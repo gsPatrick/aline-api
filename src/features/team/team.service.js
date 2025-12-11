@@ -25,11 +25,11 @@ export const getTeamData = async (teamId, token) => {
     if (!token) throw new Error("API Token missing");
 
     try {
-        // 1. Check Cache
+        // 1. Check Cache (TEMPORARILY DISABLED for data structure update)
         const cachedTeam = await Team.findOne({ where: { externalId: teamId } });
-        const TTL = 12 * 60 * 60 * 1000; // 12 hours
+        const TTL = 5 * 60 * 1000; // 5 minutes (temporarily reduced for testing)
 
-        if (cachedTeam && cachedTeam.statsData && cachedTeam.statsLastUpdated) {
+        if (false && cachedTeam && cachedTeam.statsData && cachedTeam.statsLastUpdated) {
             const isFresh = (Date.now() - new Date(cachedTeam.statsLastUpdated).getTime()) < TTL;
             if (isFresh) {
                 console.log(`Returning Team ${teamId} from Cache`);
@@ -91,6 +91,28 @@ export const getTeamData = async (teamId, token) => {
             console.error("Failed to fetch team fixtures:", e.message);
         }
 
+        // 2b. Fetch UPCOMING Fixtures (next 60 days)
+        const futureDate = new Date();
+        futureDate.setDate(today.getDate() + 60);
+        const futureEnd = formatDate(futureDate);
+        const todayStr = formatDate(today);
+
+        let upcomingFixtures = [];
+        try {
+            const upcomingUrl = `${BASE_URL}/fixtures/between/${todayStr}/${futureEnd}/${teamId}?api_token=${token}&include=league;participants;venue;state`;
+            const resUpcoming = await axios.get(upcomingUrl);
+            const allUpcoming = resUpcoming.data.data || [];
+            upcomingFixtures = allUpcoming
+                .filter(f => {
+                    const s = f.state?.state || f.state?.short_code;
+                    return s === 'NS' || s === 'TBA' || s === 'POSTP' || !s; // Not started
+                })
+                .sort((a, b) => new Date(a.starting_at) - new Date(b.starting_at))
+                .slice(0, 5);
+        } catch (e) {
+            console.error("Failed to fetch upcoming fixtures:", e.message);
+        }
+
         let totalGoalsScored = 0;
         let totalGoalsConceded = 0;
         let totalCorners = 0;
@@ -134,31 +156,58 @@ export const getTeamData = async (teamId, token) => {
             if (ftGoals > 1.5) over15FTCount++;
             if (goalsScored > 0 && goalsConceded > 0) bttsCount++;
 
-            // Stats (Corners/Cards) from this fixture
-            // Note: fixture.statistics is an array of stats. We need to sum BOTH teams for "Match Stats" usually,
-            // or just the team's stats? The image shows "Corners" and "Cards" badges. 
-            // Usually these badges represent the TOTAL in the match for betting insights.
-            // Let's sum both teams.
+            // Stats (Corners/Cards) from this fixture - separate by team
             const stats = fixture.statistics || [];
-            const matchCorners = stats.filter(s => s.type?.name === 'Corners').reduce((sum, s) => sum + (s.data?.value || 0), 0);
-            const matchCards = stats.filter(s => s.type?.name?.includes('Card')).reduce((sum, s) => sum + (s.data?.value || 0), 0); // Yellow + Red
+            const homeCorners = stats.find(s => s.type?.name === 'Corners' && s.participant_id === fixture.participants?.find(p => p.meta?.location === 'home')?.id)?.data?.value || 0;
+            const awayCorners = stats.find(s => s.type?.name === 'Corners' && s.participant_id === fixture.participants?.find(p => p.meta?.location === 'away')?.id)?.data?.value || 0;
+            const matchCorners = homeCorners + awayCorners;
+
+            // Yellow and Red cards
+            const homeYellowCards = stats.find(s => s.type?.name === 'Yellowcards' && s.participant_id === fixture.participants?.find(p => p.meta?.location === 'home')?.id)?.data?.value || 0;
+            const awayYellowCards = stats.find(s => s.type?.name === 'Yellowcards' && s.participant_id === fixture.participants?.find(p => p.meta?.location === 'away')?.id)?.data?.value || 0;
+            const homeRedCards = stats.find(s => s.type?.name === 'Redcards' && s.participant_id === fixture.participants?.find(p => p.meta?.location === 'home')?.id)?.data?.value || 0;
+            const awayRedCards = stats.find(s => s.type?.name === 'Redcards' && s.participant_id === fixture.participants?.find(p => p.meta?.location === 'away')?.id)?.data?.value || 0;
 
             totalCorners += matchCorners;
             if (matchCorners > 8.5) over85CornersCount++;
 
+            // Get participants as home/away teams
+            const homeTeamData = fixture.participants?.find(p => p.meta?.location === 'home');
+            const awayTeamData = fixture.participants?.find(p => p.meta?.location === 'away');
+
             return {
                 id: fixture.id,
                 date: fixture.starting_at,
-                opponent: opponent?.name || "Unknown",
-                opponentLogo: opponent?.image_path,
-                score: `${homeGoalsFT}-${awayGoalsFT}`,
-                htScore: `(${homeGoalsHT}-${awayGoalsHT})`,
-                league: fixture.league?.name,
-                stats: {
-                    corners: matchCorners,
-                    cards: matchCards
+                timestamp: new Date(fixture.starting_at).getTime() / 1000,
+                status: { short: 'FT' },
+                home_team: {
+                    id: homeTeamData?.id,
+                    name: homeTeamData?.name || 'Home',
+                    logo: homeTeamData?.image_path,
+                    score: homeGoalsFT
                 },
-                result: goalsScored > goalsConceded ? 'W' : (goalsScored === goalsConceded ? 'D' : 'L')
+                away_team: {
+                    id: awayTeamData?.id,
+                    name: awayTeamData?.name || 'Away',
+                    logo: awayTeamData?.image_path,
+                    score: awayGoalsFT
+                },
+                league: {
+                    id: fixture.league?.id,
+                    name: fixture.league?.name,
+                    logo: fixture.league?.image_path
+                },
+                corners: {
+                    home: homeCorners,
+                    away: awayCorners,
+                    total: matchCorners
+                },
+                cards: {
+                    yellow: { home: homeYellowCards, away: awayYellowCards },
+                    red: { home: homeRedCards, away: awayRedCards }
+                },
+                result: goalsScored > goalsConceded ? 'V' : (goalsScored === goalsConceded ? 'E' : 'D'),
+                isHome
             };
         });
 
@@ -238,6 +287,38 @@ export const getTeamData = async (teamId, token) => {
             console.error("Failed to fetch squad:", e.message);
         }
 
+        // Format upcoming matches
+        const upcomingMatches = upcomingFixtures.map(fixture => {
+            const homeTeamData = fixture.participants?.find(p => p.meta?.location === 'home');
+            const awayTeamData = fixture.participants?.find(p => p.meta?.location === 'away');
+
+            return {
+                id: fixture.id,
+                date: fixture.starting_at,
+                timestamp: new Date(fixture.starting_at).getTime() / 1000,
+                status: { short: 'NS' },
+                home_team: {
+                    id: homeTeamData?.id,
+                    name: homeTeamData?.name || 'Home',
+                    logo: homeTeamData?.image_path
+                },
+                away_team: {
+                    id: awayTeamData?.id,
+                    name: awayTeamData?.name || 'Away',
+                    logo: awayTeamData?.image_path
+                },
+                league: {
+                    id: fixture.league?.id,
+                    name: fixture.league?.name,
+                    logo: fixture.league?.image_path
+                },
+                venue: fixture.venue ? {
+                    name: fixture.venue.name,
+                    city: fixture.venue.city_name
+                } : null
+            };
+        });
+
         const result = {
             teamInfo: {
                 id: data.id,
@@ -248,6 +329,7 @@ export const getTeamData = async (teamId, token) => {
             statsGrid,
             radar,
             matchHistory,
+            upcomingMatches,
             squad: {
                 hasData: squadList.length > 0,
                 players: squadList
