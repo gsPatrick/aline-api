@@ -1228,209 +1228,108 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
 export const getMatchStats = async (matchId) => {
     const { Match } = await import("../../models/index.js");
 
-    // Try to find match in database
-    let match = await Match.findOne({ where: { id: matchId } });
+    // Step 1: Check database cache first (using externalId, not internal id)
+    let cached = await Match.findOne({ where: { externalId: matchId } });
 
-    // GRACEFUL FALLBACK: If match not in DB, try to fetch from API directly
-    if (!match) {
-        console.log(`Match ${matchId} not found in database. Attempting direct API fetch...`);
+    // Cache TTL configuration
+    const CACHE_TTL = {
+        LIVE: 5 * 60 * 1000,        // 5 minutes for live matches
+        UPCOMING: 60 * 60 * 1000,   // 1 hour for upcoming matches
+        FINISHED: 24 * 60 * 60 * 1000, // 24 hours for finished matches
+    };
 
-        try {
-            // Try to fetch directly from SportMonks API
-            const externalData = await fetchExternalMatchData(matchId, process.env.SPORTMONKS_API_TOKEN);
+    const now = new Date();
 
-            if (externalData) {
-                // Extract leagueId safely (V3 API can have it in different places)
-                const leagueId = externalData.league?.id || externalData.league_id;
+    // If we have cached data, check freshness
+    if (cached && cached.data) {
+        const cacheAge = now - new Date(cached.cached_at || cached.updatedAt);
+        const status = cached.status || cached.data?.state?.state || cached.data?.matchInfo?.state || 'NS';
 
-                if (!leagueId) {
-                    console.warn(`⚠️  Match ${matchId} has no leagueId. Skipping database save.`);
-                } else {
-                    // Try to save to database (non-blocking)
-                    try {
-                        match = await Match.create({
-                            id: matchId,
-                            externalId: matchId,
-                            leagueId: leagueId, // CRITICAL: Ensure leagueId is present
-                            data: externalData
-                        });
-                        console.log(`✅ Match ${matchId} fetched from API and saved to database.`);
-                    } catch (dbError) {
-                        console.error(`❌ Failed to save match ${matchId} to database:`, dbError.message);
-                        console.warn(`⚠️  Continuing without cache. Match data will be returned from API.`);
-
-                        // Create a temporary match object for processing
-                        match = {
-                            id: matchId,
-                            externalId: matchId,
-                            data: externalData,
-                            updatedAt: new Date()
-                        };
-                    }
-                }
-
-                // If we couldn't save to DB, create temp object
-                if (!match) {
-                    match = {
-                        id: matchId,
-                        externalId: matchId,
-                        data: externalData,
-                        updatedAt: new Date()
-                    };
-                }
-            }
-        } catch (apiError) {
-            console.error(`Failed to fetch match ${matchId} from API:`, apiError.message);
-            console.error('API Error details:', {
-                status: apiError.response?.status,
-                statusText: apiError.response?.statusText,
-                message: apiError.message
-            });
-
-            // CRITICAL: If it's an auth error, throw immediately
-            if (apiError.response?.status === 401 || apiError.response?.status === 403) {
-                throw new Error(`Authentication failed: ${apiError.message}. Check SPORTMONKS_API_TOKEN in .env`);
-            }
-
-            // For other errors, return minimal structure
-            return {
-                error: true,
-                message: "Match data not available from API",
-                matchId: matchId,
-                apiError: apiError.message,
-                matchInfo: {
-                    id: matchId,
-                    state: "API_ERROR"
-                },
-                goalAnalysis: null,
-                cornerAnalysis: null,
-                cardAnalysis: null,
-                chartsAnalysis: null,
-                homeTeam: null,
-                awayTeam: null
-            };
+        // Determine if cache is fresh based on match status
+        let isFresh = false;
+        if (status === 'FT' || status === 'AET' || status === 'FT_PEN') {
+            isFresh = cacheAge < CACHE_TTL.FINISHED;
+        } else if (status === 'LIVE' || status === 'HT' || status === 'ET' || status === 'PEN_LIVE') {
+            isFresh = cacheAge < CACHE_TTL.LIVE;
+        } else {
+            isFresh = cacheAge < CACHE_TTL.UPCOMING;
         }
-    }
 
-    // If still no match after all attempts, return minimal structure
-    if (!match) {
-        return {
-            error: true,
-            message: "Match not found",
-            matchId: matchId,
-            matchInfo: {
-                id: matchId,
-                state: "NOT_FOUND"
-            },
-            goalAnalysis: null,
-            cornerAnalysis: null,
-            cardAnalysis: null,
-            chartsAnalysis: null,
-            homeTeam: null,
-            awayTeam: null
-        };
-    }
-
-    // Dynamic Cache Strategy
-    const state = match.data?.state?.state;
-    const isLive = state === 'LIVE' || state === 'HT' || state === 'ET' || state === 'PEN_LIVE' || state === 'BREAK';
-    const isFinished = state === 'FT' || state === 'AET' || state === 'FT_PEN' || state === 'CAN' || state === 'POST' || state === 'INT' || state === 'ABAN';
-
-    // TTL in milliseconds
-    const TTL = isLive ? 60 * 1000 : 24 * 60 * 60 * 1000;
-
-    const lastUpdate = new Date(match.updatedAt).getTime();
-    const now = Date.now();
-    const isExpired = true; // (now - lastUpdate) > TTL; // CACHE DISABLED TEMPORARILY
-
-    // If data is missing OR cache is expired
-    if (!match.data || Object.keys(match.data).length === 0 || isExpired) {
-        console.log(`Match ${matchId} data update needed (State: ${state}, Expired: ${isExpired}). Fetching from API...`);
-        try {
-            const newData = await fetchExternalMatchData(match.externalId, process.env.SPORTMONKS_API_TOKEN);
-
-            // Try to update database (non-blocking)
-            try {
-                match.data = newData;
-                match.changed('data', true);
-                await match.save();
-                console.log(`✅ Match ${matchId} data updated successfully.`);
-            } catch (dbError) {
-                console.error(`❌ Failed to update match ${matchId} in database:`, dbError.message);
-                console.warn(`⚠️  Continuing without cache update. Using fresh API data.`);
-                // Continue with newData even if save failed
-                match.data = newData;
+        if (isFresh) {
+            console.log(`✅ Cache HIT for match ${matchId} (status: ${status}, age: ${Math.round(cacheAge / 1000)}s)`);
+            // CRITICAL FIX: If data is already processed (has matchInfo), return directly
+            // Don't call calculateMatchStats again - that's expensive and already done!
+            if (cached.data.matchInfo) {
+                return cached.data; // Already processed and ready to use
+            } else {
+                // Old cache format - needs processing
+                const stats = calculateMatchStats(cached.data);
+                return stats;
             }
-        } catch (error) {
-            console.error(`Failed to sync match ${matchId}:`, error.message);
-
-            // GRACEFUL FALLBACK: If fetch fails but we have some data, use it
-            if (!match.data || Object.keys(match.data).length === 0) {
-                // Return partial data structure
-                return {
-                    error: true,
-                    message: "Unable to fetch updated match data",
-                    matchId: matchId,
-                    matchInfo: {
-                        id: matchId,
-                        state: state || "UNKNOWN"
-                    },
-                    goalAnalysis: null,
-                    cornerAnalysis: null,
-                    cardAnalysis: null,
-                    chartsAnalysis: null,
-                    homeTeam: null,
-                    awayTeam: null
-                };
-            }
+        } else {
+            console.log(`⚠️  Cache STALE for match ${matchId} (status: ${status}, age: ${Math.round(cacheAge / 1000)}s) - refreshing...`);
         }
+    } else {
+        console.log(`⚠️  Cache MISS for match ${matchId} - fetching from API...`);
     }
 
-    // Calculate stats with existing data
+    // Step 2: Cache miss or stale - fetch from API
     try {
-        const stats = calculateMatchStats(match.data);
+        const externalData = await fetchExternalMatchData(matchId, process.env.SPORTMONKS_API_TOKEN);
+        const processedData = calculateMatchStats(externalData);
 
-        // Fetch H2H data (head-to-head matches)
-        let h2h = null;
-        if (stats.homeTeam?.id && stats.awayTeam?.id) {
-            try {
-                h2h = await fetchH2HMatches(stats.homeTeam.id, stats.awayTeam.id);
-                console.log(`H2H data fetched: ${h2h.matches.length} matches`);
-            } catch (h2hError) {
-                console.error('Error fetching H2H:', h2hError.message);
-                // Graceful fallback - H2H is optional
-                h2h = {
-                    matches: [],
-                    summary: { total: 0, home_wins: 0, draws: 0, away_wins: 0 },
-                    averages: { goals_per_match: 0, corners_per_match: 0, cards_per_match: 0 }
-                };
-            }
-        }
-
-        // Add H2H to response
-        return {
-            ...stats,
-            h2h
-        };
-    } catch (calcError) {
-        console.error(`Error calculating stats for match ${matchId}:`, calcError.message);
-
-        // GRACEFUL FALLBACK: Return basic match info even if calculation fails
-        const participants = match.data?.participants || [];
+        // Extract participants for metadata
+        const participants = externalData.participants || [];
         const home = participants.find(p => p.meta?.location === 'home');
         const away = participants.find(p => p.meta?.location === 'away');
 
+        // Extract fixture date
+        const fixtureDate = externalData.starting_at ?
+            new Date(externalData.starting_at) : now;
+
+        // Step 3: Update/create cache entry
+        const cacheData = {
+            externalId: matchId,
+            leagueId: externalData.league?.id || externalData.league_id,
+            date: fixtureDate,
+            status: externalData.state?.state || processedData.matchInfo?.state || 'NS',
+            homeTeamName: home?.name || 'Home',
+            awayTeamName: away?.name || 'Away',
+            homeScore: processedData.matchInfo?.score?.split('-')[0] || 0,
+            awayScore: processedData.matchInfo?.score?.split('-')[1] || 0,
+            data: processedData, // Store PROCESSED data, not raw
+            cached_at: now,
+            cache_source: 'on-demand',
+            team_ids: [home?.id, away?.id].filter(Boolean),
+            fixture_date: fixtureDate
+        };
+
+        try {
+            await Match.upsert(cacheData);
+            console.log(`✅ Match ${matchId} cached successfully`);
+        } catch (dbError) {
+            console.error(`❌ Failed to cache match ${matchId}:`, dbError.message);
+            // Continue even if cache fails - data is still valid
+        }
+
+        return processedData;
+    } catch (apiError) {
+        console.error(`❌ Failed to fetch match ${matchId} from API:`, apiError.message);
+
+        // If it's an auth error, throw immediately
+        if (apiError.response?.status === 401 || apiError.response?.status === 403) {
+            throw new Error(`Authentication failed: ${apiError.message}. Check SPORTMONKS_API_TOKEN in .env`);
+        }
+
+        // For other errors, return error structure
         return {
             error: true,
-            message: "Error calculating match statistics",
+            message: "Match data not available from API",
             matchId: matchId,
+            apiError: apiError.message,
             matchInfo: {
                 id: matchId,
-                state: match.data?.state?.state || "UNKNOWN",
-                home_team: home?.name || "Home",
-                away_team: away?.name || "Away",
-                home_logo: home?.image_path,
-                away_logo: away?.image_path
+                state: "API_ERROR"
             },
             goalAnalysis: null,
             cornerAnalysis: null,

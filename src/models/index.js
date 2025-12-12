@@ -7,6 +7,7 @@ import { defineNotificationModel } from "./notification.js";
 import { defineLeagueModel } from "./league.js"; // Novo
 import { defineMatchModel } from "./match.js";   // Novo
 import { defineTeamModel } from "./team.js";   // Novo
+import { defineCacheMetadataModel } from "./cache_metadata.js"; // Cache system
 
 const User = defineUserModel(sequelize, DataTypes);
 const Subscription = defineSubscriptionModel(sequelize, DataTypes);
@@ -25,6 +26,7 @@ Plan.hasMany(Subscription, { foreignKey: "planId" });
 const League = defineLeagueModel(sequelize, DataTypes);
 const Match = defineMatchModel(sequelize, DataTypes);
 const Team = defineTeamModel(sequelize, DataTypes);
+const CacheMetadata = defineCacheMetadataModel(sequelize, DataTypes);
 
 export {
   sequelize,
@@ -35,6 +37,7 @@ export {
   League,
   Match,
   Team,
+  CacheMetadata,
   hashPassword,
   comparePassword,
 };
