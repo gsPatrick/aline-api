@@ -25,13 +25,20 @@ COPY . .
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 && \
+    adduser -S nodejs -u 1001
+
+# Create data directory for SQLite cache (PERSISTENT!)
+RUN mkdir -p /data && \
+    chown -R nodejs:nodejs /data && \
     chown -R nodejs:nodejs /app
 
 USER nodejs
 
 # Expose port
 EXPOSE 3333
+
+# Volume for cache persistence
+VOLUME ["/data"]
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
@@ -42,3 +49,4 @@ ENTRYPOINT ["dumb-init", "--"]
 
 # Start application
 CMD ["node", "src/server.js"]
+

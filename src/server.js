@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import app from "./app.js";
 import { initSocket } from "./services/socket.js";
-import { sequelize } from "./models/index.js";
+import { sequelize, sequelizeCache } from "./models/index.js";
 import { startCron } from "./services/cron.js";
 import { initializeCache, getCacheStatus } from "./services/cache.service.js";
 
@@ -11,9 +11,12 @@ initSocket(httpServer);
 
 const start = async () => {
   try {
-    // 1. Database sync
+    // 1. Database sync - Both databases
     await sequelize.sync();
-    console.log("✅ Database synced");
+    console.log("✅ PostgreSQL synced (users, subscriptions)");
+
+    await sequelizeCache.sync();
+    console.log("✅ SQLite synced (cache - persistent across restarts!)");
 
     // 2. Start HTTP server FIRST (don't wait for cache)
     const port = process.env.PORT || 3333;
