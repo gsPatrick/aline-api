@@ -1,4 +1,3 @@
-```javascript
 import jwt from "jsonwebtoken";
 import { Subscription } from "../models/index.js";
 import { Op } from "sequelize";
@@ -44,4 +43,3 @@ export const requiresPremium = async (req, res, next) => {
     return res.status(500).json({ error: "Falha ao verificar plano" });
   }
 };
-```
