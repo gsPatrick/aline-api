@@ -3,7 +3,6 @@ import {
   createSubscription,
   getSubscription as getProviderSubscription,
 } from "../../services/mercadoPago.service.js";
-import { redis } from "../../services/redis.js";
 
 const mapMpStatusToLocal = (mpStatus) => {
   if (!mpStatus) return null;
@@ -74,14 +73,6 @@ const applyProviderStatus = async (subscription, mpStatus, plan) => {
   }
 
   await subscription.update(updates);
-
-  if (["active", "canceled"].includes(localStatus)) {
-    try {
-      await redis.del(`premium:${subscription.userId}`);
-    } catch (_redisErr) {
-      console.warn("Redis indisponível para limpar cache");
-    }
-  }
 
   return subscription;
 };

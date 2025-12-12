@@ -13,8 +13,8 @@ export const sequelize = new Sequelize({
   dialect: "postgres",
   logging: false,
   pool: {
-    max: 5,
-    min: 0,
+    max: 10,
+    min: 2,
     acquire: 30000,
     idle: 10000
   }
@@ -27,10 +27,23 @@ export const sequelizeCache = new Sequelize({
   storage: process.env.CACHE_DB_PATH || "./data/cache.db",
   logging: false,
   pool: {
-    max: 5,
-    min: 0,
+    max: 10,
+    min: 2,
     acquire: 30000,
     idle: 10000
+  }
+});
+
+// Apply SQLite performance optimizations after sync
+sequelizeCache.addHook('afterBulkSync', async () => {
+  try {
+    await sequelizeCache.query('PRAGMA journal_mode = WAL;'); // Write-Ahead Logging
+    await sequelizeCache.query('PRAGMA synchronous = NORMAL;'); // Faster writes
+    await sequelizeCache.query('PRAGMA cache_size = -64000;'); // 64MB cache
+    await sequelizeCache.query('PRAGMA temp_store = MEMORY;'); // Temp tables in memory
+    console.log("✅ SQLite optimizations applied (WAL mode, 64MB cache)");
+  } catch (error) {
+    console.warn("⚠️  SQLite optimizations failed:", error.message);
   }
 });
 

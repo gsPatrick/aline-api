@@ -1,6 +1,6 @@
+```javascript
 import jwt from "jsonwebtoken";
 import { Subscription } from "../models/index.js";
-import { redis } from "../services/redis.js";
 import { Op } from "sequelize";
 
 export const auth = (req, res, next) => {
@@ -27,22 +27,6 @@ export const requiresPremium = async (req, res, next) => {
       return res.status(401).json({ error: "Autenticação necessária" });
     }
 
-    const cacheKey = `premium:${req.user.id}`;
-    let cached = null;
-
-    try {
-      cached = await redis.get(cacheKey);
-    } catch (_redisErr) {
-      console.warn("Redis indisponível, consultando banco diretamente");
-    }
-
-    if (cached === "true") {
-      return next();
-    }
-    if (cached === "false") {
-      return res.status(402).json({ error: "Plano ativo necessário" });
-    }
-
     const now = new Date();
     const hasActive = await Subscription.findOne({
       where: {
@@ -54,15 +38,10 @@ export const requiresPremium = async (req, res, next) => {
 
     const isPremium = !!hasActive;
 
-    try {
-      await redis.setex(cacheKey, 300, isPremium ? "true" : "false");
-    } catch (_redisErr) {
-      console.warn("Redis indisponível para cache");
-    }
-
     if (isPremium) return next();
     return res.status(402).json({ error: "Plano ativo necessário" });
   } catch (_e) {
     return res.status(500).json({ error: "Falha ao verificar plano" });
   }
 };
+```
