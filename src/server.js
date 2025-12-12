@@ -15,28 +15,35 @@ const start = async () => {
     await sequelize.sync();
     console.log("✅ Database synced");
 
-    // 2. Cache initialization (BEFORE starting HTTP server)
-    console.log("🔄 Initializing cache system...");
-    const cacheResult = await initializeCache();
-
-    if (cacheResult.success) {
-      console.log(`✅ Cache ready: ${cacheResult.message}`);
-      console.log(`   📊 Statistics:`);
-      console.log(`      - Leagues: ${cacheResult.stats.leagues || 0}`);
-      console.log(`      - Teams: ${cacheResult.stats.teams || 0}`);
-      console.log(`      - Matches: ${cacheResult.stats.matches || 0}`);
-    } else {
-      console.warn(`⚠️  ${cacheResult.message}`);
-      console.warn(`   Server will start without pre-cached data`);
-    }
-
-    // 3. Start HTTP server
+    // 2. Start HTTP server FIRST (don't wait for cache)
+    const port = process.env.PORT || 3333;
     httpServer.listen(port, () => {
       console.log(`🚀 API running at http://localhost:${port}`);
+      console.log(`📊 Health check: http://localhost:${port}/health`);
     });
 
-    // 4. Start cron jobs (including cache refresh)
+    // 3. Start cron jobs
     startCron();
+
+    // 4. THEN initialize cache in background (non-blocking!)
+    console.log("🔄 Starting cache initialization in background...");
+    initializeCache()
+      .then((cacheResult) => {
+        if (cacheResult.success) {
+          console.log(`✅ Cache ready: ${cacheResult.message}`);
+          console.log(`   📊 Statistics:`);
+          console.log(`      - Leagues: ${cacheResult.stats.leagues || 0}`);
+          console.log(`      - Teams: ${cacheResult.stats.teams || 0}`);
+          console.log(`      - Matches: ${cacheResult.stats.matches || 0}`);
+        } else {
+          console.warn(`⚠️  ${cacheResult.message}`);
+        }
+      })
+      .catch((err) => {
+        console.error("❌ Cache initialization error:", err.message);
+        // Don't crash the server if cache fails
+      });
+
   } catch (err) {
     console.error("❌ Server startup failed", err);
     process.exit(1);
