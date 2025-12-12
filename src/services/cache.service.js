@@ -70,29 +70,24 @@ export const initializeCache = async () => {
  */
 const shouldPerformFullWarmup = async () => {
     try {
-        const cachedLeagues = await League.count({ where: { cache_status: 'cached' } });
-        const cachedMatches = await Match.count();
+        // Check if we have data in database (regardless of cache_status)
+        const totalLeagues = await League.count();
+        const totalTeams = await Team.count();
+        const totalMatches = await Match.count();
 
-        // If we have less than 10 leagues or 1000 matches cached, do full warmup
-        if (cachedLeagues < 10 || cachedMatches < 1000) {
-            return true;
+        console.log(`📊 Current cache: ${totalLeagues} leagues, ${totalTeams} teams, ${totalMatches} matches`);
+
+        // If we have substantial data, do incremental update instead
+        if (totalLeagues >= 50 && totalTeams >= 500 && totalMatches >= 5000) {
+            console.log('✅ Sufficient cache exists - using incremental update');
+            return false; // Use incremental update
         }
 
-        // Check if cache is stale (older than 24 hours)
-        const oldestCache = await CacheMetadata.findOne({
-            where: { resource_type: 'league', status: 'fresh' },
-            order: [['last_updated', 'ASC']]
-        });
-
-        if (!oldestCache) {
-            return true;
-        }
-
-        const cacheAge = Date.now() - new Date(oldestCache.last_updated).getTime();
-        return cacheAge > CACHE_TTL.LEAGUE_DATA;
+        console.log('⚠️  Insufficient cache - performing full warmup');
+        return true; // Do full warmup
     } catch (error) {
         console.error('Error checking cache status:', error.message);
-        return false; // Default to incremental update on error
+        return false; // Default to incremental update on error (safer)
     }
 };
 
