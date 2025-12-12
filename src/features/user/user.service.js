@@ -29,7 +29,7 @@ export const requestReset = async (email) => {
   const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
     expiresIn: "1h",
   });
-  const apiUrl = process.env.API_URL || "http://localhost:3333";
+  const apiUrl = process.env.API_URL || "https://10stats-dezstatsapi.qc6ju4.easypanel.host";
   const link = `${apiUrl}/reset?token=${token}`;
   await sendEmail({
     to: email,
