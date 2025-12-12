@@ -165,6 +165,17 @@ const performFullWarmup = async () => {
             }
         }
 
+        // Step 4: Cache matches by date (last 30 days + next 30 days)
+        console.log('📅 Etapa 4/4: Carregando partidas recentes e próximas (últimos 30 dias + próximos 30 dias)...');
+        try {
+            const dateMatches = await cacheMatchesByDateRange();
+            stats.matches += dateMatches;
+            console.log(`✅ ${dateMatches} partidas por data carregadas`);
+        } catch (error) {
+            console.error('❌ Erro ao carregar partidas por data:', error.message);
+            stats.errors++;
+        }
+
         const duration = Math.round((Date.now() - startTime) / 1000);
         console.log(`✅ Cache warming completo em ${duration}s`);
         console.log(`   📊 Estatísticas:`);
