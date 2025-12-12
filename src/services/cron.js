@@ -1,5 +1,4 @@
 import { Subscription } from "../models/index.js";
-import { redis } from "./redis.js";
 import { Op } from "sequelize";
 import { performIncrementalUpdate, updateLiveMatches } from "./cache.service.js";
 import { Match } from "../models/index.js";
