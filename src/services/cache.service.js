@@ -13,10 +13,10 @@ dotenv.config();
 const BASE_URL = 'https://api.sportmonks.com/v3/football';
 const token = process.env.SPORTMONKS_API_TOKEN || "Xql7ZNMOjdE1pxn7FOh4739UX07owQNA2dNDguw0K6p881Q8yhlInKkHgEgh";
 
-// Rate limiting configuration - OPTIMIZED FOR SPEED
-const RATE_LIMIT_DELAY = 50;  // 50ms between requests (~1200 requests/minute) - FASTER!
-const BATCH_SIZE = 500;       // Process 500 items before pause - BIGGER BATCHES!
-const BATCH_DELAY = 1000;     // 1s pause between batches - SHORTER PAUSES!
+// Rate limiting configuration - SAFER SETTINGS to avoid 429 errors
+const RATE_LIMIT_DELAY = 200;  // 200ms between requests (~300 requests/minute) - SAFER!
+const BATCH_SIZE = 100;        // Process 100 items before pause - SMALLER BATCHES!
+const BATCH_DELAY = 5000;      // 5s pause between batches - LONGER PAUSES!
 
 // Cache TTL configuration
 const CACHE_TTL = {
@@ -131,8 +131,20 @@ const performFullWarmup = async () => {
         }
         console.log(`✅ ${stats.teams} times carregados`);
 
-        // Step 3: Cache 90 matches for each team (past, current, future)
-        console.log('⚽ Etapa 3/3: Carregando histórico de partidas (90 por time)...');
+        // Step 3: Cache matches by date (last 30 days + next 30 days) - PRIORITY!
+        console.log('📅 Etapa 3/4: Carregando partidas recentes e próximas (últimos 30 dias + próximos 30 dias)...');
+        console.log('  ⚡ PRIORIDADE: Cacheando hoje, ontem e amanhã PRIMEIRO!');
+        try {
+            const dateMatches = await cacheMatchesByDateRange();
+            stats.matches += dateMatches;
+            console.log(`✅ ${dateMatches} partidas por data carregadas`);
+        } catch (error) {
+            console.error('❌ Erro ao carregar partidas por data:', error.message);
+            stats.errors++;
+        }
+
+        // Step 4: Cache 90 matches for each team (past, current, future) - LOWER PRIORITY
+        console.log('⚽ Etapa 4/4: Carregando histórico de partidas (90 por time)...');
         const teams = await Team.findAll();
 
         for (let i = 0; i < teams.length; i++) {
@@ -163,17 +175,6 @@ const performFullWarmup = async () => {
                 console.error(`    ❌ Erro ao carregar histórico do time ${team.name}:`, error.message);
                 stats.errors++;
             }
-        }
-
-        // Step 4: Cache matches by date (last 30 days + next 30 days)
-        console.log('📅 Etapa 4/4: Carregando partidas recentes e próximas (últimos 30 dias + próximos 30 dias)...');
-        try {
-            const dateMatches = await cacheMatchesByDateRange();
-            stats.matches += dateMatches;
-            console.log(`✅ ${dateMatches} partidas por data carregadas`);
-        } catch (error) {
-            console.error('❌ Erro ao carregar partidas por data:', error.message);
-            stats.errors++;
         }
 
         const duration = Math.round((Date.now() - startTime) / 1000);
