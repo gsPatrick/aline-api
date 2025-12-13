@@ -9,5 +9,6 @@ router.get('/:id/info', teamController.getTeamInfo);
 router.get('/:id/schedule', teamController.getTeamSchedule);
 router.get('/:id/squad', teamController.getTeamSquad);
 router.get('/:id/stats', teamController.getTeamStats);
+router.get('/:id/player-stats', teamController.getTeamPlayerStats);
 
 export default router;

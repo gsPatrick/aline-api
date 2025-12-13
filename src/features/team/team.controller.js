@@ -1,4 +1,5 @@
 import * as teamService from './team.service.js';
+import { getTeamPlayerStats as getPlayerStatsFromService, STAT_CATEGORIES } from '../../services/player-stats.service.js';
 
 // Helper to get team data
 const fetchTeamData = async (id, res) => {
@@ -153,5 +154,25 @@ export const getTeamStats = async (req, res) => {
                 corners80FT: 70
             }
         });
+    }
+};
+
+// GET /teams/:id/player-stats - Player statistics per match
+export const getTeamPlayerStats = async (req, res) => {
+    try {
+        const teamId = req.params.id;
+        const stat = req.query.stat || 'shots';
+        const last = parseInt(req.query.last) || 20;
+
+        const token = process.env.SPORTMONKS_API_TOKEN;
+        if (!token) {
+            return res.status(500).json({ error: "API Token missing" });
+        }
+
+        const data = await getPlayerStatsFromService(teamId, stat, last, token);
+        res.json(data);
+    } catch (error) {
+        console.error("Player Stats Error:", error.message);
+        res.status(500).json({ error: "Failed to fetch player statistics" });
     }
 };
