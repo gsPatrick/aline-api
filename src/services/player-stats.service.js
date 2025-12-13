@@ -74,10 +74,15 @@ const ALL_STATS = Object.values(STAT_CATEGORIES).flatMap(cat => cat.items);
 export const getTeamPlayerStats = async (teamId, statKey = 'shots', lastN = 20, token) => {
     try {
         // 1. Get team's last N fixtures with lineups and statistics
-        const fixturesUrl = `${BASE_URL}/fixtures?api_token=${token}&filters[participant_id]=${teamId}&include=lineups.player;statistics;participants&per_page=${lastN}&order=desc`;
+        // Use filters[participantIds] instead of filters[participant_id]
+        const fixturesUrl = `${BASE_URL}/fixtures?api_token=${token}&filters[participantIds]=${teamId}&include=lineups.player;statistics;participants;scores&per_page=${lastN}&order=starting_at&order_by=desc`;
+
+        console.log('Fetching player stats from:', fixturesUrl.replace(token, 'TOKEN'));
 
         const { data: fixturesResponse } = await axios.get(fixturesUrl);
         const fixtures = fixturesResponse.data || [];
+
+        console.log(`Found ${fixtures.length} fixtures for team ${teamId}`);
 
         if (fixtures.length === 0) {
             return { players: [], matches: [], category: statKey };
