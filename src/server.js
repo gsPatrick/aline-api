@@ -28,8 +28,10 @@ const start = async () => {
     // 3. Start cron jobs
     startCron();
 
-    // 4. THEN initialize cache in background (non-blocking!)
-    console.log("🔄 Starting cache initialization in background...");
+    // 4. CACHE INITIALIZATION - TEMPORARILY DISABLED TO PREVENT RATE LIMITING
+    // Uncomment when ready to use cache warming again
+    console.log("⏸️  Cache initialization DISABLED - avoiding rate limits");
+    /*
     initializeCache()
       .then((cacheResult) => {
         if (cacheResult.success) {
@@ -46,6 +48,7 @@ const start = async () => {
         console.error("❌ Cache initialization error:", err.message);
         // Don't crash the server if cache fails
       });
+    */
 
   } catch (err) {
     console.error("❌ Server startup failed", err);

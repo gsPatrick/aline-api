@@ -156,5 +156,7 @@ const startCacheRefreshJobs = () => {
 
 export const startCron = () => {
   scheduleDailyCheck();
-  startCacheRefreshJobs();
+  // TEMPORARILY DISABLED - Cache refresh causing rate limits
+  // startCacheRefreshJobs();
+  console.log("⏸️  Cache refresh cron jobs DISABLED - avoiding rate limits");
 };

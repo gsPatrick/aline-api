@@ -73,9 +73,17 @@ const ALL_STATS = Object.values(STAT_CATEGORIES).flatMap(cat => cat.items);
  */
 export const getTeamPlayerStats = async (teamId, statKey = 'shots', lastN = 20, token) => {
     try {
-        // 1. Get team's last N fixtures with lineups and statistics
-        // Use filters[participantIds] instead of filters[participant_id]
-        const fixturesUrl = `${BASE_URL}/fixtures?api_token=${token}&filters[participantIds]=${teamId}&include=lineups.player;statistics;participants;scores&per_page=${lastN}&order=starting_at&order_by=desc`;
+        // Calculate date range (last 6 months to today)
+        const today = new Date();
+        const startDate = new Date(today);
+        startDate.setMonth(startDate.getMonth() - 6);
+
+        const startStr = startDate.toISOString().split('T')[0];
+        const endStr = today.toISOString().split('T')[0];
+
+        // 1. Get team's fixtures with lineups and statistics using the correct endpoint
+        // SportMonks uses: /fixtures/between/{start_date}/{end_date}/{team_id}
+        const fixturesUrl = `${BASE_URL}/fixtures/between/${startStr}/${endStr}/${teamId}?api_token=${token}&include=lineups.player;statistics;participants;scores&per_page=${lastN}`;
 
         console.log('Fetching player stats from:', fixturesUrl.replace(token, 'TOKEN'));
 
