@@ -1,0 +1,1528 @@
+================================================================================
+PLAYER STATS API RESPONSE MAPPING
+Team ID: 19
+Date Range: 2024-06-01 to 2024-12-14
+Timestamp: 2025-12-14T11:14:21.121Z
+================================================================================
+
+RATE LIMIT:
+{
+  "resets_in_seconds": 3092,
+  "remaining": 2938,
+  "requested_entity": "Fixture"
+}
+
+Total fixtures: 5
+
+--------------------------------------------------------------------------------
+FIXTURE 1: ID 19150776
+Date: 2024-07-25 02:30:00
+--------------------------------------------------------------------------------
+
+### PARTICIPANTS:
+  - Arsenal (ID: 19, Location: home)
+  - AFC Bournemouth (ID: 52, Location: away)
+
+### SCORES:
+[
+  {
+    "id": 14635956,
+    "fixture_id": 19150776,
+    "type_id": 1,
+    "participant_id": 19,
+    "score": {
+      "goals": 1,
+      "participant": "home"
+    },
+    "description": "1ST_HALF"
+  },
+  {
+    "id": 14635957,
+    "fixture_id": 19150776,
+    "type_id": 1,
+    "participant_id": 52,
+    "score": {
+      "goals": 0,
+      "participant": "away"
+    },
+    "description": "1ST_HALF"
+  },
+  {
+    "id": 14635958,
+    "fixture_id": 19150776,
+    "type_id": 1525,
+    "participant_id": 52,
+    "score": {
+      "goals": 1,
+      "participant": "away"
+    },
+    "description": "CURRENT"
+  },
+  {
+    "id": 14635959,
+    "fixture_id": 19150776,
+    "type_id": 1525,
+    "participant_id": 19,
+    "score": {
+      "goals": 1,
+      "participant": "home"
+    },
+    "description": "CURRENT"
+  },
+  {
+    "id": 14635970,
+    "fixture_id": 19150776,
+    "type_id": 2,
+    "participant_id": 19,
+    "score": {
+      "goals": 1,
+      "participant": "home"
+    },
+    "description": "2ND_HALF"
+  },
+  {
+    "id": 14635971,
+    "fixture_id": 19150776,
+    "type_id": 2,
+    "participant_id": 52,
+    "score": {
+      "goals": 1,
+      "participant": "away"
+    },
+    "description": "2ND_HALF"
+  },
+  {
+    "id": 14635976,
+    "fixture_id": 19150776,
+    "type_id": 5,
+    "participant_id": 19,
+    "score": {
+      "goals": 5,
+      "participant": "home"
+    },
+    "description": "PENALTY_SHOOTOUT"
+  },
+  {
+    "id": 14635977,
+    "fixture_id": 19150776,
+    "type_id": 5,
+    "participant_id": 52,
+    "score": {
+      "goals": 4,
+      "participant": "away"
+    },
+    "description": "PENALTY_SHOOTOUT"
+  },
+  {
+    "id": 15747915,
+    "fixture_id": 19150776,
+    "type_id": 48996,
+    "participant_id": 19,
+    "score": {
+      "goals": 0,
+      "participant": "home"
+    },
+    "description": "2ND_HALF_ONLY"
+  },
+  {
+    "id": 15747916,
+    "fixture_id": 19150776,
+    "type_id": 48996,
+    "participant_id": 52,
+    "score": {
+      "goals": 1,
+      "participant": "away"
+    },
+    "description": "2ND_HALF_ONLY"
+  }
+]
+
+### LINEUPS:
+Total lineups: 47
+
+  TEAM 19 (26 players):
+    - Player ID: 3259
+      Name: B. White
+      Position: undefined
+      Jersey: 4
+      Formation Position: 2
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 186370
+      Name: T. Partey
+      Position: undefined
+      Jersey: 5
+      Formation Position: 7
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 26823
+      Name: M. Ødegaard
+      Position: undefined
+      Jersey: 8
+      Formation Position: null
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 5329
+      Name: G. de Jesus
+      Position: undefined
+      Jersey: 9
+      Formation Position: null
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 1494446
+      Name: E. Smith Rowe
+      Position: undefined
+      Jersey: 10
+      Formation Position: null
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+  TEAM 52 (21 players):
+    - Player ID: 128798
+      Name: N. Murara Neto
+      Position: undefined
+      Jersey: 1
+      Formation Position: 1
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 37381778
+      Name: Milos Kerkez
+      Position: undefined
+      Jersey: 3
+      Formation Position: 5
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 1834
+      Name: L. Cook
+      Position: undefined
+      Jersey: 4
+      Formation Position: 7
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 434243
+      Name: R. Faivre
+      Position: undefined
+      Jersey: 8
+      Formation Position: 9
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 4203
+      Name: D. Solanke
+      Position: undefined
+      Jersey: 9
+      Formation Position: 11
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+
+### STATISTICS:
+Total statistics entries: 58
+
+Unique type_ids found:
+  [34] Count: 2
+    Sample: {
+      "id": 62955888,
+      "fixture_id": 19150776,
+      "type_id": 34,
+      "participant_id": 19,
+      "data": {
+        "value": 3
+      },
+      "location": "home"
+    }
+  [41] Count: 2
+    Sample: {
+      "id": 62955887,
+      "fixture_id": 19150776,
+      "type_id": 41,
+      "participant_id": 19,
+      "data": {
+        "value": 1
+      },
+      "location": "home"
+    }
+  [42] Count: 2
+    Sample: {
+      "id": 62951081,
+      "fixture_id": 19150776,
+      "type_id": 42,
+      "participant_id": 19,
+      "data": {
+        "value": 9
+      },
+      "location": "home"
+    }
+  [43] Count: 2
+    Sample: {
+      "id": 62955885,
+      "fixture_id": 19150776,
+      "type_id": 43,
+      "participant_id": 19,
+      "data": {
+        "value": 78
+      },
+      "location": "home"
+    }
+  [44] Count: 2
+    Sample: {
+      "id": 62955879,
+      "fixture_id": 19150776,
+      "type_id": 44,
+      "participant_id": 19,
+      "data": {
+        "value": 33
+      },
+      "location": "home"
+    }
+  [45] Count: 2
+    Sample: {
+      "id": 62952389,
+      "fixture_id": 19150776,
+      "type_id": 45,
+      "participant_id": 19,
+      "data": {
+        "value": 56
+      },
+      "location": "home"
+    }
+  [46] Count: 2
+    Sample: {
+      "id": 62958833,
+      "fixture_id": 19150776,
+      "type_id": 46,
+      "participant_id": 19,
+      "data": {
+        "value": 74
+      },
+      "location": "home"
+    }
+  [49] Count: 2
+    Sample: {
+      "id": 62955957,
+      "fixture_id": 19150776,
+      "type_id": 49,
+      "participant_id": 19,
+      "data": {
+        "value": 5
+      },
+      "location": "home"
+    }
+  [50] Count: 2
+    Sample: {
+      "id": 62955956,
+      "fixture_id": 19150776,
+      "type_id": 50,
+      "participant_id": 19,
+      "data": {
+        "value": 4
+      },
+      "location": "home"
+    }
+  [51] Count: 2
+    Sample: {
+      "id": 62958831,
+      "fixture_id": 19150776,
+      "type_id": 51,
+      "participant_id": 19,
+      "data": {
+        "value": 0
+      },
+      "location": "home"
+    }
+  [52] Count: 2
+    Sample: {
+      "id": 62955883,
+      "fixture_id": 19150776,
+      "type_id": 52,
+      "participant_id": 19,
+      "data": {
+        "value": 1
+      },
+      "location": "home"
+    }
+  [56] Count: 2
+    Sample: {
+      "id": 62956226,
+      "fixture_id": 19150776,
+      "type_id": 56,
+      "participant_id": 52,
+      "data": {
+        "value": 21
+      },
+      "location": "away"
+    }
+  [57] Count: 2
+    Sample: {
+      "id": 62958801,
+      "fixture_id": 19150776,
+      "type_id": 57,
+      "participant_id": 19,
+      "data": {
+        "value": 3
+      },
+      "location": "home"
+    }
+  [58] Count: 2
+    Sample: {
+      "id": 62955955,
+      "fixture_id": 19150776,
+      "type_id": 58,
+      "participant_id": 19,
+      "data": {
+        "value": 4
+      },
+      "location": "home"
+    }
+  [59] Count: 2
+    Sample: {
+      "id": 62955898,
+      "fixture_id": 19150776,
+      "type_id": 59,
+      "participant_id": 52,
+      "data": {
+        "value": 9
+      },
+      "location": "away"
+    }
+  [64] Count: 2
+    Sample: {
+      "id": 62955958,
+      "fixture_id": 19150776,
+      "type_id": 64,
+      "participant_id": 19,
+      "data": {
+        "value": 0
+      },
+      "location": "home"
+    }
+  [78] Count: 2
+    Sample: {
+      "id": 62957483,
+      "fixture_id": 19150776,
+      "type_id": 78,
+      "participant_id": 52,
+      "data": {
+        "value": 20
+      },
+      "location": "away"
+    }
+  [80] Count: 2
+    Sample: {
+      "id": 62956223,
+      "fixture_id": 19150776,
+      "type_id": 80,
+      "participant_id": 19,
+      "data": {
+        "value": 511
+      },
+      "location": "home"
+    }
+  [81] Count: 2
+    Sample: {
+      "id": 62956228,
+      "fixture_id": 19150776,
+      "type_id": 81,
+      "participant_id": 52,
+      "data": {
+        "value": 348
+      },
+      "location": "away"
+    }
+  [82] Count: 2
+    Sample: {
+      "id": 62955902,
+      "fixture_id": 19150776,
+      "type_id": 82,
+      "participant_id": 52,
+      "data": {
+        "value": 87
+      },
+      "location": "away"
+    }
+  [84] Count: 2
+    Sample: {
+      "id": 62955884,
+      "fixture_id": 19150776,
+      "type_id": 84,
+      "participant_id": 19,
+      "data": {
+        "value": 1
+      },
+      "location": "home"
+    }
+  [86] Count: 2
+    Sample: {
+      "id": 62955882,
+      "fixture_id": 19150776,
+      "type_id": 86,
+      "participant_id": 19,
+      "data": {
+        "value": 4
+      },
+      "location": "home"
+    }
+  [98] Count: 2
+    Sample: {
+      "id": 62957781,
+      "fixture_id": 19150776,
+      "type_id": 98,
+      "participant_id": 19,
+      "data": {
+        "value": 8
+      },
+      "location": "home"
+    }
+  [99] Count: 2
+    Sample: {
+      "id": 62957784,
+      "fixture_id": 19150776,
+      "type_id": 99,
+      "participant_id": 52,
+      "data": {
+        "value": 3
+      },
+      "location": "away"
+    }
+  [100] Count: 2
+    Sample: {
+      "id": 62957484,
+      "fixture_id": 19150776,
+      "type_id": 100,
+      "participant_id": 52,
+      "data": {
+        "value": 9
+      },
+      "location": "away"
+    }
+  [108] Count: 2
+    Sample: {
+      "id": 62957695,
+      "fixture_id": 19150776,
+      "type_id": 108,
+      "participant_id": 19,
+      "data": {
+        "value": 17
+      },
+      "location": "home"
+    }
+  [109] Count: 2
+    Sample: {
+      "id": 62957693,
+      "fixture_id": 19150776,
+      "type_id": 109,
+      "participant_id": 19,
+      "data": {
+        "value": 7
+      },
+      "location": "home"
+    }
+  [117] Count: 2
+    Sample: {
+      "id": 62957694,
+      "fixture_id": 19150776,
+      "type_id": 117,
+      "participant_id": 19,
+      "data": {
+        "value": 6
+      },
+      "location": "home"
+    }
+  [1605] Count: 2
+    Sample: {
+      "id": 62957699,
+      "fixture_id": 19150776,
+      "type_id": 1605,
+      "participant_id": 52,
+      "data": {
+        "value": 75
+      },
+      "location": "away"
+    }
+
+Statistics with player_id:
+
+
+--------------------------------------------------------------------------------
+FIXTURE 2: ID 19096803
+Date: 2024-07-28 00:00:00
+--------------------------------------------------------------------------------
+
+### PARTICIPANTS:
+  - Arsenal (ID: 19, Location: home)
+  - Manchester United (ID: 14, Location: away)
+
+### SCORES:
+[
+  {
+    "id": 14655235,
+    "fixture_id": 19096803,
+    "type_id": 5,
+    "participant_id": 19,
+    "score": {
+      "goals": 3,
+      "participant": "home"
+    },
+    "description": "PENALTY_SHOOTOUT"
+  },
+  {
+    "id": 14646656,
+    "fixture_id": 19096803,
+    "type_id": 1,
+    "participant_id": 19,
+    "score": {
+      "goals": 1,
+      "participant": "home"
+    },
+    "description": "1ST_HALF"
+  },
+  {
+    "id": 14646657,
+    "fixture_id": 19096803,
+    "type_id": 1,
+    "participant_id": 14,
+    "score": {
+      "goals": 1,
+      "participant": "away"
+    },
+    "description": "1ST_HALF"
+  },
+  {
+    "id": 14646658,
+    "fixture_id": 19096803,
+    "type_id": 1525,
+    "participant_id": 14,
+    "score": {
+      "goals": 5,
+      "participant": "away"
+    },
+    "description": "CURRENT"
+  },
+  {
+    "id": 14646659,
+    "fixture_id": 19096803,
+    "type_id": 1525,
+    "participant_id": 19,
+    "score": {
+      "goals": 5,
+      "participant": "home"
+    },
+    "description": "CURRENT"
+  },
+  {
+    "id": 14646754,
+    "fixture_id": 19096803,
+    "type_id": 2,
+    "participant_id": 19,
+    "score": {
+      "goals": 2,
+      "participant": "home"
+    },
+    "description": "2ND_HALF"
+  },
+  {
+    "id": 14646755,
+    "fixture_id": 19096803,
+    "type_id": 2,
+    "participant_id": 14,
+    "score": {
+      "goals": 1,
+      "participant": "away"
+    },
+    "description": "2ND_HALF"
+  },
+  {
+    "id": 14655234,
+    "fixture_id": 19096803,
+    "type_id": 5,
+    "participant_id": 14,
+    "score": {
+      "goals": 4,
+      "participant": "away"
+    },
+    "description": "PENALTY_SHOOTOUT"
+  },
+  {
+    "id": 15684774,
+    "fixture_id": 19096803,
+    "type_id": 48996,
+    "participant_id": 14,
+    "score": {
+      "goals": 0,
+      "participant": "away"
+    },
+    "description": "2ND_HALF_ONLY"
+  },
+  {
+    "id": 15684773,
+    "fixture_id": 19096803,
+    "type_id": 48996,
+    "participant_id": 19,
+    "score": {
+      "goals": 1,
+      "participant": "home"
+    },
+    "description": "2ND_HALF_ONLY"
+  }
+]
+
+### LINEUPS:
+Total lineups: 51
+
+  TEAM 14 (23 players):
+    - Player ID: 2884
+      Name: H. Maguire
+      Position: undefined
+      Jersey: 5
+      Formation Position: 4
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 537121
+      Name: M. Mount
+      Position: undefined
+      Jersey: 7
+      Formation Position: 9
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 37325012
+      Name: R. Højlund
+      Position: undefined
+      Jersey: 9
+      Formation Position: 11
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 1878
+      Name: M. Rashford
+      Position: undefined
+      Jersey: 10
+      Formation Position: 10
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 992
+      Name: C. Dannemann Eriksen
+      Position: undefined
+      Jersey: 14
+      Formation Position: null
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+  TEAM 19 (28 players):
+    - Player ID: 3259
+      Name: B. White
+      Position: undefined
+      Jersey: 4
+      Formation Position: 2
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 186370
+      Name: T. Partey
+      Position: undefined
+      Jersey: 5
+      Formation Position: null
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 97811
+      Name: G. dos Santos Magalhães
+      Position: undefined
+      Jersey: 6
+      Formation Position: null
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 26823
+      Name: M. Ødegaard
+      Position: undefined
+      Jersey: 8
+      Formation Position: 6
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 5329
+      Name: G. de Jesus
+      Position: undefined
+      Jersey: 9
+      Formation Position: 10
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+
+### STATISTICS:
+Total statistics entries: 52
+
+Unique type_ids found:
+  [34] Count: 2
+    Sample: {
+      "id": 63494201,
+      "fixture_id": 19096803,
+      "type_id": 34,
+      "participant_id": 14,
+      "data": {
+        "value": 6
+      },
+      "location": "away"
+    }
+  [41] Count: 2
+    Sample: {
+      "id": 63493973,
+      "fixture_id": 19096803,
+      "type_id": 41,
+      "participant_id": 19,
+      "data": {
+        "value": 1
+      },
+      "location": "home"
+    }
+  [42] Count: 2
+    Sample: {
+      "id": 63480581,
+      "fixture_id": 19096803,
+      "type_id": 42,
+      "participant_id": 19,
+      "data": {
+        "value": 6
+      },
+      "location": "home"
+    }
+  [43] Count: 2
+    Sample: {
+      "id": 63494316,
+      "fixture_id": 19096803,
+      "type_id": 43,
+      "participant_id": 19,
+      "data": {
+        "value": 49
+      },
+      "location": "home"
+    }
+  [44] Count: 2
+    Sample: {
+      "id": 63494315,
+      "fixture_id": 19096803,
+      "type_id": 44,
+      "participant_id": 19,
+      "data": {
+        "value": 34
+      },
+      "location": "home"
+    }
+  [45] Count: 2
+    Sample: {
+      "id": 63485191,
+      "fixture_id": 19096803,
+      "type_id": 45,
+      "participant_id": 19,
+      "data": {
+        "value": 58
+      },
+      "location": "home"
+    }
+  [49] Count: 2
+    Sample: {
+      "id": 63493967,
+      "fixture_id": 19096803,
+      "type_id": 49,
+      "participant_id": 19,
+      "data": {
+        "value": 5
+      },
+      "location": "home"
+    }
+  [50] Count: 2
+    Sample: {
+      "id": 63493983,
+      "fixture_id": 19096803,
+      "type_id": 50,
+      "participant_id": 14,
+      "data": {
+        "value": 2
+      },
+      "location": "away"
+    }
+  [51] Count: 2
+    Sample: {
+      "id": 63498043,
+      "fixture_id": 19096803,
+      "type_id": 51,
+      "participant_id": 14,
+      "data": {
+        "value": 0
+      },
+      "location": "away"
+    }
+  [52] Count: 2
+    Sample: {
+      "id": 63494091,
+      "fixture_id": 19096803,
+      "type_id": 52,
+      "participant_id": 14,
+      "data": {
+        "value": 5
+      },
+      "location": "away"
+    }
+  [56] Count: 2
+    Sample: {
+      "id": 63494803,
+      "fixture_id": 19096803,
+      "type_id": 56,
+      "participant_id": 19,
+      "data": {
+        "value": 10
+      },
+      "location": "home"
+    }
+  [57] Count: 2
+    Sample: {
+      "id": 63497139,
+      "fixture_id": 19096803,
+      "type_id": 57,
+      "participant_id": 19,
+      "data": {
+        "value": 2
+      },
+      "location": "home"
+    }
+  [58] Count: 2
+    Sample: {
+      "id": 63493980,
+      "fixture_id": 19096803,
+      "type_id": 58,
+      "participant_id": 14,
+      "data": {
+        "value": 5
+      },
+      "location": "away"
+    }
+  [59] Count: 2
+    Sample: {
+      "id": 63494321,
+      "fixture_id": 19096803,
+      "type_id": 59,
+      "participant_id": 19,
+      "data": {
+        "value": 13
+      },
+      "location": "home"
+    }
+  [78] Count: 2
+    Sample: {
+      "id": 63496040,
+      "fixture_id": 19096803,
+      "type_id": 78,
+      "participant_id": 14,
+      "data": {
+        "value": 13
+      },
+      "location": "away"
+    }
+  [80] Count: 2
+    Sample: {
+      "id": 63493981,
+      "fixture_id": 19096803,
+      "type_id": 80,
+      "participant_id": 14,
+      "data": {
+        "value": 323
+      },
+      "location": "away"
+    }
+  [81] Count: 2
+    Sample: {
+      "id": 63493959,
+      "fixture_id": 19096803,
+      "type_id": 81,
+      "participant_id": 19,
+      "data": {
+        "value": 383
+      },
+      "location": "home"
+    }
+  [82] Count: 2
+    Sample: {
+      "id": 63493977,
+      "fixture_id": 19096803,
+      "type_id": 82,
+      "participant_id": 19,
+      "data": {
+        "value": 84
+      },
+      "location": "home"
+    }
+  [86] Count: 2
+    Sample: {
+      "id": 63493978,
+      "fixture_id": 19096803,
+      "type_id": 86,
+      "participant_id": 14,
+      "data": {
+        "value": 3
+      },
+      "location": "away"
+    }
+  [98] Count: 2
+    Sample: {
+      "id": 63498041,
+      "fixture_id": 19096803,
+      "type_id": 98,
+      "participant_id": 19,
+      "data": {
+        "value": 7
+      },
+      "location": "home"
+    }
+  [99] Count: 2
+    Sample: {
+      "id": 63498045,
+      "fixture_id": 19096803,
+      "type_id": 99,
+      "participant_id": 14,
+      "data": {
+        "value": 4
+      },
+      "location": "away"
+    }
+  [100] Count: 2
+    Sample: {
+      "id": 63496036,
+      "fixture_id": 19096803,
+      "type_id": 100,
+      "participant_id": 19,
+      "data": {
+        "value": 11
+      },
+      "location": "home"
+    }
+  [108] Count: 2
+    Sample: {
+      "id": 63496038,
+      "fixture_id": 19096803,
+      "type_id": 108,
+      "participant_id": 19,
+      "data": {
+        "value": 21
+      },
+      "location": "home"
+    }
+  [109] Count: 2
+    Sample: {
+      "id": 63496035,
+      "fixture_id": 19096803,
+      "type_id": 109,
+      "participant_id": 19,
+      "data": {
+        "value": 10
+      },
+      "location": "home"
+    }
+  [117] Count: 2
+    Sample: {
+      "id": 63497594,
+      "fixture_id": 19096803,
+      "type_id": 117,
+      "participant_id": 14,
+      "data": {
+        "value": 8
+      },
+      "location": "away"
+    }
+  [1605] Count: 2
+    Sample: {
+      "id": 63496044,
+      "fixture_id": 19096803,
+      "type_id": 1605,
+      "participant_id": 14,
+      "data": {
+        "value": 100
+      },
+      "location": "away"
+    }
+
+Statistics with player_id:
+
+
+--------------------------------------------------------------------------------
+FIXTURE 3: ID 19096804
+Date: 2024-07-31 23:30:00
+--------------------------------------------------------------------------------
+
+### PARTICIPANTS:
+  - Liverpool (ID: 8, Location: home)
+  - Arsenal (ID: 19, Location: away)
+
+### SCORES:
+[
+  {
+    "id": 14655846,
+    "fixture_id": 19096804,
+    "type_id": 1,
+    "participant_id": 8,
+    "score": {
+      "goals": 2,
+      "participant": "home"
+    },
+    "description": "1ST_HALF"
+  },
+  {
+    "id": 14655847,
+    "fixture_id": 19096804,
+    "type_id": 1,
+    "participant_id": 19,
+    "score": {
+      "goals": 1,
+      "participant": "away"
+    },
+    "description": "1ST_HALF"
+  },
+  {
+    "id": 14655848,
+    "fixture_id": 19096804,
+    "type_id": 1525,
+    "participant_id": 19,
+    "score": {
+      "goals": 1,
+      "participant": "away"
+    },
+    "description": "CURRENT"
+  },
+  {
+    "id": 14655849,
+    "fixture_id": 19096804,
+    "type_id": 1525,
+    "participant_id": 8,
+    "score": {
+      "goals": 2,
+      "participant": "home"
+    },
+    "description": "CURRENT"
+  },
+  {
+    "id": 14655914,
+    "fixture_id": 19096804,
+    "type_id": 2,
+    "participant_id": 8,
+    "score": {
+      "goals": 2,
+      "participant": "home"
+    },
+    "description": "2ND_HALF"
+  },
+  {
+    "id": 14655915,
+    "fixture_id": 19096804,
+    "type_id": 2,
+    "participant_id": 19,
+    "score": {
+      "goals": 1,
+      "participant": "away"
+    },
+    "description": "2ND_HALF"
+  },
+  {
+    "id": 15684775,
+    "fixture_id": 19096804,
+    "type_id": 48996,
+    "participant_id": 8,
+    "score": {
+      "goals": 0,
+      "participant": "home"
+    },
+    "description": "2ND_HALF_ONLY"
+  },
+  {
+    "id": 15684776,
+    "fixture_id": 19096804,
+    "type_id": 48996,
+    "participant_id": 19,
+    "score": {
+      "goals": 0,
+      "participant": "away"
+    },
+    "description": "2ND_HALF_ONLY"
+  }
+]
+
+### LINEUPS:
+Total lineups: 57
+
+  TEAM 8 (30 players):
+    - Player ID: 309344
+      Name: W. Endo
+      Position: undefined
+      Jersey: 3
+      Formation Position: null
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 100556
+      Name: I. Konaté
+      Position: undefined
+      Jersey: 5
+      Formation Position: null
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 785998
+      Name: D. Szoboszlai
+      Position: undefined
+      Jersey: 8
+      Formation Position: 7
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 4125
+      Name: M. Salah
+      Position: undefined
+      Jersey: 11
+      Formation Position: 9
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 4545513
+      Name: C. Jones
+      Position: undefined
+      Jersey: 17
+      Formation Position: 8
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+  TEAM 19 (27 players):
+    - Player ID: 3259
+      Name: B. White
+      Position: undefined
+      Jersey: 4
+      Formation Position: 2
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 186370
+      Name: T. Partey
+      Position: undefined
+      Jersey: 5
+      Formation Position: 7
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 97811
+      Name: G. dos Santos Magalhães
+      Position: undefined
+      Jersey: 6
+      Formation Position: 4
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 26823
+      Name: M. Ødegaard
+      Position: undefined
+      Jersey: 8
+      Formation Position: 6
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+    - Player ID: 5329
+      Name: G. de Jesus
+      Position: undefined
+      Jersey: 9
+      Formation Position: 10
+      Player Object Keys: id, sport_id, country_id, nationality_id, city_id, position_id, detailed_position_id, type_id, common_name, firstname, lastname, name, display_name, image_path, height, weight, date_of_birth, gender
+
+
+### STATISTICS:
+Total statistics entries: 56
+
+Unique type_ids found:
+  [34] Count: 2
+    Sample: {
+      "id": 64249467,
+      "fixture_id": 19096804,
+      "type_id": 34,
+      "participant_id": 8,
+      "data": {
+        "value": 1
+      },
+      "location": "home"
+    }
+  [41] Count: 2
+    Sample: {
+      "id": 64249469,
+      "fixture_id": 19096804,
+      "type_id": 41,
+      "participant_id": 8,
+      "data": {
+        "value": 2
+      },
+      "location": "home"
+    }
+  [42] Count: 2
+    Sample: {
+      "id": 64245750,
+      "fixture_id": 19096804,
+      "type_id": 42,
+      "participant_id": 19,
+      "data": {
+        "value": 13
+      },
+      "location": "away"
+    }
+  [43] Count: 2
+    Sample: {
+      "id": 64249465,
+      "fixture_id": 19096804,
+      "type_id": 43,
+      "participant_id": 8,
+      "data": {
+        "value": 67
+      },
+      "location": "home"
+    }
+  [44] Count: 2
+    Sample: {
+      "id": 64249471,
+      "fixture_id": 19096804,
+      "type_id": 44,
+      "participant_id": 8,
+      "data": {
+        "value": 21
+      },
+      "location": "home"
+    }
+  [45] Count: 2
+    Sample: {
+      "id": 64247218,
+      "fixture_id": 19096804,
+      "type_id": 45,
+      "participant_id": 8,
+      "data": {
+        "value": 40
+      },
+      "location": "home"
+    }
+  [49] Count: 2
+    Sample: {
+      "id": 64249605,
+      "fixture_id": 19096804,
+      "type_id": 49,
+      "participant_id": 19,
+      "data": {
+        "value": 0
+      },
+      "location": "away"
+    }
+  [50] Count: 2
+    Sample: {
+      "id": 64249606,
+      "fixture_id": 19096804,
+      "type_id": 50,
+      "participant_id": 19,
+      "data": {
+        "value": 2
+      },
+      "location": "away"
+    }
+  [51] Count: 2
+    Sample: {
+      "id": 64250118,
+      "fixture_id": 19096804,
+      "type_id": 51,
+      "participant_id": 19,
+      "data": {
+        "value": 4
+      },
+      "location": "away"
+    }
+  [52] Count: 2
+    Sample: {
+      "id": 64249473,
+      "fixture_id": 19096804,
+      "type_id": 52,
+      "participant_id": 8,
+      "data": {
+        "value": 2
+      },
+      "location": "home"
+    }
+  [56] Count: 2
+    Sample: {
+      "id": 64250441,
+      "fixture_id": 19096804,
+      "type_id": 56,
+      "participant_id": 8,
+      "data": {
+        "value": 14
+      },
+      "location": "home"
+    }
+  [57] Count: 2
+    Sample: {
+      "id": 64250547,
+      "fixture_id": 19096804,
+      "type_id": 57,
+      "participant_id": 8,
+      "data": {
+        "value": 1
+      },
+      "location": "home"
+    }
+  [58] Count: 2
+    Sample: {
+      "id": 64249599,
+      "fixture_id": 19096804,
+      "type_id": 58,
+      "participant_id": 8,
+      "data": {
+        "value": 4
+      },
+      "location": "home"
+    }
+  [59] Count: 2
+    Sample: {
+      "id": 64249474,
+      "fixture_id": 19096804,
+      "type_id": 59,
+      "participant_id": 8,
+      "data": {
+        "value": 36
+      },
+      "location": "home"
+    }
+  [64] Count: 2
+    Sample: {
+      "id": 64249608,
+      "fixture_id": 19096804,
+      "type_id": 64,
+      "participant_id": 19,
+      "data": {
+        "value": 0
+      },
+      "location": "away"
+    }
+  [78] Count: 2
+    Sample: {
+      "id": 64251126,
+      "fixture_id": 19096804,
+      "type_id": 78,
+      "participant_id": 19,
+      "data": {
+        "value": 16
+      },
+      "location": "away"
+    }
+  [80] Count: 2
+    Sample: {
+      "id": 64249604,
+      "fixture_id": 19096804,
+      "type_id": 80,
+      "participant_id": 19,
+      "data": {
+        "value": 568
+      },
+      "location": "away"
+    }
+  [81] Count: 2
+    Sample: {
+      "id": 64249607,
+      "fixture_id": 19096804,
+      "type_id": 81,
+      "participant_id": 19,
+      "data": {
+        "value": 503
+      },
+      "location": "away"
+    }
+  [82] Count: 2
+    Sample: {
+      "id": 64249488,
+      "fixture_id": 19096804,
+      "type_id": 82,
+      "participant_id": 19,
+      "data": {
+        "value": 88
+      },
+      "location": "away"
+    }
+  [84] Count: 2
+    Sample: {
+      "id": 64249486,
+      "fixture_id": 19096804,
+      "type_id": 84,
+      "participant_id": 19,
+      "data": {
+        "value": 0
+      },
+      "location": "away"
+    }
+  [86] Count: 2
+    Sample: {
+      "id": 64249472,
+      "fixture_id": 19096804,
+      "type_id": 86,
+      "participant_id": 8,
+      "data": {
+        "value": 4
+      },
+      "location": "home"
+    }
+  [98] Count: 2
+    Sample: {
+      "id": 64254260,
+      "fixture_id": 19096804,
+      "type_id": 98,
+      "participant_id": 19,
+      "data": {
+        "value": 15
+      },
+      "location": "away"
+    }
+  [99] Count: 2
+    Sample: {
+      "id": 64254259,
+      "fixture_id": 19096804,
+      "type_id": 99,
+      "participant_id": 8,
+      "data": {
+        "value": 0
+      },
+      "location": "home"
+    }
+  [100] Count: 2
+    Sample: {
+      "id": 64249951,
+      "fixture_id": 19096804,
+      "type_id": 100,
+      "participant_id": 8,
+      "data": {
+        "value": 6
+      },
+      "location": "home"
+    }
+  [108] Count: 2
+    Sample: {
+      "id": 64251520,
+      "fixture_id": 19096804,
+      "type_id": 108,
+      "participant_id": 8,
+      "data": {
+        "value": 14
+      },
+      "location": "home"
+    }
+  [109] Count: 2
+    Sample: {
+      "id": 64251521,
+      "fixture_id": 19096804,
+      "type_id": 109,
+      "participant_id": 8,
+      "data": {
+        "value": 5
+      },
+      "location": "home"
+    }
+  [117] Count: 2
+    Sample: {
+      "id": 64250863,
+      "fixture_id": 19096804,
+      "type_id": 117,
+      "participant_id": 8,
+      "data": {
+        "value": 10
+      },
+      "location": "home"
+    }
+  [1605] Count: 2
+    Sample: {
+      "id": 64251524,
+      "fixture_id": 19096804,
+      "type_id": 1605,
+      "participant_id": 19,
+      "data": {
+        "value": 50
+      },
+      "location": "away"
+    }
+
+Statistics with player_id:
+
+

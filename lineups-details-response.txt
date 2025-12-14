@@ -1,0 +1,271 @@
+================================================================================
+LINEUPS.DETAILS AND EVENTS RESPONSE
+Fixture ID: 19150776
+Timestamp: 2025-12-14T11:17:27.561Z
+================================================================================
+
+### LINEUPS WITH DETAILS:
+Total lineups: 47
+
+Player 1: ID 3259
+  Team ID: 19
+  Jersey: 4
+  Position: 2
+  DETAILS (18 entries):
+    - type_id: 1584, value: {"value":78}
+    - type_id: 96, value: {"value":1}
+    - type_id: 80, value: {"value":32}
+    - type_id: 120, value: {"value":42}
+    - type_id: 116, value: {"value":26}
+    - type_id: 106, value: {"value":4}
+    - type_id: 105, value: {"value":8}
+    - type_id: 107, value: {"value":2}
+    - type_id: 56, value: {"value":3}
+    - type_id: 1491, value: {"value":4}
+
+Player 2: ID 186370
+  Team ID: 19
+  Jersey: 5
+  Position: 7
+  DETAILS (15 entries):
+    - type_id: 1584, value: {"value":88}
+    - type_id: 118, value: {"value":7.14}
+    - type_id: 106, value: {"value":2}
+    - type_id: 105, value: {"value":3}
+    - type_id: 78, value: {"value":2}
+    - type_id: 80, value: {"value":51}
+    - type_id: 100, value: {"value":1}
+    - type_id: 120, value: {"value":58}
+    - type_id: 122, value: {"value":10}
+    - type_id: 123, value: {"value":8}
+
+Player 3: ID 26823
+  Team ID: 19
+  Jersey: 8
+  Position: null
+  DETAILS (18 entries):
+    - type_id: 1584, value: {"value":93}
+    - type_id: 110, value: {"value":1}
+    - type_id: 118, value: {"value":7.34}
+    - type_id: 1491, value: {"value":1}
+    - type_id: 105, value: {"value":1}
+    - type_id: 119, value: {"value":74}
+    - type_id: 580, value: {"value":2}
+    - type_id: 123, value: {"value":3}
+    - type_id: 122, value: {"value":4}
+    - type_id: 117, value: {"value":2}
+
+Player 4: ID 5329
+  Team ID: 19
+  Jersey: 9
+  Position: null
+  DETAILS (15 entries):
+    - type_id: 120, value: {"value":19}
+    - type_id: 116, value: {"value":8}
+    - type_id: 123, value: {"value":1}
+    - type_id: 80, value: {"value":9}
+    - type_id: 122, value: {"value":1}
+    - type_id: 119, value: {"value":58}
+    - type_id: 108, value: {"value":3}
+    - type_id: 56, value: {"value":1}
+    - type_id: 1491, value: {"value":4}
+    - type_id: 105, value: {"value":6}
+
+Player 5: ID 1494446
+  Team ID: 19
+  Jersey: 10
+  Position: null
+  DETAILS: None
+
+Player 6: ID 5270466
+  Team ID: 19
+  Jersey: 12
+  Position: 3
+  DETAILS (16 entries):
+    - type_id: 118, value: {"value":6.83}
+    - type_id: 80, value: {"value":32}
+    - type_id: 580, value: {"value":1}
+    - type_id: 100, value: {"value":1}
+    - type_id: 97, value: {"value":1}
+    - type_id: 120, value: {"value":36}
+    - type_id: 122, value: {"value":3}
+    - type_id: 1584, value: {"value":88}
+    - type_id: 116, value: {"value":28}
+    - type_id: 119, value: {"value":62}
+
+Player 7: ID 539961
+  Team ID: 19
+  Jersey: 14
+  Position: 10
+  DETAILS (18 entries):
+    - type_id: 109, value: {"value":3}
+    - type_id: 108, value: {"value":5}
+    - type_id: 40, value: {"value":true}
+    - type_id: 58, value: {"value":2}
+    - type_id: 42, value: {"value":3}
+    - type_id: 96, value: {"value":5}
+    - type_id: 106, value: {"value":8}
+    - type_id: 105, value: {"value":15}
+    - type_id: 1491, value: {"value":7}
+    - type_id: 120, value: {"value":38}
+
+Player 8: ID 8403613
+  Team ID: 19
+  Jersey: 15
+  Position: null
+  DETAILS (9 entries):
+    - type_id: 97, value: {"value":1}
+    - type_id: 119, value: {"value":57}
+    - type_id: 80, value: {"value":15}
+    - type_id: 116, value: {"value":15}
+    - type_id: 120, value: {"value":17}
+    - type_id: 118, value: {"value":6.94}
+    - type_id: 100, value: {"value":1}
+    - type_id: 1584, value: {"value":100}
+    - type_id: 88, value: {"value":1}
+
+
+### EVENTS:
+Total events: 36
+
+Events by type:
+  [type_id: 14] Count: 2
+    Sample: player_id: 5270497, player_name: Fábio Vieira
+    Minute: 18, Info: Shot
+    Full event: {
+      "id": 117262631,
+      "fixture_id": 19150776,
+      "period_id": 5504553,
+      "participant_id": 19,
+      "type_id": 14,
+      "section": "event",
+      "player_id": 5270497,
+      "related_player_id": 537759,
+      "player_name": "Fábio Vieira",
+      "related_player_name": "Reiss Nelson",
+      "result": "1-0",
+      "info": "Shot",
+      "addition": "1st Goal",
+      "minute": 18,
+      "extra_minute": null,
+      "injured": null,
+      "on_bench": false,
+      "coach_id": null,
+      "sub_type_id": null,
+      "detailed_period_id": null,
+      "rescinded": null,
+      "sort_order": 1
+    }
+
+  [type_id: 18] Count: 19
+    Sample: player_id: 172752, player_name: Ryan Christie
+    Minute: 64, Info: N/A
+    Full event: {
+      "id": 117264091,
+      "fixture_id": 19150776,
+      "period_id": 5504558,
+      "participant_id": 52,
+      "type_id": 18,
+      "section": "event",
+      "player_id": 172752,
+      "related_player_id": 37550443,
+      "player_name": "Ryan Christie",
+      "related_player_name": "Alex Scott",
+      "result": null,
+      "info": null,
+      "addition": null,
+      "minute": 64,
+      "extra_minute": null,
+      "injured": false,
+      "on_bench": false,
+      "coach_id": null,
+      "sub_type_id": null,
+      "detailed_period_id": null,
+      "rescinded": null,
+      "sort_order": 13
+    }
+
+  [type_id: 19] Count: 3
+    Sample: player_id: 24065255, player_name: Illia Zabarnyi
+    Minute: 33, Info: Foul
+    Full event: {
+      "id": 117263195,
+      "fixture_id": 19150776,
+      "period_id": 5504553,
+      "participant_id": 52,
+      "type_id": 19,
+      "section": "event",
+      "player_id": 24065255,
+      "related_player_id": null,
+      "player_name": "Illia Zabarnyi",
+      "related_player_name": null,
+      "result": null,
+      "info": "Foul",
+      "addition": null,
+      "minute": 33,
+      "extra_minute": null,
+      "injured": null,
+      "on_bench": false,
+      "coach_id": null,
+      "sub_type_id": 1496,
+      "detailed_period_id": null,
+      "rescinded": false,
+      "sort_order": 1
+    }
+
+  [type_id: 22] Count: 3
+    Sample: player_id: 172752, player_name: Ryan Christie
+    Minute: 11, Info: goalkeeperSave
+    Full event: {
+      "id": 117265716,
+      "fixture_id": 19150776,
+      "period_id": 5504565,
+      "participant_id": 52,
+      "type_id": 22,
+      "section": "event",
+      "player_id": 172752,
+      "related_player_id": null,
+      "player_name": "Ryan Christie",
+      "related_player_name": null,
+      "result": "4-4",
+      "info": "goalkeeperSave",
+      "addition": "AFC Bournemouth - Miss 11th Penalty",
+      "minute": 11,
+      "extra_minute": null,
+      "injured": null,
+      "on_bench": false,
+      "coach_id": null,
+      "sub_type_id": 1509,
+      "detailed_period_id": null,
+      "rescinded": null,
+      "sort_order": 11
+    }
+
+  [type_id: 23] Count: 9
+    Sample: player_id: 8403613, player_name: Jakub Piotr Kiwior
+    Minute: 12, Info: scored
+    Full event: {
+      "id": 117265762,
+      "fixture_id": 19150776,
+      "period_id": 5504565,
+      "participant_id": 19,
+      "type_id": 23,
+      "section": "event",
+      "player_id": 8403613,
+      "related_player_id": null,
+      "player_name": "Jakub Piotr Kiwior",
+      "related_player_name": null,
+      "result": "5-4",
+      "info": "scored",
+      "addition": "Arsenal - Score 12th Penalty",
+      "minute": 12,
+      "extra_minute": null,
+      "injured": null,
+      "on_bench": false,
+      "coach_id": null,
+      "sub_type_id": 1507,
+      "detailed_period_id": null,
+      "rescinded": null,
+      "sort_order": 12
+    }
+
