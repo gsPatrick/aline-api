@@ -40,4 +40,8 @@ router.use("/leagues", leagueRoutes);
 // Search (Teams, Leagues, Players)
 router.use("/search", searchRoutes);
 
+// GoldStats (New Feature)
+import goldStatsRoutes from "../features/goldstats/goldstats.routes.js";
+router.use("/goldstats", goldStatsRoutes);
+
 export default router;
