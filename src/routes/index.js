@@ -44,4 +44,8 @@ router.use("/search", searchRoutes);
 import goldStatsRoutes from "../features/goldstats/goldstats.routes.js";
 router.use("/goldstats", goldStatsRoutes);
 
+// AI Chat
+import chatRoutes from "../features/chat/chat.routes.js";
+router.use("/chat", chatRoutes);
+
 export default router;

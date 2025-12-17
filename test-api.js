@@ -1,57 +1,57 @@
-import axios from 'axios';
-import { fetchExternalMatchData, calculateMatchStats } from './src/features/match/match.service.js';
-import dotenv from 'dotenv';
+// Test script to capture API response structure
+// Run with: node test-api.js
 
-dotenv.config();
+const matchId = '19433604';
+const API_BASE = 'https://10stats-api-10stats.ebl0ff.easypanel.host/api';
 
-const API_TOKEN = "Xql7ZNMOjdE1pxn7FOh4739UX07owQNA2dNDguw0K6p881Q8yhlInKkHgEgh";
-const FIXTURE_ID = 19568462;
-const BASE_URL = "https://api.sportmonks.com/v3/football";
+async function testMatchAPI() {
+    console.log(`Testing API for match ID: ${matchId}\n`);
 
-const run = async () => {
     try {
-        console.log(`Fetching fixture ${FIXTURE_ID} using integrated service...`);
+        const response = await fetch(`${API_BASE}/matches/${matchId}/stats`);
+        console.log('Status:', response.status);
 
-        const mergedData = await fetchExternalMatchData(FIXTURE_ID, API_TOKEN);
+        if (!response.ok) {
+            console.log('Response not OK');
+            const text = await response.text();
+            console.log('Body:', text.substring(0, 500));
+            return;
+        }
 
-        console.log("✅ Data fetched successfully!");
-        console.log("Match:", mergedData.name);
+        const data = await response.json();
 
-        // Check main fixture events
-        const mainEvents = mergedData.events || [];
-        const mainEventTypes = mainEvents.map(e => e.type?.name).filter((v, i, a) => a.indexOf(v) === i);
-        console.log("DEBUG: Main Fixture Event Types:", JSON.stringify(mainEventTypes));
+        // Write full response to file
+        const fs = await import('fs');
+        fs.writeFileSync('./api-response.json', JSON.stringify(data, null, 2));
+        console.log('\nFull response saved to: api-response.json');
 
-        console.log("Home History:", mergedData.homeTeam?.latest?.length);
-        console.log("Away History:", mergedData.awayTeam?.latest?.length);
+        // Log structure
+        console.log('\n=== TOP LEVEL KEYS ===');
+        console.log(Object.keys(data));
 
-        console.log("\nCalculating Stats...");
-        const stats = calculateMatchStats(mergedData);
+        if (data.matchInfo) {
+            console.log('\n=== matchInfo keys ===');
+            console.log(Object.keys(data.matchInfo));
+        }
 
-        console.log("FULL STATS:", JSON.stringify(stats, null, 2));
+        if (data.home) {
+            console.log('\n=== home keys ===');
+            console.log(Object.keys(data.home));
+        }
 
-        if (stats.cornerAnalysis) {
-            console.log("\n✅ Corner Analysis Generated!");
-            console.log("--- Home Team (Last 10 Home) ---");
-            console.log("Avg For:", stats.cornerAnalysis.home.avgFor);
-            console.log("Avg Against:", stats.cornerAnalysis.home.avgAgainst);
-            console.log("Races:", JSON.stringify(stats.cornerAnalysis.home.races));
-            console.log("Trends:", JSON.stringify(stats.cornerAnalysis.home.trends));
+        if (data.events) {
+            console.log('\n=== events sample ===');
+            console.log(data.events.slice(0, 2));
+        }
 
-            console.log("\n--- Away Team (Last 10 Away) ---");
-            console.log("Avg For:", stats.cornerAnalysis.away.avgFor);
-            console.log("Avg Against:", stats.cornerAnalysis.away.avgAgainst);
-            console.log("Races:", JSON.stringify(stats.cornerAnalysis.away.races));
-
-            // Log a sample interval
-            console.log("\nSample Interval (0-10):", JSON.stringify(stats.cornerAnalysis.home.intervals['0-10']));
-        } else {
-            console.log("\n❌ Corner Analysis Missing!");
+        if (data.standings) {
+            console.log('\n=== standings length ===');
+            console.log(data.standings?.length || 0);
         }
 
     } catch (error) {
-        console.error("❌ Fatal Error:", error.message);
+        console.error('Error:', error.message);
     }
-};
+}
 
-run();
+testMatchAPI();

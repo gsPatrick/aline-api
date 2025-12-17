@@ -922,7 +922,8 @@ export const getRoundFixtures = async (roundId) => {
     try {
         console.log(`Getting fixtures for round ${roundId}`);
         // Correct Sportmonks v3 endpoint - fixtures are nested on round
-        const url = `${BASE_URL}/rounds/${roundId}?api_token=${token}&include=fixtures.participants`;
+        // Include scores and state for displaying results
+        const url = `${BASE_URL}/rounds/${roundId}?api_token=${token}&include=fixtures.participants;fixtures.scores;fixtures.state`;
         const { data } = await axios.get(url);
         // Extract fixtures from round data
         return data.data?.fixtures || [];
