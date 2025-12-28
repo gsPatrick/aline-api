@@ -2,7 +2,8 @@ import * as goldStatsService from "./goldstats.service.js";
 
 export const getHomeData = async (req, res) => {
     try {
-        const data = await goldStatsService.getHomeData();
+        const { date } = req.query; // Accept ?date=YYYY-MM-DD query param
+        const data = await goldStatsService.getHomeData(date || null);
         res.json({
             success: true,
             data

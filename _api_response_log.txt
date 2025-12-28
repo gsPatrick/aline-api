@@ -1,0 +1,1208 @@
+SportMonks API Validation - 2025-12-28T04:42:31.119Z
+
+
+============================================================
+1. Today Fixtures
+============================================================
+
+Status: 200
+URL: https://api.sportmonks.com/v3/football/fixtures/date/2025-12-28?api_token=TOKEN_HIDDEN&include=league;participants;state;scores
+
+Response:
+{
+  "data": [
+    {
+      "id": 19577561,
+      "sport_id": 1,
+      "league_id": 1583,
+      "season_id": 26530,
+      "stage_id": 77478236,
+      "group_id": null,
+      "aggregate_id": null,
+      "round_id": 390280,
+      "state_id": 1,
+      "venue_id": null,
+      "name": "Melbourne City W vs Perth Glory W",
+      "starting_at": "2025-12-28 05:15:00",
+      "result_info": null,
+      "leg": "1/1",
+      "details": null,
+      "length": 90,
+      "placeholder": false,
+      "has_odds": true,
+      "has_premium_odds": true,
+      "starting_at_timestamp": 1766898900,
+      "league": {
+        "id": 1583,
+        "sport_id": 1,
+        "country_id": 98,
+        "name": "A-League Women",
+        "active": true,
+        "short_code": null,
+        "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/15/1583.png",
+        "type": "league",
+        "sub_type": "domestic",
+        "last_played_at": "2025-12-27 07:00:00",
+        "category": 2,
+        "has_jerseys": false
+      },
+      "participants": [
+        {
+          "id": 231022,
+          "sport_id": 1,
+          "country_id": 98,
+          "venue_id": null,
+          "gender": "female",
+          "name": "Perth Glory W",
+          "short_code": null,
+          "image_path": "https://cdn.sportmonks.com/images/soccer/teams/14/231022.png",
+          "founded": null,
+          "type": "domestic",
+          "placeholder": false,
+          "last_played_at": "2025-12-21 09:00:00",
+          "meta": {
+            "location": "away",
+            "winner": null,
+            "position": 7
+          }
+        },
+        {
+          "id": 231020,
+          "sport_id": 1,
+          "country_id": 98,
+          "venue_id": null,
+          "gender": "female",
+          "name": "Melbourne City W",
+          "short_code": null,
+          "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/231020.png",
+          "founded": null,
+          "type": "domestic",
+          "placeholder": false,
+          "last_played_at": "2025-12-23 05:30:00",
+          "meta": {
+            "location": "home",
+            "winner": null,
+            "position": 4
+          }
+        }
+      ],
+      "state": {
+        "id": 1,
+        "state": "NS",
+        "name": "Not Started",
+        "short_name": "NS",
+        "developer_name": "NS"
+      },
+      "scores": [
+        {
+          "id": 17715800,
+          "fixture_id": 19577561,
+          "type_id": 1525,
+          "participant_id": 231022,
+          "score": {
+            "goals": 0,
+            "participant": "away"
+          },
+          "description": "CURRENT"
+        },
+        {
+          "id": 17715804,
+          "fixture_id": 19577561,
+          "type_id": 2,
+          "participant_id": 231022,
+          "score": {
+            "goals": 0,
+            "participant": "away"
+          },
+          "description": "2ND_HALF"
+        },
+        {
+          "id": 17715802,
+          "fixture_id": 19577561,
+          "type_id": 1,
+          "participant_id": 231022,
+          "score": {
+            "goals": 0,
+            "participant": "away"
+          },
+          "description": "1ST_HALF"
+        },
+        {
+          "id": 17715803,
+          "fixture_id": 19577561,
+          "type_id": 1,
+          "participant_id": 231020,
+          "score": {
+            "goals": 0,
+            "participant": "home"
+          },
+          "description": "1ST_HALF"
+        },
+        {
+          "id": 17715801,
+          "fixture_id": 19577561,
+          "type_id": 1525,
+          "participant_id": 231020,
+          "score": {
+            "goals": 0,
+            "participant": "home"
+          },
+          "description": "CURRENT"
+        },
+        {
+          "id": 17715805,
+          "fixture_id": 19577561,
+          "type_id": 2,
+          "participant_id": 231020,
+          "score": {
+            "goals": 0,
+            "participant": "home"
+          },
+          "description": "2ND_HALF"
+        }
+      ]
+    },
+    {
+      "id": 19577423,
+      "sport_id": 1,
+      "league_id": 1356,
+      "season_id": 26529,
+      "stage_id": 77478235,
+      "group_id": null,
+      "aggregate_id": null,
+      "round_id": 390255,
+      "state_id": 1,
+      "venue_id": 343377,
+      "name": "Melbourne City vs Perth Glory",
+      "starting_at": "2025-12-28 08:00:00",
+      "result_info": null,
+      "leg": "1/1",
+      "details": null,
+      "length": 90,
+      "placeholder": false,
+      "has_odds": true,
+      "has_premium_odds": true,
+      "starting_at_timestamp": 1766908800,
+      "league": {
+        "id": 1356,
+        "sport_id": 1,
+        "country_id": 98,
+        "name": "A-League Men",
+        "active": true,
+        "short_code": "AUS AL",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/12/1356.png",
+        "type": "league",
+        "sub_type": "domestic",
+        "last_played_at": "2025-12-27 08:35:00",
+        "category": 2,
+        "has_jerseys": false
+      },
+      "participants": [
+       
+
+============================================================
+2. Yesterday Fixtures
+============================================================
+
+Status: 200
+URL: https://api.sportmonks.com/v3/football/fixtures/date/2025-12-27?api_token=TOKEN_HIDDEN&include=league;participants;state;scores
+
+Response:
+{
+  "data": [
+    {
+      "id": 19577558,
+      "sport_id": 1,
+      "league_id": 1583,
+      "season_id": 26530,
+      "stage_id": 77478236,
+      "group_id": null,
+      "aggregate_id": null,
+      "round_id": 390280,
+      "state_id": 5,
+      "venue_id": 1743,
+      "name": "Adelaide United W vs Western Sydney Wanderers W",
+      "starting_at": "2025-12-27 05:50:00",
+      "result_info": "Adelaide United W won after full-time.",
+      "leg": "1/1",
+      "details": null,
+      "length": 90,
+      "placeholder": false,
+      "has_odds": true,
+      "has_premium_odds": true,
+      "starting_at_timestamp": 1766814600,
+      "league": {
+        "id": 1583,
+        "sport_id": 1,
+        "country_id": 98,
+        "name": "A-League Women",
+        "active": true,
+        "short_code": null,
+        "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/15/1583.png",
+        "type": "league",
+        "sub_type": "domestic",
+        "last_played_at": "2025-12-27 07:00:00",
+        "category": 2,
+        "has_jerseys": false
+      },
+      "participants": [
+        {
+          "id": 231016,
+          "sport_id": 1,
+          "country_id": 98,
+          "venue_id": null,
+          "gender": "female",
+          "name": "Western Sydney Wanderers W",
+          "short_code": null,
+          "image_path": "https://cdn.sportmonks.com/images/soccer/teams/8/231016.png",
+          "founded": null,
+          "type": "domestic",
+          "placeholder": false,
+          "last_played_at": "2025-12-27 05:50:00",
+          "meta": {
+            "location": "away",
+            "winner": false,
+            "position": 10
+          }
+        },
+        {
+          "id": 231023,
+          "sport_id": 1,
+          "country_id": 98,
+          "venue_id": null,
+          "gender": "female",
+          "name": "Adelaide United W",
+          "short_code": null,
+          "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/231023.png",
+          "founded": null,
+          "type": "domestic",
+          "placeholder": false,
+          "last_played_at": "2025-12-27 05:50:00",
+          "meta": {
+            "location": "home",
+            "winner": true,
+            "position": 11
+          }
+        }
+      ],
+      "state": {
+        "id": 5,
+        "state": "FT",
+        "name": "Full Time",
+        "short_name": "FT",
+        "developer_name": "FT"
+      },
+      "scores": [
+        {
+          "id": 17712535,
+          "fixture_id": 19577558,
+          "type_id": 1,
+          "participant_id": 231016,
+          "score": {
+            "goals": 0,
+            "participant": "away"
+          },
+          "description": "1ST_HALF"
+        },
+        {
+          "id": 17712536,
+          "fixture_id": 19577558,
+          "type_id": 1,
+          "participant_id": 231023,
+          "score": {
+            "goals": 3,
+            "participant": "home"
+          },
+          "description": "1ST_HALF"
+        },
+        {
+          "id": 17712537,
+          "fixture_id": 19577558,
+          "type_id": 2,
+          "participant_id": 231016,
+          "score": {
+            "goals": 2,
+            "participant": "away"
+          },
+          "description": "2ND_HALF"
+        },
+        {
+          "id": 17712534,
+          "fixture_id": 19577558,
+          "type_id": 1525,
+          "participant_id": 231023,
+          "score": {
+            "goals": 5,
+            "participant": "home"
+          },
+          "description": "CURRENT"
+        },
+        {
+          "id": 17712628,
+          "fixture_id": 19577558,
+          "type_id": 48996,
+          "participant_id": 231016,
+          "score": {
+            "goals": 2,
+            "participant": "away"
+          },
+          "description": "2ND_HALF_ONLY"
+        },
+        {
+          "id": 17712538,
+          "fixture_id": 19577558,
+          "type_id": 2,
+          "participant_id": 231023,
+          "score": {
+            "goals": 5,
+            "participant": "home"
+          },
+          "description": "2ND_HALF"
+        },
+        {
+          "id": 17712627,
+          "fixture_id": 19577558,
+          "type_id": 48996,
+          "participant_id": 231023,
+          "score": {
+            "goals": 2,
+            "participant": "home"
+          },
+          "description": "2ND_HALF_ONLY"
+        },
+        {
+          "id": 17712533,
+          "fixture_id": 19577558,
+          "type_id": 1525,
+          "participant_id": 231016,
+          "score": {
+            "goals": 2,
+            "participant": "away"
+          },
+          "description": "CURRENT"
+        }
+      ]
+    },
+    {
+      "id": 19577421,
+      "sport_id": 1,
+      "league_id": 1356,
+      "season_id": 26529,
+      "stage_id": 77478235,
+      "group_id": null,
+      "aggregate_id": null,
+      "round_id": 390255,
+      "state_id": 10,
+      "venue_id": 14742,
+      "name": "Sydney vs Auckland",
+      "starting_at": "2025-12-27 06:00:00",
+      "result_info": null,
+      "leg": "1/1",
+      "details": null
+
+============================================================
+3. Team Squad (with ratings)
+============================================================
+
+Status: 200
+URL: https://api.sportmonks.com/v3/football/squads/teams/85?api_token=TOKEN_HIDDEN&include=player.statistics.details.type;player.position
+
+Response:
+{
+  "data": [
+    {
+      "id": 1239463,
+      "transfer_id": 490958,
+      "player_id": 540162,
+      "team_id": 85,
+      "position_id": 24,
+      "detailed_position_id": 24,
+      "start": "2025-07-09",
+      "end": "2030-06-30",
+      "captain": false,
+      "jersey_number": 1,
+      "player": {
+        "id": 540162,
+        "sport_id": 1,
+        "country_id": 266,
+        "nationality_id": 266,
+        "city_id": 101368,
+        "position_id": 24,
+        "detailed_position_id": 24,
+        "type_id": 24,
+        "common_name": "D. Kotarski",
+        "firstname": "Dominik",
+        "lastname": "Kotarski",
+        "name": "Dominik Kotarski",
+        "display_name": "Dominik Kotarski",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/players/2/540162.png",
+        "height": 189,
+        "weight": 75,
+        "date_of_birth": "2000-02-10",
+        "gender": "male",
+        "statistics": [
+          {
+            "id": 1804093814,
+            "player_id": 540162,
+            "team_id": 85,
+            "season_id": 24893,
+            "has_values": false,
+            "position_id": 24,
+            "jersey_number": 1,
+            "details": []
+          },
+          {
+            "id": 1857549611,
+            "player_id": 540162,
+            "team_id": 85,
+            "season_id": 24896,
+            "has_values": false,
+            "position_id": 24,
+            "jersey_number": 1,
+            "details": []
+          },
+          {
+            "id": 1804093816,
+            "player_id": 540162,
+            "team_id": 85,
+            "season_id": 25536,
+            "has_values": true,
+            "position_id": 24,
+            "jersey_number": 1,
+            "details": [
+              {
+                "id": 46594773,
+                "player_statistic_id": 1804093816,
+                "type_id": 57,
+                "value": {
+                  "total": 46
+                },
+                "type": {
+                  "id": 57,
+                  "name": "Saves",
+                  "code": "saves",
+                  "developer_name": "SAVES",
+                  "model_type": "statistic",
+                  "stat_group": "defensive"
+                }
+              },
+              {
+                "id": 46594767,
+                "player_statistic_id": 1804093816,
+                "type_id": 80,
+                "value": {
+                  "total": 595
+                },
+                "type": {
+                  "id": 80,
+                  "name": "Passes",
+                  "code": "passes",
+                  "developer_name": "PASSES",
+                  "model_type": "statistic",
+                  "stat_group": "overall"
+                }
+              },
+              {
+                "id": 48493751,
+                "player_statistic_id": 1804093816,
+                "type_id": 84,
+                "value": {
+                  "total": 1,
+                  "home": 0,
+                  "away": 1
+                },
+                "type": {
+                  "id": 84,
+                  "name": "Yellowcards",
+                  "code": "yellowcards",
+                  "developer_name": "YELLOWCARDS",
+                  "model_type": "statistic",
+                  "stat_group": "overall"
+                }
+              },
+              {
+                "id": 46594748,
+                "player_statistic_id": 1804093816,
+                "type_id": 88,
+                "value": {
+                  "total": 26
+                },
+                "type": {
+                  "id": 88,
+                  "name": "Goals Conceded",
+                  "code": "goals-conceded",
+                  "developer_name": "GOALS_CONCEDED",
+                  "model_type": "statistic",
+                  "stat_group": "defensive"
+                }
+              },
+              {
+                "id": 46594729,
+                "player_statistic_id": 1804093816,
+                "type_id": 94,
+                "value": {
+                  "total": 1
+                },
+                "type": {
+                  "id": 94,
+                  "name": "Dispossessed",
+                  "code": "dispossessed",
+                  "developer_name": "DISPOSSESSED",
+                  "model_type": "statistic",
+                  "stat_group": "offensive"
+                }
+              },
+              {
+                "id": 46829497,
+                "player_statistic_id": 1804093816,
+                "type_id": 96,
+                "value": {
+                  "total": 2
+                },
+                "type": {
+                  "id": 96,
+                  "name": "Fouls Drawn",
+                  "code": "fouls-drawn",
+                  "developer_name": "FOULS_DRAWN",
+                  "model_type": "statistic",
+                  "stat_group": "overall"
+                }
+              },
+              {
+                "id": 46726747,
+                "player_statistic_id": 1804093816,
+                "type_id": 101,
+                "value": {
+
+============================================================
+4. Match Header
+============================================================
+
+Status: 200
+URL: https://api.sportmonks.com/v3/football/fixtures/19433604?api_token=TOKEN_HIDDEN&include=league;participants;state;scores;venue
+
+Response:
+{
+  "data": {
+    "id": 19433604,
+    "sport_id": 1,
+    "league_id": 82,
+    "season_id": 25646,
+    "stage_id": 77476914,
+    "group_id": null,
+    "aggregate_id": null,
+    "round_id": 393433,
+    "state_id": 5,
+    "venue_id": 2166,
+    "name": "Borussia Dortmund vs Borussia Mönchengladbach",
+    "starting_at": "2025-12-19 19:30:00",
+    "result_info": "Borussia Dortmund won after full-time.",
+    "leg": "1/1",
+    "details": null,
+    "length": 90,
+    "placeholder": false,
+    "has_odds": true,
+    "has_premium_odds": true,
+    "starting_at_timestamp": 1766172600,
+    "league": {
+      "id": 82,
+      "sport_id": 1,
+      "country_id": 11,
+      "name": "Bundesliga",
+      "active": true,
+      "short_code": "GER BI",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/18/82.png",
+      "type": "league",
+      "sub_type": "domestic",
+      "last_played_at": "2025-12-21 16:30:00",
+      "category": 1,
+      "has_jerseys": false
+    },
+    "participants": [
+      {
+        "id": 68,
+        "sport_id": 1,
+        "country_id": 11,
+        "venue_id": 2166,
+        "gender": "male",
+        "name": "Borussia Dortmund",
+        "short_code": "BVB",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/4/68.png",
+        "founded": 1909,
+        "type": "domestic",
+        "placeholder": false,
+        "last_played_at": "2025-12-19 19:30:00",
+        "meta": {
+          "location": "home",
+          "winner": true,
+          "position": 3
+        }
+      },
+      {
+        "id": 683,
+        "sport_id": 1,
+        "country_id": 11,
+        "venue_id": 180,
+        "gender": "male",
+        "name": "Borussia Mönchengladbach",
+        "short_code": "BMG",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/11/683.png",
+        "founded": 1900,
+        "type": "domestic",
+        "placeholder": false,
+        "last_played_at": "2025-12-19 19:30:00",
+        "meta": {
+          "location": "away",
+          "winner": false,
+          "position": 11
+        }
+      }
+    ],
+    "state": {
+      "id": 5,
+      "state": "FT",
+      "name": "Full Time",
+      "short_name": "FT",
+      "developer_name": "FT"
+    },
+    "scores": [
+      {
+        "id": 17684361,
+        "fixture_id": 19433604,
+        "type_id": 2,
+        "participant_id": 683,
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        },
+        "description": "2ND_HALF"
+      },
+      {
+        "id": 17684356,
+        "fixture_id": 19433604,
+        "type_id": 1525,
+        "participant_id": 683,
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        },
+        "description": "CURRENT"
+      },
+      {
+        "id": 17684358,
+        "fixture_id": 19433604,
+        "type_id": 1,
+        "participant_id": 68,
+        "score": {
+          "goals": 1,
+          "participant": "home"
+        },
+        "description": "1ST_HALF"
+      },
+      {
+        "id": 17684353,
+        "fixture_id": 19433604,
+        "type_id": 1525,
+        "participant_id": 68,
+        "score": {
+          "goals": 2,
+          "participant": "home"
+        },
+        "description": "CURRENT"
+      },
+      {
+        "id": 17684359,
+        "fixture_id": 19433604,
+        "type_id": 1,
+        "participant_id": 683,
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        },
+        "description": "1ST_HALF"
+      },
+      {
+        "id": 17684360,
+        "fixture_id": 19433604,
+        "type_id": 2,
+        "participant_id": 68,
+        "score": {
+          "goals": 2,
+          "participant": "home"
+        },
+        "description": "2ND_HALF"
+      },
+      {
+        "id": 17685127,
+        "fixture_id": 19433604,
+        "type_id": 48996,
+        "participant_id": 68,
+        "score": {
+          "goals": 1,
+          "participant": "home"
+        },
+        "description": "2ND_HALF_ONLY"
+      },
+      {
+        "id": 17685128,
+        "fixture_id": 19433604,
+        "type_id": 48996,
+        "participant_id": 683,
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        },
+        "description": "2ND_HALF_ONLY"
+      }
+    ],
+    "venue": {
+      "id": 2166,
+      "country_id": 11,
+      "city_id": 24229,
+      "name": "Signal Iduna Park",
+      "address": "Strobelallee 50 44139 Dortmund, North Rhine-Westphalia",
+      "zipcode": null,
+      "latitude": "51.4925",
+      "longitude": "7.451667",
+      "capacity": 81365,
+      "image_path": "https://cdn.sportmonks.com/images/soccer/venues/22/2166.png",
+      "city_name": "Dortmund",
+      "surface": "grass",
+      "national_team": false
+    }
+  },
+  "subscription": [
+    {
+      "meta": {
+        "trial_ends_at": "2025-11-26 21:06:45",
+        "ends_at": "2026-01-26 21:06:45",
+        "current_timestamp": 1766896954
+      },
+      "plans": [
+        {
+          "plan": "Worldwide Plan",
+          "sport": "Football",
+          "category": "Advanced"
+        }
+      ],
+     
+
+============================================================
+5. Team Fixtures (between dates)
+============================================================
+
+Status: 200
+URL: https://api.sportmonks.com/v3/football/fixtures/between/2025-11-28/2026-01-27/85?api_token=TOKEN_HIDDEN&include=league;participants;scores;state
+
+Response:
+{
+  "data": [
+    {
+      "id": 19425663,
+      "sport_id": 1,
+      "league_id": 271,
+      "season_id": 25536,
+      "stage_id": 77476856,
+      "group_id": null,
+      "aggregate_id": null,
+      "round_id": 371937,
+      "state_id": 5,
+      "venue_id": 6184,
+      "name": "AGF vs FC København",
+      "starting_at": "2025-11-30 13:00:00",
+      "result_info": "AGF won after full-time.",
+      "leg": "1/1",
+      "details": null,
+      "length": 90,
+      "placeholder": false,
+      "has_odds": true,
+      "has_premium_odds": true,
+      "starting_at_timestamp": 1764507600,
+      "league": {
+        "id": 271,
+        "sport_id": 1,
+        "country_id": 320,
+        "name": "Superliga",
+        "active": true,
+        "short_code": "DNK SL",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/271.png",
+        "type": "league",
+        "sub_type": "domestic",
+        "last_played_at": "2025-12-08 18:00:00",
+        "category": 2,
+        "has_jerseys": false
+      },
+      "participants": [
+        {
+          "id": 85,
+          "sport_id": 1,
+          "country_id": 320,
+          "venue_id": 5655,
+          "gender": "male",
+          "name": "FC København",
+          "short_code": "COP",
+          "image_path": "https://cdn.sportmonks.com/images/soccer/teams/21/85.png",
+          "founded": 1992,
+          "type": "domestic",
+          "placeholder": false,
+          "last_played_at": "2025-12-13 17:00:00",
+          "meta": {
+            "location": "away",
+            "winner": false,
+            "position": 4
+          }
+        },
+        {
+          "id": 2905,
+          "sport_id": 1,
+          "country_id": 320,
+          "venue_id": 1708,
+          "gender": "male",
+          "name": "AGF",
+          "short_code": "AGF",
+          "image_path": "https://cdn.sportmonks.com/images/soccer/teams/25/2905.png",
+          "founded": 1902,
+          "type": "domestic",
+          "placeholder": false,
+          "last_played_at": "2025-12-14 14:00:00",
+          "meta": {
+            "location": "home",
+            "winner": true,
+            "position": 1
+          }
+        }
+      ],
+      "scores": [
+        {
+          "id": 17529223,
+          "fixture_id": 19425663,
+          "type_id": 1,
+          "participant_id": 2905,
+          "score": {
+            "goals": 1,
+            "participant": "home"
+          },
+          "description": "1ST_HALF"
+        },
+        {
+          "id": 17529224,
+          "fixture_id": 19425663,
+          "type_id": 1,
+          "participant_id": 85,
+          "score": {
+            "goals": 0,
+            "participant": "away"
+          },
+          "description": "1ST_HALF"
+        },
+        {
+          "id": 17529222,
+          "fixture_id": 19425663,
+          "type_id": 1525,
+          "participant_id": 85,
+          "score": {
+            "goals": 0,
+            "participant": "away"
+          },
+          "description": "CURRENT"
+        },
+        {
+          "id": 17529225,
+          "fixture_id": 19425663,
+          "type_id": 2,
+          "participant_id": 2905,
+          "score": {
+            "goals": 2,
+            "participant": "home"
+          },
+          "description": "2ND_HALF"
+        },
+        {
+          "id": 17529221,
+          "fixture_id": 19425663,
+          "type_id": 1525,
+          "participant_id": 2905,
+          "score": {
+            "goals": 2,
+            "participant": "home"
+          },
+          "description": "CURRENT"
+        },
+        {
+          "id": 17529226,
+          "fixture_id": 19425663,
+          "type_id": 2,
+          "participant_id": 85,
+          "score": {
+            "goals": 0,
+            "participant": "away"
+          },
+          "description": "2ND_HALF"
+        },
+        {
+          "id": 17532153,
+          "fixture_id": 19425663,
+          "type_id": 48996,
+          "participant_id": 2905,
+          "score": {
+            "goals": 1,
+            "participant": "home"
+          },
+          "description": "2ND_HALF_ONLY"
+        },
+        {
+          "id": 17532154,
+          "fixture_id": 19425663,
+          "type_id": 48996,
+          "participant_id": 85,
+          "score": {
+            "goals": 0,
+            "participant": "away"
+          },
+          "description": "2ND_HALF_ONLY"
+        }
+      ],
+      "state": {
+        "id": 5,
+        "state": "FT",
+        "name": "Full Time",
+        "short_name": "FT",
+        "developer_name": "FT"
+      }
+    },
+    {
+      "id": 19425670,
+      "sport_id": 1,
+      "league_id": 271,
+      "season_id": 25536,
+      "stage_id": 77476856,
+      "group_id": null,
+      "aggregate_id": null,
+      "round_id": 371938,
+      "state_id": 5,
+      "venue_id": 5655,
+      "name": "FC København vs Sønderjyske Fodbold",
+      "starting_at": "2025-12-07 17:00:00",
+      "result_info": "Sønderjyske Fodbold won after full-time.",
+      "leg": "1/1",
+      "details": null,
+      "length": 90,
+      "placeholder": false,
+      "has_
+
+============================================================
+6. Standings
+============================================================
+
+Status: 200
+URL: https://api.sportmonks.com/v3/football/standings/seasons/25659?api_token=TOKEN_HIDDEN&include=participant;details
+
+Response:
+{
+  "data": [
+    {
+      "id": 258870,
+      "participant_id": 83,
+      "sport_id": 1,
+      "league_id": 564,
+      "season_id": 25659,
+      "stage_id": 77476930,
+      "group_id": null,
+      "round_id": 373226,
+      "standing_rule_id": 127567,
+      "position": 1,
+      "result": "equal",
+      "points": 46,
+      "participant": {
+        "id": 83,
+        "sport_id": 1,
+        "country_id": 32,
+        "venue_id": 9236,
+        "gender": "male",
+        "name": "FC Barcelona",
+        "short_code": "BAR",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png",
+        "founded": 1899,
+        "type": "domestic",
+        "placeholder": false,
+        "last_played_at": "2025-12-21 15:15:00"
+      },
+      "details": [
+        {
+          "id": 8266718614,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 137,
+          "value": 0
+        },
+        {
+          "id": 8266718620,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 138,
+          "value": 0
+        },
+        {
+          "id": 8266718606,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 134,
+          "value": 20
+        },
+        {
+          "id": 8266718607,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 129,
+          "value": 18
+        },
+        {
+          "id": 8266718641,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 179,
+          "value": 31
+        },
+        {
+          "id": 8266718608,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 130,
+          "value": 15
+        },
+        {
+          "id": 8266718622,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 139,
+          "value": 28
+        },
+        {
+          "id": 8266718636,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 144,
+          "value": 2
+        },
+        {
+          "id": 8266718638,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 145,
+          "value": 23
+        },
+        {
+          "id": 8266718639,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 146,
+          "value": 15
+        },
+        {
+          "id": 8266718605,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 133,
+          "value": 51
+        },
+        {
+          "id": 8266718609,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 131,
+          "value": 1
+        },
+        {
+          "id": 8266718610,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 132,
+          "value": 2
+        },
+        {
+          "id": 8266718612,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 135,
+          "value": 9
+        },
+        {
+          "id": 8266718613,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 136,
+          "value": 9
+        },
+        {
+          "id": 8266718621,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 185,
+          "value": 27
+        },
+        {
+          "id": 8266718623,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 140,
+          "value": 5
+        },
+        {
+          "id": 8266718625,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 187,
+          "value": 46
+        },
+        {
+          "id": 8266718626,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 141,
+          "value": 9
+        },
+        {
+          "id": 8266718633,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 142,
+          "value": 6
+        },
+        {
+          "id": 8266718635,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 143,
+          "value": 1
+        },
+        {
+          "id": 8266718637,
+          "standing_type": "standing",
+          "standing_id": 258870,
+          "type_id": 186,
+          "value": 19
+        }
+      ]
+    },
+    {
+      "id": 258883,
+      "participant_id": 3468,
+      "sport_id": 1,
+      "league_id": 564,
+      "season_id": 25659,
+      "stage_id": 77476930,
+      "group_id": null,
+      "round_id": 373226,
+      "standing_rule_id": 127568,
+      "position": 2,
+      "result": "equal",
+      "points": 42,
+      "participant": {
+        "id": 3468,
+        "sport_id": 1,
+        "country_id": 32,
+        "venue_id": 2020,
+        "gender": "male",
+        "name": "Real Madrid",
+        "short_code": "RMA",
+        "

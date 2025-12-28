@@ -136,15 +136,20 @@ function getScore(fixture, side) {
 
 // --- FEATURE IMPLEMENTATION ---
 
-export const getHomeData = async () => {
-    const today = new Date();
+export const getHomeData = async (selectedDate = null) => {
     const dates = [];
 
-    // Generate Today + 3 Days
-    for (let i = 0; i < 4; i++) {
-        const d = new Date(today);
-        d.setDate(today.getDate() + i);
-        dates.push(d.toISOString().split('T')[0]);
+    if (selectedDate) {
+        // Single date mode
+        dates.push(selectedDate);
+    } else {
+        // Default range: Yesterday (-1) to +3 days ahead
+        const today = new Date();
+        for (let i = -1; i <= 3; i++) {
+            const d = new Date(today);
+            d.setDate(today.getDate() + i);
+            dates.push(d.toISOString().split('T')[0]);
+        }
     }
 
     const allMatches = [];
@@ -237,6 +242,7 @@ export const getNextMatches = async (id) => {
         const url = `${BASE_URL}/fixtures/between/${start}/${endStr}/${teamId}?api_token=${TOKEN}&include=league;participants;state`;
         const { data } = await axios.get(url);
 
+        // NO LEAGUE FILTER - Include ALL competitions (Copa, Liga, Amistoso)
         let fixtures = (data.data || [])
             .filter(f => new Date(f.starting_at) > new Date()) // Future only
             .sort((a, b) => new Date(a.starting_at) - new Date(b.starting_at))
