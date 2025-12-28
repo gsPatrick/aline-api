@@ -4,6 +4,8 @@ import { initSocket } from "./services/socket.js";
 import { sequelize, sequelizeCache } from "./models/index.js";
 import { startCron } from "./services/cron.js";
 import { initializeCache, getCacheStatus } from "./services/cache.service.js";
+import { startLiveMatchPolling } from "./services/live-updates.service.js";
+import * as MatchService from "./features/match/match.service.js";
 
 const port = process.env.PORT;
 const httpServer = createServer(app);
@@ -27,6 +29,9 @@ const start = async () => {
 
     // 3. Start cron jobs
     startCron();
+
+    // 4. Start Live Match Polling
+    startLiveMatchPolling(MatchService);
 
     // 4. CACHE INITIALIZATION - TEMPORARILY DISABLED TO PREVENT RATE LIMITING
     // Uncomment when ready to use cache warming again

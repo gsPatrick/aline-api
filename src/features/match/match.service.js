@@ -942,51 +942,66 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
 
     try {
         // Step 1: Fetch Match Details (Participants, Stats, League, Venue, Odds, Referee, Events, Lineups)
-        const [resParticipants, resStats, resLeague, resVenue, resOdds, resReferee, resEvents, resComments, resLineups] = await Promise.all([
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=participants;state;scores`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=statistics.type`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=league`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=venue`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=odds`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=referees`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=events.type`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=comments`),
-            axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=lineups.player`)
-        ]);
+        // Step 1: Fetch Match Details (Consolidated)
+        const includes = [
+            'participants',
+            'state',
+            'scores',
+            'statistics.type',
+            'league',
+            'venue',
+            'odds',
+            'referees',
+            'events.type',
+            'comments',
+            'lineups.player',
+            'trends'
+        ].join(';');
 
-        const participants = resParticipants.data.data.participants || [];
+        const { data: resData } = await axios.get(`${BASE_URL}/fixtures/${matchId}?api_token=${token}&include=${includes}`);
+
+        // Mock the response structure expected by the rest of the function (or better, destructure directly)
+        // Since we now have one object, we can destructure it.
+        const fixture = resData.data;
+
+
+        // But to minimize code churn, let's map the variables.
+
+        // Actually, let's adapt the variable extraction below instead of keeping the wrappers.
+        const participants = fixture.participants || [];
         const home = participants.find(p => p.meta?.location === 'home') || participants[0];
         const away = participants.find(p => p.meta?.location === 'away') || participants[1];
 
-        // Process Comments for Corners (if events are missing corners)
-        const comments = resComments.data.data.comments || [];
-        const existingEvents = resEvents.data.data.events || [];
+        const comments = fixture.comments || [];
+        const existingEvents = fixture.events || [];
+        const lines = fixture.lineups || [];
+        const seasonId = fixture.season_id;
+
+        // We need to attach other parts to 'fixture' if they aren't already there?
+        // No, 'fixture' contains everything now because of the includes.
+
+        // But wait, the function returns "externalData". What structure does it expect?
+        // It returns keys like "participants", "statistics", "leadgue", etc.
+        // It seems it returns: { ...resParticipants.data.data.participants... } merged?
+
+        // Let's check what it returns further down in the original file.
+        // It was doing: return { ...resParticipants.data.data, ...others }; 
+        // No, I need to see the return statement of fetchExternalMatchData.
+
 
         const cornerEvents = comments
             .filter(c => c.comment && c.comment.toLowerCase().includes('corner'))
-            .map(c => {
-                // Determine team from comment text or extra_minute if implied? 
-                // Unfortunately comments often lack participant_id directly usually.
-                // But sometimes we can infer or just list them.
-                // However, without participant_id, we can't assign Home/Away easily unless we parse "Corner for [TeamName]".
-                // For now, let's try to pass them and let Frontend decide or just show generic.
-                return {
-                    id: `comment-${c.id}`,
-                    minute: c.minute,
-                    type: { name: 'Corner' },
-                    comment: c.comment,
-                    // Attempt to guess team if possible, or leave null
-                    participant_id: null
-                };
-            });
+            .map(c => ({
+                id: `comment-${c.id}`,
+                minute: c.minute,
+                type: { name: 'Corner' },
+                comment: c.comment,
+                participant_id: null
+            }));
 
-        // Merge real events + corner comments
-        // Avoid duplicates if corners ARE in events (check by minute?)
-        // Simple merge for now as specific match lacked corner events totally.
         const allEvents = [...existingEvents, ...cornerEvents];
 
         // Get Season ID for Standings
-        const seasonId = resParticipants.data.data.season_id;
         let standings = [];
         if (seasonId) {
             try {
@@ -1001,8 +1016,7 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
         }
 
         // Referee Data
-        // referees is an array of pivot objects. The actual referee details are in .referee property of the pivot.
-        const referees = resReferee.data.data.referees || [];
+        const referees = fixture.referees || [];
         const mainReferee = referees.find(r => r.type?.name === 'REFEREE') || referees[0]; // Fallback to first if no type
 
         let referee = null;
@@ -1190,20 +1204,19 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
 
         // Merge data
         const mergedData = {
-            ...resParticipants.data.data,
-            // Ensure state and scores are top-level
-            state: resParticipants.data.data.state,
-            scores: resParticipants.data.data.scores,
+            ...fixture,
+            state: fixture.state,
+            scores: fixture.scores,
 
-            statistics: resStats.data.data.statistics,
-            league: resLeague.data.data.league,
-            venue: resVenue.data.data.venue,
-            odds: resOdds.data.data.odds,
+            statistics: fixture.statistics,
+            league: fixture.league,
+            venue: fixture.venue,
+            odds: fixture.odds,
             referee: referee, // Add referee to merged data
             refereeHistory: refereeHistory, // Add referee history
             events: allEvents, // Use merged events
             comments: comments, // Expose raw comments too
-            lineups: resLineups.data.data.lineups || [], // Add lineups
+            lineups: fixture.lineups || [], // Add lineups
             standings: standings, // Add standings
             h2h: h2hData, // Add H2H Data
             homeTeam: {
@@ -1215,7 +1228,8 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
                 ...away,
                 detailedHistory: validAwayHistory,
                 squad: awaySquad
-            }
+            },
+            trends: fixture.trends // Add trends
         };
 
         return mergedData;
@@ -1225,15 +1239,19 @@ export const fetchExternalMatchData = async (matchId, apiToken) => {
     }
 };
 
-export const getMatchStats = async (matchId) => {
+export const getMatchStats = async (matchId, options = {}) => {
     const { Match } = await import("../../models/index.js");
 
     // Step 1: Check database cache first (using externalId, not internal id)
-    let cached = await Match.findOne({ where: { externalId: matchId } });
+    // Skip cache if requested (e.g. by LiveUpdatesService)
+    let cached = null;
+    if (!options.skipCache) {
+        cached = await Match.findOne({ where: { externalId: matchId } });
+    }
 
     // Cache TTL configuration
     const CACHE_TTL = {
-        LIVE: 5 * 60 * 1000,        // 5 minutes for live matches
+        LIVE: 30 * 1000,            // 30 seconds for live matches (reduced from 5m)
         UPCOMING: 60 * 60 * 1000,   // 1 hour for upcoming matches
         FINISHED: 24 * 60 * 60 * 1000, // 24 hours for finished matches
     };
@@ -1244,30 +1262,49 @@ export const getMatchStats = async (matchId) => {
     if (cached && cached.data) {
         const cacheAge = now - new Date(cached.cached_at || cached.updatedAt);
         const status = cached.status || cached.data?.state?.state || cached.data?.matchInfo?.state || 'NS';
+        const dataStatus = cached.data?.matchInfo?.status || cached.data?.matchInfo?.state || 'NS';
 
-        // Determine if cache is fresh based on match status
-        let isFresh = false;
-        if (status === 'FT' || status === 'AET' || status === 'FT_PEN') {
-            isFresh = cacheAge < CACHE_TTL.FINISHED;
-        } else if (status === 'LIVE' || status === 'HT' || status === 'ET' || status === 'PEN_LIVE') {
-            isFresh = cacheAge < CACHE_TTL.LIVE;
+        // Check if cache metadata status doesn't match the actual data status
+        // This happens when goldstats updates status but match.service cached old data
+        const isInconsistent = (status === 'FT' || status === 'AET') && dataStatus === 'NS';
+
+        // Check if match was scheduled but hasn't been refreshed since it started
+        // If cached status is NS but match time has passed (+ buffer), force refresh
+        const matchDate = cached.data?.matchInfo?.starting_at || cached.data?.starting_at || cached.date;
+        const matchStartTime = matchDate ? new Date(matchDate) : null;
+        const matchShouldHaveStarted = matchStartTime && (now - matchStartTime) > 30 * 60 * 1000; // 30 min buffer
+
+        if (isInconsistent) {
+            console.log(`⚠️  Cache INCONSISTENT for match ${matchId} - status=${status} but data.matchInfo.status=${dataStatus} - forcing refresh...`);
+            // Don't return cached data, continue to API fetch
+        } else if (status === 'NS' && matchShouldHaveStarted) {
+            console.log(`⚠️  Cache STALE for match ${matchId} - was NS but match should have started at ${matchStartTime?.toISOString()} - forcing refresh...`);
+            // Don't return cached data, continue to API fetch
         } else {
-            isFresh = cacheAge < CACHE_TTL.UPCOMING;
-        }
-
-        if (isFresh) {
-            console.log(`✅ Cache HIT for match ${matchId} (status: ${status}, age: ${Math.round(cacheAge / 1000)}s)`);
-            // CRITICAL FIX: If data is already processed (has matchInfo), return directly
-            // Don't call calculateMatchStats again - that's expensive and already done!
-            if (cached.data.matchInfo) {
-                return cached.data; // Already processed and ready to use
+            // Determine if cache is fresh based on match status
+            let isFresh = false;
+            if (status === 'FT' || status === 'AET' || status === 'FT_PEN') {
+                isFresh = cacheAge < CACHE_TTL.FINISHED;
+            } else if (status === 'LIVE' || status === 'HT' || status === 'ET' || status === 'PEN_LIVE') {
+                isFresh = cacheAge < CACHE_TTL.LIVE;
             } else {
-                // Old cache format - needs processing
-                const stats = calculateMatchStats(cached.data);
-                return stats;
+                isFresh = cacheAge < CACHE_TTL.UPCOMING;
             }
-        } else {
-            console.log(`⚠️  Cache STALE for match ${matchId} (status: ${status}, age: ${Math.round(cacheAge / 1000)}s) - refreshing...`);
+
+            if (isFresh) {
+                console.log(`✅ Cache HIT for match ${matchId} (status: ${status}, age: ${Math.round(cacheAge / 1000)}s)`);
+                // CRITICAL FIX: If data is already processed (has matchInfo), return directly
+                // Don't call calculateMatchStats again - that's expensive and already done!
+                if (cached.data.matchInfo) {
+                    return cached.data; // Already processed and ready to use
+                } else {
+                    // Old cache format - needs processing
+                    const stats = calculateMatchStats(cached.data);
+                    return stats;
+                }
+            } else {
+                console.log(`⚠️  Cache STALE for match ${matchId} (status: ${status}, age: ${Math.round(cacheAge / 1000)}s) - refreshing...`);
+            }
         }
     } else {
         console.log(`⚠️  Cache MISS for match ${matchId} - fetching from API...`);

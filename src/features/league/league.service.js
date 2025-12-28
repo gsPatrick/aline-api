@@ -123,38 +123,42 @@ export const getTopscorers = async (seasonId) => {
 
         const topscorers = data.data || [];
 
-        // Sort by goals
-        const byGoals = [...topscorers]
-            .sort((a, b) => (b.goals || 0) - (a.goals || 0))
-            .slice(0, 5)
+        // Filter by type_id: 83 = goals, 84 = assists, 78 = rating
+        const goalScorers = topscorers.filter(t => t.type_id === 83);
+        const assistMakers = topscorers.filter(t => t.type_id === 84);
+        const ratedPlayers = topscorers.filter(t => t.type_id === 78);
+
+        // Sort by goals (using 'total' field from API)
+        const byGoals = [...goalScorers]
+            .sort((a, b) => (b.total || 0) - (a.total || 0))
+            .slice(0, 10)
             .map(t => ({
                 player_name: t.player?.display_name || t.player?.name,
                 team_name: t.participant?.name,
                 team_logo: t.participant?.image_path,
-                goals: t.goals || 0
+                goals: t.total || 0
             }));
 
         // Sort by assists
-        const byAssists = [...topscorers]
-            .sort((a, b) => (b.assists || 0) - (a.assists || 0))
-            .slice(0, 5)
+        const byAssists = [...assistMakers]
+            .sort((a, b) => (b.total || 0) - (a.total || 0))
+            .slice(0, 10)
             .map(t => ({
                 player_name: t.player?.display_name || t.player?.name,
                 team_name: t.participant?.name,
                 team_logo: t.participant?.image_path,
-                assists: t.assists || 0
+                assists: t.total || 0
             }));
 
         // Sort by rating
-        const byRating = [...topscorers]
-            .filter(t => t.rating)
-            .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-            .slice(0, 5)
+        const byRating = [...ratedPlayers]
+            .sort((a, b) => (b.total || 0) - (a.total || 0))
+            .slice(0, 10)
             .map(t => ({
                 player_name: t.player?.display_name || t.player?.name,
                 team_name: t.participant?.name,
                 team_logo: t.participant?.image_path,
-                rating: t.rating ? parseFloat(t.rating).toFixed(2) : 0
+                rating: t.total ? parseFloat(t.total).toFixed(2) : 0
             }));
 
         return {
